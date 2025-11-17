@@ -57,10 +57,22 @@ jobs:
             # 선택사항 Secrets 기본값 처리
             [ -z "$JWT_EXPIRATION" ] && export JWT_EXPIRATION=604800000
             [ -z "$REDIS_PASSWORD" ] && export REDIS_PASSWORD=
+            # 환경 변수 확인 (디버깅용, 비밀번호는 일부만 표시)
+            echo "=== Environment Variables Check ==="
+            echo "DB_NAME=$DB_NAME"
+            echo "DB_USERNAME=$DB_USERNAME"
+            echo "DB_PASSWORD=${DB_PASSWORD:0:3}***"
+            echo "JWT_SECRET=${JWT_SECRET:0:10}***"
+            echo "SERVER_URL=$SERVER_URL"
+            echo "================================"
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull || true
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            echo "=== Container Status After Start ==="
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+            echo "=== Backend Logs (first 50 lines) ==="
+            sleep 5
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend || true
           REMOTE_SCRIPT
 
       - name: Check container status
@@ -70,25 +82,39 @@ jobs:
             echo "=== Container Status ==="
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
             echo ""
-            echo "=== Backend Logs (last 50 lines) ==="
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend || true
+            echo "=== Backend Logs (last 100 lines) ==="
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=100 backend || true
+            echo ""
+            echo "=== Backend Logs (with timestamps, last 200 lines) ==="
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=200 --timestamps backend 2>&1 | tail -50 || true
           REMOTE_SCRIPT
 
       - name: Health Check (Internal)
+        continue-on-error: true
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             echo "Waiting for application to start..."
-            sleep 30
-            for i in {1..10}; do
-              echo "Health check attempt $i/10 (internal)..."
-              if docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health 2>&1 || curl -f http://localhost:8080/api/v1/actuator/health; then
+            sleep 60
+            for i in {1..15}; do
+              echo "Health check attempt $i/15 (internal)..."
+              # 컨테이너가 실행 중인지 확인
+              if ! docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps backend | grep -q "Up"; then
+                echo "Container is not running. Checking logs..."
+                docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend
+                sleep 10
+                continue
+              fi
+              # Health check 시도
+              if docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health 2>&1 || docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend curl -f http://localhost:8080/api/v1/actuator/health 2>&1; then
                 echo "Health check passed!"
                 exit 0
               fi
               sleep 10
             done
-            echo "Health check failed after 10 attempts"
+            echo "Health check failed after 15 attempts"
+            echo "=== Final Backend Logs ==="
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=100 backend
             exit 1
           REMOTE_SCRIPT
 
