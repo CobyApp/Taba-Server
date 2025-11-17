@@ -66,7 +66,10 @@ jobs:
             echo "SERVER_URL=$SERVER_URL"
             echo "================================"
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull || true
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+            # 기존 이미지 제거 후 재빌드
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml down || true
+            docker rmi taba_backend-backend 2>/dev/null || true
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache --pull backend
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             echo "=== Container Status After Start ==="
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
