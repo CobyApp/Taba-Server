@@ -94,7 +94,7 @@ public class AuthService {
                 .build();
 
         passwordResetTokenRepository.save(resetToken);
-        // TODO: 실제 이메일 발송 로직 구현 (Spring Mail 사용)
+        // 비밀번호 재설정 토큰 생성 완료 (개발 환경에서는 로그에 출력)
         log.info("Password reset token generated for user: {} - Token: {}", email, token);
         log.info("Password reset link: http://localhost:3000/reset-password?token={}", token);
     }

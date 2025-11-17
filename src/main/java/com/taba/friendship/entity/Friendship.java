@@ -43,10 +43,6 @@ public class Friendship extends BaseEntity {
     @Column(name = "trust_score")
     private Integer trustScore = 0;
 
-    // SharedFlower는 더 이상 사용하지 않습니다. 친구 간 편지는 Letter 테이블을 직접 조회합니다.
-    // @OneToMany(mappedBy = "friendship", cascade = CascadeType.ALL, orphanRemoval = true)
-    // private List<SharedFlower> sharedFlowers = new ArrayList<>();
-
     @PrePersist
     public void prePersist() {
         if (this.id == null) {

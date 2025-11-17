@@ -16,10 +16,10 @@ Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하�
 
 ### 주요 기능
 - **인증 시스템**: JWT 기반 회원가입/로그인, 비밀번호 재설정, 토큰 블랙리스트 관리
-- **편지 관리**: 공개/비공개 편지 작성, 좋아요, 저장, 신고, 예약 발송
-- **친구 시스템**: 초대 코드 기반 친구 추가, 친구 목록 조회, 꽃다발 관리, 친구별 편지 목록 조회
+- **편지 관리**: 공개/비공개 편지 작성, 템플릿 및 이미지 첨부, 신고, 예약 발송, 답장 (자동 친구 추가)
+- **친구 시스템**: 초대 코드 기반 친구 추가 (3분 유효), 친구 목록 조회, 꽃다발 관리, 친구별 편지 목록 조회
 - **알림 시스템**: 실시간 알림 발송 및 관리, 배치 읽음 처리 최적화
-- **파일 업로드**: 이미지 업로드 및 URL 반환
+- **파일 업로드**: 이미지 업로드 및 URL 반환 (로컬 저장)
 
 ---
 
@@ -95,8 +95,6 @@ Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하�
   - `letters`: 편지 정보 (읽음 상태 포함)
   - `friendships`: 친구 관계
   - `letter_images`: 편지 첨부 이미지
-  - `letter_likes`: 편지 좋아요
-  - `letter_saves`: 편지 저장
   - `letter_reports`: 편지 신고
   - `invite_codes`: 초대 코드
   - `notifications`: 알림
@@ -181,7 +179,7 @@ taba_backend/
 │   ├── letter/                       # 편지 모듈
 │   │   ├── controller/
 │   │   ├── dto/
-│   │   ├── entity/                   # Letter, LetterLike, LetterReport 등
+│   │   ├── entity/                   # Letter, LetterImage, LetterReport 등
 │   │   ├── repository/
 │   │   ├── scheduler/                # 예약 발송 스케줄러 (알림 발송 포함)
 │   │   └── service/
@@ -520,9 +518,8 @@ curl -X GET http://localhost:8080/api/v1/users/{userId} \
 - `POST /letters` - 편지 작성 (예약 발송 지원)
 - `GET /letters/public` - 공개 편지 목록
 - `GET /letters/{letterId}` - 편지 상세 조회
-- `POST /letters/{letterId}/like` - 좋아요 토글
-- `POST /letters/{letterId}/save` - 저장 토글
 - `POST /letters/{letterId}/report` - 편지 신고
+- `POST /letters/{letterId}/reply` - 편지 답장 (자동 친구 추가)
 - `DELETE /letters/{letterId}` - 편지 삭제
 
 #### 친구 API

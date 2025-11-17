@@ -24,14 +24,9 @@ public class LetterDto {
     private Letter.Visibility visibility;
     private Boolean isAnonymous;
     private LocalDateTime sentAt;
-    private Integer likes;
     private Integer views;
-    private Integer savedCount;
-    private Boolean isLiked;
-    private Boolean isSaved;
     private List<String> attachedImages;
     private LetterTemplateDto template;
-    private PositionDto position;
 }
 
 

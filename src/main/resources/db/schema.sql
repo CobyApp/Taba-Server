@@ -41,9 +41,7 @@
 -- - template_font_size (DECIMAL(5,2))
 -- - scheduled_at (TIMESTAMP, nullable)
 -- - sent_at (TIMESTAMP, nullable)
--- - likes (INTEGER, default 0)
 -- - views (INTEGER, default 0)
--- - saved_count (INTEGER, default 0)
 -- - is_read (BOOLEAN, default false) -- 읽음 상태 (recipient 기준)
 -- - read_at (TIMESTAMP, nullable) -- 읽은 시간
 -- - created_at, updated_at, deleted_at (TIMESTAMP)
@@ -63,18 +61,6 @@
 -- - letter_id (VARCHAR(36), FK -> letters.id)
 -- - image_url (VARCHAR(500))
 -- - image_order (INTEGER)
-
--- letter_likes: 편지 좋아요
--- - id (VARCHAR(36), PK)
--- - letter_id (VARCHAR(36), FK -> letters.id)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - UNIQUE(letter_id, user_id)
-
--- letter_saves: 편지 저장
--- - id (VARCHAR(36), PK)
--- - letter_id (VARCHAR(36), FK -> letters.id)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - UNIQUE(letter_id, user_id)
 
 -- letter_reports: 편지 신고
 -- - id (VARCHAR(36), PK)
@@ -119,4 +105,3 @@
 --    - visibility = 'DIRECT'인 편지만 조회
 -- 2. 읽음 상태는 letters.is_read 필드로 관리됩니다.
 --    - recipient 기준으로 읽음 상태 관리
--- 3. shared_flowers 테이블은 더 이상 사용하지 않습니다 (deprecated).

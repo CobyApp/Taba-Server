@@ -7,12 +7,8 @@ import com.taba.letter.dto.LetterCreateRequest;
 import com.taba.letter.dto.LetterDto;
 import com.taba.letter.entity.Letter;
 import com.taba.letter.entity.LetterImage;
-import com.taba.letter.entity.LetterLike;
-import com.taba.letter.entity.LetterSave;
-import com.taba.letter.repository.LetterLikeRepository;
 import com.taba.letter.repository.LetterRepository;
 import com.taba.letter.repository.LetterReportRepository;
-import com.taba.letter.repository.LetterSaveRepository;
 import com.taba.friendship.service.FriendshipService;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
@@ -31,8 +27,6 @@ import java.util.stream.Collectors;
 public class LetterService {
 
     private final LetterRepository letterRepository;
-    private final LetterLikeRepository letterLikeRepository;
-    private final LetterSaveRepository letterSaveRepository;
     private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
     private final FriendshipService friendshipService;
@@ -182,56 +176,6 @@ public class LetterService {
     }
 
     @Transactional
-    public LetterDto toggleLike(String letterId) {
-        Letter letter = letterRepository.findActiveById(letterId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.LETTER_NOT_FOUND));
-
-        User user = SecurityUtil.getCurrentUser();
-        if (user == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        LetterLike existingLike = letterLikeRepository.findByLetterIdAndUserId(letterId, user.getId()).orElse(null);
-
-        if (existingLike != null) {
-            letterLikeRepository.delete(existingLike);
-            letter.decrementLikes();
-        } else {
-            LetterLike like = new LetterLike(letter, user);
-            letterLikeRepository.save(like);
-            letter.incrementLikes();
-        }
-
-        letterRepository.save(letter);
-        return toDto(letter, user.getId());
-    }
-
-    @Transactional
-    public LetterDto toggleSave(String letterId) {
-        Letter letter = letterRepository.findActiveById(letterId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.LETTER_NOT_FOUND));
-
-        User user = SecurityUtil.getCurrentUser();
-        if (user == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        LetterSave existingSave = letterSaveRepository.findByLetterIdAndUserId(letterId, user.getId()).orElse(null);
-
-        if (existingSave != null) {
-            letterSaveRepository.delete(existingSave);
-            letter.decrementSavedCount();
-        } else {
-            LetterSave save = new LetterSave(letter, user);
-            letterSaveRepository.save(save);
-            letter.incrementSavedCount();
-        }
-
-        letterRepository.save(letter);
-        return toDto(letter, user.getId());
-    }
-
-    @Transactional
     public void reportLetter(String letterId, String reason) {
         Letter letter = letterRepository.findActiveById(letterId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LETTER_NOT_FOUND));
@@ -285,11 +229,6 @@ public class LetterService {
                 .map(LetterImage::getImageUrl)
                 .collect(Collectors.toList());
 
-        Boolean isLiked = currentUserId != null && 
-                letterLikeRepository.existsByLetterIdAndUserId(letter.getId(), currentUserId);
-        Boolean isSaved = currentUserId != null && 
-                letterSaveRepository.existsByLetterIdAndUserId(letter.getId(), currentUserId);
-
         // 템플릿 정보 구성
         com.taba.letter.dto.LetterTemplateDto template = null;
         if (letter.getTemplateBackground() != null || 
@@ -314,11 +253,7 @@ public class LetterService {
                 .visibility(letter.getVisibility())
                 .isAnonymous(letter.getIsAnonymous())
                 .sentAt(letter.getSentAt())
-                .likes(letter.getLikes())
                 .views(letter.getViews())
-                .savedCount(letter.getSavedCount())
-                .isLiked(isLiked)
-                .isSaved(isSaved)
                 .attachedImages(images)
                 .template(template)
                 .build();

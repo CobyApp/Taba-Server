@@ -76,14 +76,8 @@ public class Letter extends BaseEntity {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
-    @Column(name = "likes")
-    private Integer likes = 0;
-
     @Column(name = "views")
     private Integer views = 0;
-
-    @Column(name = "saved_count")
-    private Integer savedCount = 0;
 
     @Column(name = "is_read")
     private Boolean isRead = false;
@@ -93,12 +87,6 @@ public class Letter extends BaseEntity {
 
     @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LetterImage> images = new ArrayList<>();
-
-    @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LetterLike> letterLikes = new ArrayList<>();
-
-    @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LetterSave> letterSaves = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
@@ -133,26 +121,6 @@ public class Letter extends BaseEntity {
 
     public void incrementViews() {
         this.views++;
-    }
-
-    public void incrementLikes() {
-        this.likes++;
-    }
-
-    public void decrementLikes() {
-        if (this.likes > 0) {
-            this.likes--;
-        }
-    }
-
-    public void incrementSavedCount() {
-        this.savedCount++;
-    }
-
-    public void decrementSavedCount() {
-        if (this.savedCount > 0) {
-            this.savedCount--;
-        }
     }
 
     public void addImage(LetterImage image) {

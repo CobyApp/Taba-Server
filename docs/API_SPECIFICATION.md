@@ -311,11 +311,7 @@ Authorization: Bearer {token}
     "visibility": "PUBLIC",
     "isAnonymous": false,
     "sentAt": "2024-01-01T00:00:00",
-    "likes": 0,
     "views": 0,
-    "savedCount": 0,
-    "isLiked": false,
-    "isSaved": false,
     "attachedImages": [
       "http://localhost:8080/api/v1/uploads/image1.jpg"
     ],
@@ -351,10 +347,7 @@ Authorization: Bearer {token}
         "preview": "미리보기",
         "sender": { ... },
         "flowerType": "ROSE",
-        "likes": 10,
         "views": 50,
-        "isLiked": false,
-        "isSaved": false,
         "attachedImages": [ ... ],
         "template": { ... }
       }
@@ -387,56 +380,14 @@ Authorization: Bearer {token}
     "visibility": "PUBLIC",
     "isAnonymous": false,
     "sentAt": "2024-01-01T00:00:00",
-    "likes": 10,
     "views": 51,
-    "savedCount": 5,
-    "isLiked": true,
-    "isSaved": false,
     "attachedImages": [ ... ],
     "template": { ... }
   }
 }
 ```
 
-### 3.4 편지 좋아요 토글
-
-**POST** `/letters/{letterId}/like`
-
-**인증**: 필요
-
-**Response** (200 OK):
-```json
-{
-  "success": true,
-  "data": {
-    "id": "letter-uuid",
-    "likes": 11,
-    "isLiked": true,
-    ...
-  }
-}
-```
-
-### 3.5 편지 저장 토글
-
-**POST** `/letters/{letterId}/save`
-
-**인증**: 필요
-
-**Response** (200 OK):
-```json
-{
-  "success": true,
-  "data": {
-    "id": "letter-uuid",
-    "savedCount": 6,
-    "isSaved": true,
-    ...
-  }
-}
-```
-
-### 3.6 편지 답장 (자동 친구 추가)
+### 3.4 편지 답장 (자동 친구 추가)
 
 **POST** `/letters/{letterId}/reply`
 
@@ -475,7 +426,7 @@ Authorization: Bearer {token}
 
 **참고**: 친구가 아닌 경우 자동으로 양방향 친구 관계가 생성됩니다.
 
-### 3.7 편지 신고
+### 3.5 편지 신고
 
 **POST** `/letters/{letterId}/report`
 
@@ -497,7 +448,7 @@ Authorization: Bearer {token}
 }
 ```
 
-### 3.8 편지 삭제
+### 3.6 편지 삭제
 
 **DELETE** `/letters/{letterId}`
 
@@ -1022,6 +973,11 @@ Swagger UI에서:
 
 ---
 
-**문서 버전**: 1.0.0  
+**문서 버전**: 1.1.0  
 **최종 업데이트**: 2024-11-17
+
+**주요 변경사항**:
+- 좋아요/스크랩 기능 제거
+- 친구 간 편지 조회 방식 변경 (SharedFlower → Letter 직접 조회)
+- 읽음 상태 관리 추가 (Letter.isRead)
 

@@ -40,18 +40,6 @@ public class LetterController {
         return ResponseEntity.ok(ApiResponse.success(letterDto));
     }
 
-    @PostMapping("/{letterId}/like")
-    public ResponseEntity<ApiResponse<LetterDto>> toggleLike(@PathVariable String letterId) {
-        LetterDto letterDto = letterService.toggleLike(letterId);
-        return ResponseEntity.ok(ApiResponse.success(letterDto));
-    }
-
-    @PostMapping("/{letterId}/save")
-    public ResponseEntity<ApiResponse<LetterDto>> toggleSave(@PathVariable String letterId) {
-        LetterDto letterDto = letterService.toggleSave(letterId);
-        return ResponseEntity.ok(ApiResponse.success(letterDto));
-    }
-
     @PostMapping("/{letterId}/report")
     public ResponseEntity<ApiResponse<?>> reportLetter(
             @PathVariable String letterId,

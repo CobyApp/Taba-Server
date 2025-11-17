@@ -9,7 +9,7 @@ Taba 백엔드 서버 - Spring Boot 기반 REST API
 - **Spring Security 6.x** - JWT 기반 인증 및 보안
 - **Spring Data JPA** - 데이터베이스 접근 추상화
 - **MySQL 8.0** - 관계형 데이터베이스
-- **Redis** - 토큰 블랙리스트 관리 및 캐싱
+- **Redis** - 토큰 블랙리스트 관리 (선택사항)
 - **QueryDSL 5.0.0** - 타입 안전한 동적 쿼리
 - **MapStruct 1.5.5** - DTO 매핑 자동화
 - **Swagger/OpenAPI 3** - API 문서화 및 테스트
@@ -29,37 +29,16 @@ src/main/java/com/taba/
 ├── friendship/        # 친구 관계 및 꽃다발
 ├── invite/            # 초대 코드
 ├── notification/      # 알림
-├── settings/           # 설정
+├── settings/          # 설정
 ├── file/              # 파일 업로드
 └── common/            # 공통 유틸리티
 ```
 
 ## 초기 설정
 
-### Gradle Wrapper 생성 (최초 1회)
-
-Gradle이 설치되어 있지 않은 경우:
-
-```bash
-# Gradle 설치 후
-gradle wrapper --gradle-version 8.5
-```
-
-또는 직접 다운로드:
-- https://gradle.org/releases/ 에서 Gradle 8.5 다운로드
-- `gradle/wrapper/gradle-wrapper.jar` 파일을 다운로드하여 배치
-
-## 📚 상세 가이드
-
-프로젝트의 상세한 설명, 기술 스택, 실행 방법, API 사용법은 다음 문서를 참고하세요:
-
-👉 **[프로젝트 가이드 (PROJECT_GUIDE.md)](docs/PROJECT_GUIDE.md)**
-
-## 실행 방법
-
 ### 1. 환경 변수 설정
 
-`.env` 파일을 생성하거나 환경 변수를 설정합니다:
+`.env` 파일을 프로젝트 루트에 생성합니다:
 
 ```bash
 # MySQL 설정
@@ -69,7 +48,7 @@ DB_NAME=taba
 DB_USERNAME=root
 DB_PASSWORD=your_password
 
-# Redis 설정
+# Redis 설정 (선택사항)
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
@@ -77,16 +56,11 @@ REDIS_PASSWORD=
 # JWT 설정
 JWT_SECRET=your-256-bit-secret-key-change-this-in-production
 
-# AWS S3 설정 (선택사항)
-AWS_S3_BUCKET=taba-bucket
-AWS_S3_REGION=ap-northeast-2
-AWS_ACCESS_KEY=
-AWS_SECRET_KEY=
+# 서버 설정 (선택사항)
+SERVER_URL=http://localhost:8080/api/v1
 ```
 
 ### 2. MySQL 데이터베이스 설정
-
-MySQL을 설치하고 데이터베이스를 생성합니다:
 
 ```bash
 # MySQL 접속
@@ -102,9 +76,25 @@ CREATE DATABASE taba CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 mysql -u root -p < src/main/resources/db/init.sql
 ```
 
-자세한 설정 방법은 [DATABASE_SETUP.md](docs/DATABASE_SETUP.md)를 참고하세요.
+### 3. Redis 설정 (선택사항)
 
-### 3. 애플리케이션 실행
+Redis는 토큰 블랙리스트 기능에 사용됩니다. Redis가 없어도 애플리케이션은 정상 작동하지만, 로그아웃된 토큰을 블랙리스트에 추가하는 기능만 비활성화됩니다.
+
+**macOS (Homebrew)**:
+```bash
+brew install redis
+brew services start redis
+```
+
+**Linux**:
+```bash
+sudo apt install redis-server
+sudo systemctl start redis
+```
+
+## 실행 방법
+
+### 개발 환경
 
 ```bash
 ./gradlew bootRun
@@ -117,11 +107,18 @@ mysql -u root -p < src/main/resources/db/init.sql
 java -jar build/libs/taba-backend-1.0.0.jar
 ```
 
+### 프로덕션 환경
+
+```bash
+./gradlew clean build
+java -jar build/libs/taba-backend-1.0.0.jar --spring.profiles.active=prod
+```
+
 ## API 문서
 
 애플리케이션 실행 후 다음 URL에서 Swagger UI를 확인할 수 있습니다:
 
-- http://localhost:8080/api/v1/swagger-ui/index.html
+- **로컬**: http://localhost:8080/api/v1/swagger-ui/index.html
 
 ## 주요 기능
 
@@ -136,26 +133,23 @@ java -jar build/libs/taba-backend-1.0.0.jar
 - 프로필 조회/수정 (친구 수, 보낸 편지 수 포함)
 
 ### 편지
-- 편지 작성 (예약 발송 지원)
-- 공개 편지 목록 조회 (하늘)
-- 편지 상세 조회
-- 편지 좋아요/저장 (토글)
+- 편지 작성 (예약 발송 지원, 템플릿 및 이미지 첨부)
+- 공개 편지 목록 조회 (씨앗 - 로그인 시 자신이 작성한 편지 제외)
+- 편지 상세 조회 (자동 읽음 처리)
+- 편지 답장 (자동 친구 추가)
 - 편지 신고 (중복 신고 방지)
 - 편지 삭제
+
+### 친구
+- 초대 코드 생성/조회 (3분 유효)
+- 초대 코드로 친구 추가 (양방향 관계 생성)
+- 친구 목록 조회
+- 친구 삭제 (양방향 관계 삭제)
 
 ### 꽃다발
 - 꽃다발 목록 조회 (친구별, 읽지 않은 편지 수 포함)
 - 친구별 편지 목록 조회 (Letter 테이블 직접 조회)
 - 꽃다발 이름 변경
-
-### 친구
-- 초대 코드로 친구 추가 (검증 및 양방향 관계 생성)
-- 친구 목록 조회
-- 친구 삭제 (양방향 관계 삭제)
-
-### 초대 코드
-- 초대 코드 생성
-- 현재 초대 코드 조회
 
 ### 알림
 - 알림 목록 조회 (카테고리별 필터링)
@@ -176,7 +170,7 @@ java -jar build/libs/taba-backend-1.0.0.jar
 - JDK 17 이상
 - Gradle 8.x
 - MySQL 8.0
-- Redis 6.x
+- Redis 6.x (선택사항)
 
 ## 빌드
 
@@ -184,7 +178,12 @@ java -jar build/libs/taba-backend-1.0.0.jar
 ./gradlew clean build
 ```
 
+## 📚 상세 문서
+
+- **[프로젝트 가이드](docs/PROJECT_GUIDE.md)** - 프로젝트 상세 설명 및 개발 가이드
+- **[API 명세서](docs/API_SPECIFICATION.md)** - 전체 API 엔드포인트 상세 명세
+- **[빠른 시작 가이드](docs/QUICK_START.md)** - 빠른 실행을 위한 가이드
+
 ## 라이선스
 
 MIT
-
