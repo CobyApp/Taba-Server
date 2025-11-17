@@ -31,7 +31,9 @@ jobs:
       - name: Copy files to server
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.yml docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
-          scp -r -o StrictHostKeyChecking=no src/main/resources/db ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
+          scp -o StrictHostKeyChecking=no build.gradle settings.gradle gradle.properties ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
+          scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
+          scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
 
       - name: Deploy with Docker Compose
         run: |
@@ -72,20 +74,29 @@ jobs:
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend || true
           REMOTE_SCRIPT
 
-      - name: Health Check
+      - name: Health Check (Internal)
         run: |
-          echo "Waiting for application to start..."
-          sleep 30
-          for i in {1..10}; do
-            echo "Health check attempt $i/10..."
-            if curl -f http://cobyserver.iptime.org:8080/api/v1/actuator/health; then
-              echo "Health check passed!"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "Health check failed after 10 attempts"
-          exit 1
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
+            cd ~/taba_backend
+            echo "Waiting for application to start..."
+            sleep 30
+            for i in {1..10}; do
+              echo "Health check attempt $i/10 (internal)..."
+              if docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health 2>&1 || curl -f http://localhost:8080/api/v1/actuator/health; then
+                echo "Health check passed!"
+                exit 0
+              fi
+              sleep 10
+            done
+            echo "Health check failed after 10 attempts"
+            exit 1
+          REMOTE_SCRIPT
+
+      - name: Health Check (External) - Optional
+        continue-on-error: true
+        run: |
+          echo "Checking external health endpoint..."
+          curl -f http://cobyserver.iptime.org:8080/api/v1/actuator/health || echo "External health check failed (may be due to firewall/port forwarding)"
 
       - name: Deployment Summary
         run: |
