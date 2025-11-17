@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**",
                                 "/error",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/uploads/**"  // 업로드된 이미지 파일 접근 허용
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

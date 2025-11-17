@@ -180,5 +180,39 @@ public class FriendshipService {
                     friendshipRepository.save(friendship);
                 });
     }
+
+    /**
+     * 코드 없이 직접 친구 추가 (편지 답장 시 자동 친구 추가용)
+     */
+    @Transactional
+    public void addFriendByUserIds(String userId1, String userId2) {
+        // 자기 자신은 친구 추가 불가
+        if (userId1.equals(userId2)) {
+            return;
+        }
+
+        // 이미 친구인지 확인
+        if (friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(userId1, userId2)) {
+            return; // 이미 친구이면 아무것도 하지 않음
+        }
+
+        User user1 = userRepository.findActiveUserById(userId1)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user2 = userRepository.findActiveUserById(userId2)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 양방향 친구 관계 생성
+        Friendship friendship1 = Friendship.builder()
+                .user(user1)
+                .friend(user2)
+                .build();
+        friendshipRepository.save(friendship1);
+
+        Friendship friendship2 = Friendship.builder()
+                .user(user2)
+                .friend(user1)
+                .build();
+        friendshipRepository.save(friendship2);
+    }
 }
 

@@ -21,6 +21,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL ORDER BY l.sentAt DESC")
     Page<Letter> findPublicLetters(Pageable pageable);
 
+    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL AND l.sender.id != :excludeUserId ORDER BY l.sentAt DESC")
+    Page<Letter> findPublicLettersExcludingUser(@Param("excludeUserId") String excludeUserId, Pageable pageable);
+
     @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL ORDER BY l.createdAt DESC")
     Page<Letter> findBySenderId(@Param("userId") String userId, Pageable pageable);
 

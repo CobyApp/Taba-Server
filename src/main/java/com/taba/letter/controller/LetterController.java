@@ -60,6 +60,15 @@ public class LetterController {
         return ResponseEntity.ok(ApiResponse.success("신고가 접수되었습니다."));
     }
 
+    @PostMapping("/{letterId}/reply")
+    public ResponseEntity<ApiResponse<LetterDto>> replyLetter(
+            @PathVariable String letterId,
+            @Valid @RequestBody LetterCreateRequest request) {
+        LetterDto replyLetter = letterService.replyLetter(letterId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(replyLetter, "답장이 전송되었습니다. 친구가 자동으로 추가되었습니다."));
+    }
+
     @DeleteMapping("/{letterId}")
     public ResponseEntity<ApiResponse<?>> deleteLetter(@PathVariable String letterId) {
         letterService.deleteLetter(letterId);

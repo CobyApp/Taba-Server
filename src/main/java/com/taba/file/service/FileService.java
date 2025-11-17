@@ -20,16 +20,33 @@ public class FileService {
 
     public String uploadImage(MultipartFile file) {
         try {
-            // TODO: AWS S3 업로드로 변경
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            // 파일명에서 특수문자 제거 및 안전한 파일명 생성
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.isEmpty()) {
+                throw new RuntimeException("파일명이 없습니다.");
+            }
+            
+            // 파일 확장자 추출
+            String extension = "";
+            int lastDotIndex = originalFilename.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                extension = originalFilename.substring(lastDotIndex);
+            }
+            
+            // UUID 기반 고유 파일명 생성
+            String fileName = UUID.randomUUID().toString() + extension;
             Path uploadPath = Paths.get(uploadDir);
             
+            // 업로드 디렉토리 생성
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
             
+            // 파일 저장
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath);
+            
+            log.info("File uploaded successfully: {}", fileName);
             
             // 실제 URL 반환 (서버 주소 + 경로)
             String baseUrl = System.getenv("SERVER_URL");

@@ -13,6 +13,7 @@ import com.taba.letter.repository.LetterLikeRepository;
 import com.taba.letter.repository.LetterRepository;
 import com.taba.letter.repository.LetterReportRepository;
 import com.taba.letter.repository.LetterSaveRepository;
+import com.taba.friendship.service.FriendshipService;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class LetterService {
     private final LetterSaveRepository letterSaveRepository;
     private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
+    private final FriendshipService friendshipService;
 
     @Transactional
     public LetterDto createLetter(LetterCreateRequest request) {
@@ -78,10 +80,78 @@ public class LetterService {
         return toDto(letter, sender.getId());
     }
 
+    /**
+     * 편지 답장 생성 (답장 시 자동으로 친구 추가)
+     */
+    @Transactional
+    public LetterDto replyLetter(String originalLetterId, LetterCreateRequest request) {
+        User sender = SecurityUtil.getCurrentUser();
+        if (sender == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // 원본 편지 조회
+        Letter originalLetter = letterRepository.findActiveById(originalLetterId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LETTER_NOT_FOUND));
+
+        // 원본 편지의 sender가 recipient가 됨
+        User recipient = originalLetter.getSender();
+        if (recipient == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        // 자기 자신에게 답장 불가
+        if (recipient.getId().equals(sender.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        // 친구가 아니면 자동으로 친구 추가
+        friendshipService.addFriendByUserIds(sender.getId(), recipient.getId());
+
+        // 답장 편지 생성
+        Letter replyLetter = Letter.builder()
+                .sender(sender)
+                .recipient(recipient)
+                .title(request.getTitle())
+                .content(request.getContent())
+                .preview(request.getPreview())
+                .flowerType(request.getFlowerType())
+                .visibility(Letter.Visibility.DIRECT) // 답장은 항상 DIRECT
+                .isAnonymous(request.getIsAnonymous() != null ? request.getIsAnonymous() : false)
+                .templateBackground(request.getTemplate() != null ? request.getTemplate().getBackground() : null)
+                .templateTextColor(request.getTemplate() != null ? request.getTemplate().getTextColor() : null)
+                .templateFontFamily(request.getTemplate() != null ? request.getTemplate().getFontFamily() : null)
+                .templateFontSize(request.getTemplate() != null ? request.getTemplate().getFontSize() : null)
+                .scheduledAt(request.getScheduledAt())
+                .build();
+
+        if (request.getAttachedImages() != null) {
+            for (int i = 0; i < request.getAttachedImages().size(); i++) {
+                replyLetter.addImage(new LetterImage(request.getAttachedImages().get(i), i));
+            }
+        }
+
+        if (request.getScheduledAt() == null || request.getScheduledAt().isBefore(LocalDateTime.now())) {
+            replyLetter.send();
+        }
+
+        replyLetter = letterRepository.save(replyLetter);
+        return toDto(replyLetter, sender.getId());
+    }
+
     @Transactional(readOnly = true)
     public Page<LetterDto> getPublicLetters(Pageable pageable) {
-        Page<Letter> letters = letterRepository.findPublicLetters(pageable);
         String currentUserId = SecurityUtil.getCurrentUserId();
+        Page<Letter> letters;
+        
+        // 로그인한 사용자의 경우 자신이 작성한 편지 제외
+        if (currentUserId != null && !currentUserId.isEmpty()) {
+            letters = letterRepository.findPublicLettersExcludingUser(currentUserId, pageable);
+        } else {
+            // 비로그인 사용자는 모든 공개 편지 조회
+            letters = letterRepository.findPublicLetters(pageable);
+        }
+        
         return letters.map(letter -> {
             letter.incrementViews();
             letterRepository.save(letter);
@@ -212,6 +282,20 @@ public class LetterService {
         Boolean isSaved = currentUserId != null && 
                 letterSaveRepository.existsByLetterIdAndUserId(letter.getId(), currentUserId);
 
+        // 템플릿 정보 구성
+        com.taba.letter.dto.LetterTemplateDto template = null;
+        if (letter.getTemplateBackground() != null || 
+            letter.getTemplateTextColor() != null || 
+            letter.getTemplateFontFamily() != null || 
+            letter.getTemplateFontSize() != null) {
+            template = com.taba.letter.dto.LetterTemplateDto.builder()
+                    .background(letter.getTemplateBackground())
+                    .textColor(letter.getTemplateTextColor())
+                    .fontFamily(letter.getTemplateFontFamily())
+                    .fontSize(letter.getTemplateFontSize())
+                    .build();
+        }
+
         return LetterDto.builder()
                 .id(letter.getId())
                 .title(letter.getTitle())
@@ -228,6 +312,7 @@ public class LetterService {
                 .isLiked(isLiked)
                 .isSaved(isSaved)
                 .attachedImages(images)
+                .template(template)
                 .build();
     }
 }
