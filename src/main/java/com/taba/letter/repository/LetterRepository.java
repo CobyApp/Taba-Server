@@ -32,5 +32,36 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
 
     @Query("SELECT l FROM Letter l WHERE l.scheduledAt <= :now AND l.sentAt IS NULL AND l.deletedAt IS NULL")
     List<Letter> findScheduledLettersToSend(@Param("now") LocalDateTime now);
+
+    /**
+     * 친구 간 주고받은 편지 조회 (양방향)
+     * sender가 currentUserId이고 recipient가 friendId이거나,
+     * sender가 friendId이고 recipient가 currentUserId인 편지
+     */
+    @Query("SELECT l FROM Letter l WHERE " +
+           "((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
+           "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
+           "AND l.visibility = 'DIRECT' " +
+           "AND l.sentAt IS NOT NULL " +
+           "AND l.deletedAt IS NULL " +
+           "ORDER BY l.sentAt DESC")
+    Page<Letter> findLettersBetweenFriends(
+            @Param("currentUserId") String currentUserId,
+            @Param("friendId") String friendId,
+            Pageable pageable);
+
+    /**
+     * 친구 간 읽지 않은 편지 수 조회
+     */
+    @Query("SELECT COUNT(l) FROM Letter l WHERE " +
+           "l.recipient.id = :currentUserId " +
+           "AND l.sender.id = :friendId " +
+           "AND l.visibility = 'DIRECT' " +
+           "AND l.sentAt IS NOT NULL " +
+           "AND l.deletedAt IS NULL " +
+           "AND (l.isRead IS NULL OR l.isRead = false)")
+    long countUnreadLettersBetweenFriends(
+            @Param("currentUserId") String currentUserId,
+            @Param("friendId") String friendId);
 }
 

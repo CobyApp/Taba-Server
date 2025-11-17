@@ -5,9 +5,9 @@ import com.taba.common.exception.ErrorCode;
 import com.taba.common.util.SecurityUtil;
 import com.taba.friendship.dto.BouquetDto;
 import com.taba.friendship.entity.Friendship;
-import com.taba.friendship.entity.SharedFlower;
 import com.taba.friendship.repository.FriendshipRepository;
-import com.taba.friendship.repository.SharedFlowerRepository;
+import com.taba.letter.entity.Letter;
+import com.taba.letter.repository.LetterRepository;
 import com.taba.invite.entity.InviteCode;
 import com.taba.invite.repository.InviteCodeRepository;
 import com.taba.user.entity.User;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
-    private final SharedFlowerRepository sharedFlowerRepository;
+    private final LetterRepository letterRepository;
     private final UserRepository userRepository;
     private final InviteCodeRepository inviteCodeRepository;
 
@@ -88,7 +88,8 @@ public class FriendshipService {
         List<Friendship> friendships = friendshipRepository.findByUserId(currentUser.getId());
         return friendships.stream()
                 .map(friendship -> {
-                    long unreadCount = sharedFlowerRepository.countUnreadByFriendshipId(friendship.getId());
+                    long unreadCount = letterRepository.countUnreadLettersBetweenFriends(
+                            currentUser.getId(), friendship.getFriend().getId());
                     return BouquetDto.builder()
                             .friend(com.taba.user.dto.UserMapper.INSTANCE.toDto(friendship.getFriend()))
                             .bloomLevel(friendship.getBloomLevel())
@@ -135,27 +136,35 @@ public class FriendshipService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        Friendship friendship = friendshipRepository.findByUserIds(currentUser.getId(), friendId)
+        // 친구 관계 확인
+        friendshipRepository.findByUserIds(currentUser.getId(), friendId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FRIENDSHIP_NOT_FOUND));
 
-        org.springframework.data.domain.Page<SharedFlower> sharedFlowers = 
-                sharedFlowerRepository.findByFriendshipId(friendship.getId(), pageable);
+        // 친구 간 주고받은 편지 조회
+        org.springframework.data.domain.Page<Letter> letters = 
+                letterRepository.findLettersBetweenFriends(currentUser.getId(), friendId, pageable);
 
-        return sharedFlowers.map(sf -> {
+        return letters.map(letter -> {
             com.taba.friendship.dto.LetterSummaryDto letterSummary = 
                     com.taba.friendship.dto.LetterSummaryDto.builder()
-                            .id(sf.getLetter().getId())
-                            .title(sf.getLetter().getTitle())
-                            .preview(sf.getLetter().getPreview())
+                            .id(letter.getId())
+                            .title(letter.getTitle())
+                            .preview(letter.getPreview())
                             .build();
 
+            // recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
+            Boolean isRead = letter.getRecipient() != null && 
+                    letter.getRecipient().getId().equals(currentUser.getId()) 
+                    ? letter.getIsRead() 
+                    : null; // 내가 보낸 편지는 읽음 상태가 의미 없음
+
             return com.taba.friendship.dto.SharedFlowerDto.builder()
-                    .id(sf.getId())
+                    .id(letter.getId())
                     .letter(letterSummary)
-                    .flowerType(sf.getLetter().getFlowerType().name())
-                    .sentAt(sf.getSentAt())
-                    .sentByMe(sf.getSentByUser().getId().equals(currentUser.getId()))
-                    .isRead(sf.getIsRead())
+                    .flowerType(letter.getFlowerType().name())
+                    .sentAt(letter.getSentAt())
+                    .sentByMe(letter.getSender().getId().equals(currentUser.getId()))
+                    .isRead(isRead)
                     .build();
         });
     }

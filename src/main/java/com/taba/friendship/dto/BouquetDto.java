@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Getter
 @Builder
@@ -15,11 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class BouquetDto {
     private UserDto friend;
-    private List<SharedFlowerDto> sharedFlowers;
     private BigDecimal bloomLevel;
     private Integer trustScore;
     private String bouquetName;
-    private Integer unreadCount;
+    private Integer unreadCount; // 읽지 않은 편지 수
 }
 
 

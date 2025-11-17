@@ -85,6 +85,12 @@ public class Letter extends BaseEntity {
     @Column(name = "saved_count")
     private Integer savedCount = 0;
 
+    @Column(name = "is_read")
+    private Boolean isRead = false;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
     @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LetterImage> images = new ArrayList<>();
 
@@ -152,6 +158,11 @@ public class Letter extends BaseEntity {
     public void addImage(LetterImage image) {
         this.images.add(image);
         image.setLetter(this);
+    }
+
+    public void markAsRead() {
+        this.isRead = true;
+        this.readAt = LocalDateTime.now();
     }
 
     public enum FlowerType {

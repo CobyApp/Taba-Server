@@ -596,6 +596,8 @@ Authorization: Bearer {token}
 
 **인증**: 필요
 
+**설명**: 현재 로그인한 사용자의 모든 친구와의 꽃다발 정보를 조회합니다. 각 꽃다발은 친구와의 관계 정보와 읽지 않은 편지 수를 포함합니다.
+
 **Response** (200 OK):
 ```json
 {
@@ -622,6 +624,11 @@ Authorization: Bearer {token}
 
 **인증**: 필요
 
+**설명**: 특정 친구와 주고받은 편지 목록을 조회합니다. Letter 테이블을 직접 조회하여 양방향 편지를 가져옵니다.
+
+**Path Parameters**:
+- `friendId`: 친구의 사용자 ID
+
 **Query Parameters**:
 - `page`: 페이지 번호 (기본값: 0)
 - `size`: 페이지 크기 (기본값: 20)
@@ -633,7 +640,7 @@ Authorization: Bearer {token}
   "data": {
     "content": [
       {
-        "id": "shared-flower-uuid",
+        "id": "letter-uuid",
         "letter": {
           "id": "letter-uuid",
           "title": "편지 제목",
@@ -652,6 +659,11 @@ Authorization: Bearer {token}
   }
 }
 ```
+
+**참고**:
+- `id`: 편지 ID (Letter 테이블의 ID)
+- `sentByMe`: 현재 사용자가 보낸 편지인지 여부
+- `isRead`: 내가 받은 편지인 경우 읽음 상태 (내가 보낸 편지는 null)
 
 ### 5.3 꽃다발 이름 변경
 
@@ -995,6 +1007,13 @@ Swagger UI에서:
 ### 공개 편지 목록
 - 로그인한 사용자는 자신이 작성한 편지가 목록에 표시되지 않습니다
 - 비로그인 사용자는 모든 공개 편지를 볼 수 있습니다
+
+### 친구 간 편지 조회
+- 친구 간 주고받은 편지는 `Letter` 테이블을 직접 조회합니다
+- `sender_id`와 `recipient_id`를 이용하여 양방향 편지를 조회합니다
+- `visibility = 'DIRECT'`인 편지만 조회됩니다
+- 읽음 상태는 `Letter.isRead` 필드로 관리됩니다 (recipient 기준)
+- 편지 상세 조회 시 자동으로 읽음 처리됩니다
 
 ### 파일 업로드
 - 모든 이미지는 로컬 `uploads/` 폴더에 저장됩니다

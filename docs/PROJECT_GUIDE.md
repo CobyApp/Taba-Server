@@ -90,8 +90,21 @@ Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하�
   - UTF-8MB4 인코딩 (이모지 지원)
   - InnoDB 엔진
   - 커넥션 풀링 (HikariCP)
-- **테이블 구조**: 12개 주요 테이블
-  - users, letters, friendships, notifications 등
+- **테이블 구조**: 주요 테이블
+  - `users`: 사용자 정보
+  - `letters`: 편지 정보 (읽음 상태 포함)
+  - `friendships`: 친구 관계
+  - `letter_images`: 편지 첨부 이미지
+  - `letter_likes`: 편지 좋아요
+  - `letter_saves`: 편지 저장
+  - `letter_reports`: 편지 신고
+  - `invite_codes`: 초대 코드
+  - `notifications`: 알림
+  - `password_reset_tokens`: 비밀번호 재설정 토큰
+- **친구 간 편지 조회**: `Letter` 테이블을 직접 조회하여 양방향 편지를 가져옵니다
+  - `sender_id`와 `recipient_id`를 이용한 양방향 쿼리
+  - `visibility = 'DIRECT'`인 편지만 조회
+  - 읽음 상태는 `Letter.isRead` 필드로 관리 (recipient 기준)
 
 #### Redis
 - **역할**: 캐싱 및 토큰 블랙리스트 관리
@@ -176,7 +189,7 @@ taba_backend/
 │   ├── friendship/                   # 친구 관계 모듈
 │   │   ├── controller/
 │   │   ├── dto/
-│   │   ├── entity/                   # Friendship, SharedFlower
+│   │   ├── entity/                   # Friendship
 │   │   ├── repository/
 │   │   └── service/
 │   │
@@ -518,8 +531,8 @@ curl -X GET http://localhost:8080/api/v1/users/{userId} \
 - `DELETE /friends/{friendId}` - 친구 삭제 (양방향 관계 삭제)
 
 #### 꽃다발 API
-- `GET /bouquets` - 꽃다발 목록
-- `GET /bouquets/{friendId}/letters` - 친구별 편지 목록
+- `GET /bouquets` - 꽃다발 목록 (읽지 않은 편지 수 포함)
+- `GET /bouquets/{friendId}/letters` - 친구별 편지 목록 (Letter 테이블 직접 조회)
 - `PUT /bouquets/{friendId}/name` - 꽃다발 이름 변경
 
 #### 초대 코드 API

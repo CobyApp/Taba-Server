@@ -159,7 +159,7 @@ public class LetterService {
         });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LetterDto getLetter(String letterId) {
         Letter letter = letterRepository.findActiveById(letterId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LETTER_NOT_FOUND));
@@ -168,6 +168,14 @@ public class LetterService {
         checkLetterAccess(letter, currentUserId);
 
         letter.incrementViews();
+        
+        // recipient가 현재 사용자이고 아직 읽지 않은 경우 읽음 처리
+        if (letter.getRecipient() != null && 
+            letter.getRecipient().getId().equals(currentUserId) && 
+            (letter.getIsRead() == null || !letter.getIsRead())) {
+            letter.markAsRead();
+        }
+        
         letterRepository.save(letter);
 
         return toDto(letter, currentUserId);

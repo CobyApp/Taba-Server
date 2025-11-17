@@ -9,8 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -45,8 +43,9 @@ public class Friendship extends BaseEntity {
     @Column(name = "trust_score")
     private Integer trustScore = 0;
 
-    @OneToMany(mappedBy = "friendship", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SharedFlower> sharedFlowers = new ArrayList<>();
+    // SharedFlower는 더 이상 사용하지 않습니다. 친구 간 편지는 Letter 테이블을 직접 조회합니다.
+    // @OneToMany(mappedBy = "friendship", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<SharedFlower> sharedFlowers = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
@@ -71,11 +70,6 @@ public class Friendship extends BaseEntity {
 
     public void updateTrustScore(Integer trustScore) {
         this.trustScore = trustScore;
-    }
-
-    public void addSharedFlower(SharedFlower sharedFlower) {
-        this.sharedFlowers.add(sharedFlower);
-        sharedFlower.setFriendship(this);
     }
 }
 
