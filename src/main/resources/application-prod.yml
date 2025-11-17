@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: taba-backend
+  
   datasource:
     url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:taba}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:taba_user}
@@ -21,6 +24,11 @@ spring:
         format_sql: false
         use_sql_comments: false
     open-in-view: false
+  
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   
   data:
     redis:
