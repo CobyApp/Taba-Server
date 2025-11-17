@@ -23,7 +23,7 @@ public class FileController {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    static class FileUploadResponse {
+    public static class FileUploadResponse {
         private String url;
         private String fileName;
     }

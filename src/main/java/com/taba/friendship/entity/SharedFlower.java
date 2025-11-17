@@ -44,7 +44,7 @@ public class SharedFlower {
     @Column(name = "seed_id", nullable = false, length = 50)
     private String seedId;
 
-    @Column(name = "energy", precision = 3, scale = 2)
+    @Column(name = "energy", columnDefinition = "DECIMAL(3,2) DEFAULT 0.5")
     private BigDecimal energy = new BigDecimal("0.5");
 
     @Column(name = "is_read")

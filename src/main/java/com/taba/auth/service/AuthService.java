@@ -12,6 +12,7 @@ import com.taba.user.dto.UserDto;
 import com.taba.user.dto.UserMapper;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserMapper userMapper;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -91,8 +94,9 @@ public class AuthService {
                 .build();
 
         passwordResetTokenRepository.save(resetToken);
-        // TODO: 이메일 발송 로직
-        log.info("Password reset token generated for user: {}", email);
+        // TODO: 실제 이메일 발송 로직 구현 (Spring Mail 사용)
+        log.info("Password reset token generated for user: {} - Token: {}", email, token);
+        log.info("Password reset link: http://localhost:3000/reset-password?token={}", token);
     }
 
     @Transactional
@@ -127,6 +131,22 @@ public class AuthService {
 
         user.updatePassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void logout(String token) {
+        try {
+            // 토큰에서 만료 시간 추출
+            Claims claims = jwtTokenProvider.getClaimsFromToken(token);
+            Date expiration = claims.getExpiration();
+            long expirationTime = expiration.getTime();
+            
+            // 블랙리스트에 추가 (Redis가 없어도 에러 발생 안 함)
+            tokenBlacklistService.addToBlacklist(token, expirationTime);
+            log.info("Token added to blacklist (if Redis is available)");
+        } catch (Exception e) {
+            log.debug("Failed to add token to blacklist (Redis may be unavailable): {}", e.getMessage());
+        }
     }
 
     private String generateUniqueUsername() {

@@ -53,5 +53,13 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+    public Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
 }
 

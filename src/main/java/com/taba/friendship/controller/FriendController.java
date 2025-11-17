@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/friends")
 @RequiredArgsConstructor
@@ -23,9 +25,9 @@ public class FriendController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getFriends() {
-        // TODO: 친구 목록 조회 구현
-        return ResponseEntity.ok(ApiResponse.success(null));
+    public ResponseEntity<ApiResponse<List<com.taba.user.dto.UserDto>>> getFriends() {
+        List<com.taba.user.dto.UserDto> friends = friendshipService.getFriends();
+        return ResponseEntity.ok(ApiResponse.success(friends));
     }
 
     @DeleteMapping("/{friendId}")

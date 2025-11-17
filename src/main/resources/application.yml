@@ -22,12 +22,16 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
         use_sql_comments: true
     open-in-view: false
   
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   data:
     redis:
+      # Redis 설정 (Redis 서버가 실행 중이어야 합니다)
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
@@ -79,7 +83,7 @@ logging:
   level:
     root: INFO
     com.taba: DEBUG
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO  # Spring Security 로그 레벨 조정
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

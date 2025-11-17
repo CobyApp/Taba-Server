@@ -13,7 +13,10 @@ public enum ErrorCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD", "잘못된 비밀번호 형식입니다."),
     INVALID_INVITE_CODE(HttpStatus.BAD_REQUEST, "INVALID_INVITE_CODE", "유효하지 않은 초대 코드입니다."),
     INVITE_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "INVITE_CODE_EXPIRED", "만료된 초대 코드입니다."),
+    INVITE_CODE_ALREADY_USED(HttpStatus.BAD_REQUEST, "INVITE_CODE_ALREADY_USED", "이미 사용된 초대 코드입니다."),
+    CANNOT_USE_OWN_INVITE_CODE(HttpStatus.BAD_REQUEST, "CANNOT_USE_OWN_INVITE_CODE", "자신의 초대 코드는 사용할 수 없습니다."),
     FRIEND_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "FRIEND_ALREADY_EXISTS", "이미 친구 관계가 존재합니다."),
+    ALREADY_FRIENDS(HttpStatus.BAD_REQUEST, "ALREADY_FRIENDS", "이미 친구입니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "잘못된 요청입니다."),
     
     // 401 Unauthorized

@@ -22,26 +22,4 @@ public class BouquetDto {
     private Integer unreadCount;
 }
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public static class SharedFlowerDto {
-    private String id;
-    private LetterSummaryDto letter;
-    private String flowerType;
-    private java.time.LocalDateTime sentAt;
-    private Boolean sentByMe;
-    private Boolean isRead;
-}
-
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public static class LetterSummaryDto {
-    private String id;
-    private String title;
-    private String preview;
-}
 

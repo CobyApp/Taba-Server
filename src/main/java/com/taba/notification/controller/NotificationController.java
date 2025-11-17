@@ -47,7 +47,7 @@ public class NotificationController {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    static class ReadAllResponse {
+    public static class ReadAllResponse {
         private int readCount;
         private String message;
     }

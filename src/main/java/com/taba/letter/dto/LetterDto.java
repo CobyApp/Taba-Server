@@ -34,23 +34,4 @@ public class LetterDto {
     private PositionDto position;
 }
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public static class PositionDto {
-    private Double x;
-    private Double y;
-}
-
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public static class LetterTemplateDto {
-    private String background;
-    private String textColor;
-    private String fontFamily;
-    private Double fontSize;
-}
 

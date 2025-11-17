@@ -130,16 +130,26 @@ export JWT_SECRET=your-secret-key
 
 `.env` 파일 생성:
 ```bash
+# MySQL 설정
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=taba
 DB_USERNAME=root
 DB_PASSWORD=your_password
-JWT_SECRET=your-secret-key
+
+# Redis 설정
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# JWT 설정
+JWT_SECRET=your-256-bit-secret-key-change-this-in-production
+
+# 서버 설정 (선택사항)
+SERVER_URL=http://localhost:8080/api/v1
 ```
 
-그리고 애플리케이션 실행 시:
-```bash
-source .env
-./gradlew bootRun
-```
+애플리케이션은 자동으로 `.env` 파일을 읽습니다 (dotenv-java 라이브러리 사용).
 
 ### 단계 4: 빌드 및 실행
 
@@ -269,6 +279,27 @@ bash: ./gradlew: Permission denied
 **해결 방법**:
 ```bash
 chmod +x gradlew
+```
+
+### 문제 5: Redis 연결 실패
+
+**에러 메시지**:
+```
+Unable to connect to Redis
+```
+
+**해결 방법**:
+```bash
+# Redis 설치 (macOS)
+brew install redis
+brew services start redis
+
+# Redis 연결 테스트
+redis-cli ping
+# 응답: PONG
+
+# Redis가 선택사항이므로, 토큰 블랙리스트 기능만 사용 불가
+# 다른 기능은 정상 작동
 ```
 
 ---

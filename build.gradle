@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.0'
     id 'io.spring.dependency-management' version '1.1.4'
-    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com.taba'
@@ -60,6 +59,9 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     
+    // Dotenv (.env 파일 지원)
+    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+    
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -72,18 +74,12 @@ tasks.named('test') {
 // QueryDSL 설정
 def querydslDir = "$buildDir/generated/querydsl"
 
-querydsl {
-    jpa = true
-    querydslSourcesDir = querydslDir
-}
-
 sourceSets {
     main.java.srcDirs += [querydslDir]
 }
 
-tasks.withType(JavaCompile) {
-    options.annotationProcessorPath = configurations.annotationProcessor
-    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+tasks.named('compileJava') {
+    options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
 }
 
 clean {

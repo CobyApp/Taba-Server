@@ -48,18 +48,8 @@ public class NotificationService {
             throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
         }
 
-        // TODO: 배치 업데이트로 최적화
-        Page<Notification> unreadNotifications = notificationRepository.findByUserId(currentUser.getId(), 
-                org.springframework.data.domain.Pageable.unpaged());
-        
-        int count = 0;
-        for (Notification notification : unreadNotifications) {
-            if (!notification.getIsRead()) {
-                notification.markAsRead();
-                notificationRepository.save(notification);
-                count++;
-            }
-        }
+        // 배치 업데이트로 최적화
+        int count = notificationRepository.markAllAsReadByUserId(currentUser.getId());
         return count;
     }
 

@@ -26,11 +26,11 @@ public class BouquetController {
     }
 
     @GetMapping("/{friendId}/letters")
-    public ResponseEntity<ApiResponse<Page<?>>> getFriendLetters(
+    public ResponseEntity<ApiResponse<Page<com.taba.friendship.dto.SharedFlowerDto>>> getFriendLetters(
             @PathVariable String friendId,
             @PageableDefault(size = 20) Pageable pageable) {
-        // TODO: 친구별 편지 목록 조회 구현
-        return ResponseEntity.ok(ApiResponse.success(Page.empty()));
+        Page<com.taba.friendship.dto.SharedFlowerDto> letters = friendshipService.getFriendLetters(friendId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(letters));
     }
 
     @PutMapping("/{friendId}/name")

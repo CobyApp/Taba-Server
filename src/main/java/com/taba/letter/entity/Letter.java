@@ -67,7 +67,7 @@ public class Letter extends BaseEntity {
     @Column(name = "template_font_family", length = 100)
     private String templateFontFamily;
 
-    @Column(name = "template_font_size", precision = 5, scale = 2)
+    @Column(name = "template_font_size", columnDefinition = "DECIMAL(5,2)")
     private Double templateFontSize;
 
     @Column(name = "scheduled_at")

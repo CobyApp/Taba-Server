@@ -51,25 +51,25 @@ public class SettingsController {
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    static class PushNotificationResponse {
+    public static class PushNotificationResponse {
         private Boolean enabled;
     }
 
     @lombok.Getter
     @lombok.Setter
-    static class UpdatePushNotificationRequest {
+    public static class UpdatePushNotificationRequest {
         private Boolean enabled;
     }
 
     @lombok.Getter
     @lombok.AllArgsConstructor
-    static class LanguageResponse {
+    public static class LanguageResponse {
         private String language;
     }
 
     @lombok.Getter
     @lombok.Setter
-    static class UpdateLanguageRequest {
+    public static class UpdateLanguageRequest {
         private String language;
     }
 }

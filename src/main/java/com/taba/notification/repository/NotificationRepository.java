@@ -20,5 +20,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
 
     @Query("SELECT COUNT(n) FROM Notification n WHERE n.user.id = :userId AND n.isRead = false")
     long countUnreadByUserId(@Param("userId") String userId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP WHERE n.user.id = :userId AND n.isRead = false")
+    int markAllAsReadByUserId(@Param("userId") String userId);
 }
 

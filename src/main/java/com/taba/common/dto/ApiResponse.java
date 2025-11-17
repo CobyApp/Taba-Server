@@ -53,7 +53,7 @@ public class ApiResponse<T> {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ErrorResponse {
+    static class ErrorResponse {
         private String code;
         private String message;
         private Object details;

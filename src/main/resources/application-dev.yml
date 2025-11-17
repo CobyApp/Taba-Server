@@ -1,6 +1,12 @@
 spring:
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:taba}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    # MySQL 비밀번호 설정 방법:
+    # 1. 환경 변수: export DB_PASSWORD=your_actual_password
+    # 2. 또는 위의 password 값을 직접 수정: password: your_actual_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: true
     hibernate:
@@ -16,4 +22,5 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.security: INFO  # Spring Security 로그 레벨 조정
 

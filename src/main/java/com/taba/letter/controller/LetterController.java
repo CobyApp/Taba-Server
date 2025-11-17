@@ -56,7 +56,7 @@ public class LetterController {
     public ResponseEntity<ApiResponse<?>> reportLetter(
             @PathVariable String letterId,
             @RequestBody ReportRequest request) {
-        // TODO: 신고 로직 구현
+        letterService.reportLetter(letterId, request.getReason());
         return ResponseEntity.ok(ApiResponse.success("신고가 접수되었습니다."));
     }
 

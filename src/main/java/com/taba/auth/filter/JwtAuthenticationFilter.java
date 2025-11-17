@@ -1,5 +1,6 @@
 package com.taba.auth.filter;
 
+import com.taba.auth.service.TokenBlacklistService;
 import com.taba.auth.util.JwtTokenProvider;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
@@ -27,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -35,6 +37,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
+                // Redis 블랙리스트 체크 (Redis가 없어도 동작)
+                try {
+                    if (tokenBlacklistService.isBlacklisted(jwt)) {
+                        log.debug("Token is blacklisted, skipping authentication");
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                } catch (Exception e) {
+                    log.debug("Redis blacklist check failed, continuing with token validation: {}", e.getMessage());
+                }
+
                 String userId = jwtTokenProvider.getUserIdFromToken(jwt);
                 User user = userRepository.findActiveUserById(userId).orElse(null);
 

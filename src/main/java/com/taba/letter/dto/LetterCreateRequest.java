@@ -29,7 +29,7 @@ public class LetterCreateRequest {
 
     private Boolean isAnonymous = false;
 
-    private LetterTemplateRequest template;
+    private com.taba.letter.dto.LetterTemplateRequest template;
 
     private List<String> attachedImages;
 
@@ -38,12 +38,4 @@ public class LetterCreateRequest {
     private String recipientId;
 }
 
-@Getter
-@Setter
-public static class LetterTemplateRequest {
-    private String background;
-    private String textColor;
-    private String fontFamily;
-    private Double fontSize;
-}
 

@@ -39,7 +39,7 @@ public class Friendship extends BaseEntity {
     @Column(name = "bouquet_name", length = 100)
     private String bouquetName;
 
-    @Column(name = "bloom_level", precision = 3, scale = 2)
+    @Column(name = "bloom_level", columnDefinition = "DECIMAL(3,2) DEFAULT 0.0")
     private BigDecimal bloomLevel = BigDecimal.ZERO;
 
     @Column(name = "trust_score")

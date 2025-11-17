@@ -15,11 +15,11 @@
 Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하는 소셜 플랫폼입니다. 이 백엔드는 Spring Boot 기반의 RESTful API 서버로, 모바일 앱과 웹 클라이언트를 위한 모든 기능을 제공합니다.
 
 ### 주요 기능
-- **인증 시스템**: JWT 기반 회원가입/로그인, 비밀번호 재설정
-- **편지 관리**: 공개/비공개 편지 작성, 좋아요, 저장, 신고
-- **친구 시스템**: 초대 코드 기반 친구 추가, 꽃다발 관리
-- **알림 시스템**: 실시간 알림 발송 및 관리
-- **파일 업로드**: 이미지 업로드 및 관리
+- **인증 시스템**: JWT 기반 회원가입/로그인, 비밀번호 재설정, 토큰 블랙리스트 관리
+- **편지 관리**: 공개/비공개 편지 작성, 좋아요, 저장, 신고, 예약 발송
+- **친구 시스템**: 초대 코드 기반 친구 추가, 친구 목록 조회, 꽃다발 관리, 친구별 편지 목록 조회
+- **알림 시스템**: 실시간 알림 발송 및 관리, 배치 읽음 처리 최적화
+- **파일 업로드**: 이미지 업로드 및 URL 반환
 
 ---
 
@@ -94,8 +94,9 @@ Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하�
   - users, letters, friendships, notifications 등
 
 #### Redis
-- **역할**: 캐싱 및 세션 관리
+- **역할**: 캐싱 및 토큰 블랙리스트 관리
 - **사용 예시**:
+  - JWT 토큰 블랙리스트 (로그아웃 처리)
   - 사용자 프로필 캐싱
   - 공개 편지 목록 캐싱
   - 친구 목록 캐싱
@@ -110,6 +111,7 @@ Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하�
   - Signature: 서버 서명
 - **토큰 만료**: 7일
 - **저장 위치**: 클라이언트 (로컬 스토리지/쿠키)
+- **토큰 블랙리스트**: Redis를 사용하여 로그아웃된 토큰 관리
 
 #### BCrypt
 - **역할**: 비밀번호 해싱
@@ -153,7 +155,7 @@ taba_backend/
 │   │   ├── entity/                   # PasswordResetToken
 │   │   ├── filter/                   # JWT 필터
 │   │   ├── repository/               # 리포지토리
-│   │   ├── service/                  # 비즈니스 로직
+│   │   ├── service/                  # 비즈니스 로직 (TokenBlacklistService 포함)
 │   │   └── util/                     # JWT 유틸리티
 │   │
 │   ├── user/                         # 사용자 모듈
@@ -166,9 +168,9 @@ taba_backend/
 │   ├── letter/                       # 편지 모듈
 │   │   ├── controller/
 │   │   ├── dto/
-│   │   ├── entity/                   # Letter, LetterLike 등
+│   │   ├── entity/                   # Letter, LetterLike, LetterReport 등
 │   │   ├── repository/
-│   │   ├── scheduler/                # 예약 발송 스케줄러
+│   │   ├── scheduler/                # 예약 발송 스케줄러 (알림 발송 포함)
 │   │   └── service/
 │   │
 │   ├── friendship/                   # 친구 관계 모듈
@@ -259,9 +261,20 @@ taba_backend/
    # mysql Ver 8.0.x 이상 필요
    ```
 
-3. **Redis (선택사항, 캐싱용)**
+3. **Redis (토큰 블랙리스트 및 캐싱용, 선택사항)**
    ```bash
    redis-cli --version
+   ```
+   
+   **설치 방법**:
+   ```bash
+   # macOS
+   brew install redis
+   brew services start redis
+   
+   # Linux
+   sudo apt install redis-server
+   sudo systemctl start redis
    ```
 
 4. **Gradle (또는 Gradle Wrapper)**
@@ -306,7 +319,33 @@ mysql -u root -p < src/main/resources/db/init.sql
 
 ### 3단계: 환경 변수 설정
 
-#### 방법 1: 환경 변수로 설정
+#### 방법 1: .env 파일 사용 (권장)
+
+프로젝트 루트에 `.env` 파일 생성:
+
+```bash
+# MySQL 설정
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=taba
+DB_USERNAME=root
+DB_PASSWORD=your_mysql_password
+
+# Redis 설정
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# JWT 설정
+JWT_SECRET=your-256-bit-secret-key-change-this-in-production
+
+# 서버 URL (파일 업로드용)
+SERVER_URL=http://localhost:8080/api/v1
+```
+
+애플리케이션은 자동으로 `.env` 파일을 읽습니다.
+
+#### 방법 2: 환경 변수로 설정
 
 ```bash
 export DB_USERNAME=root
@@ -314,7 +353,7 @@ export DB_PASSWORD=your_mysql_password
 export JWT_SECRET=your-256-bit-secret-key-change-this-in-production
 ```
 
-#### 방법 2: application.yml 직접 수정
+#### 방법 3: application.yml 직접 수정
 
 `src/main/resources/application.yml` 파일을 열어서 수정:
 
@@ -458,24 +497,25 @@ curl -X GET http://localhost:8080/api/v1/users/{userId} \
 - `POST /auth/forgot-password` - 비밀번호 찾기
 - `POST /auth/reset-password` - 비밀번호 재설정
 - `PUT /auth/change-password` - 비밀번호 변경
-- `POST /auth/logout` - 로그아웃
+- `POST /auth/logout` - 로그아웃 (토큰 블랙리스트 처리)
 
 #### 사용자 API
 - `GET /users/{userId}` - 프로필 조회
 - `PUT /users/{userId}` - 프로필 수정
 
 #### 편지 API
-- `POST /letters` - 편지 작성
+- `POST /letters` - 편지 작성 (예약 발송 지원)
 - `GET /letters/public` - 공개 편지 목록
 - `GET /letters/{letterId}` - 편지 상세 조회
-- `POST /letters/{letterId}/like` - 좋아요
-- `POST /letters/{letterId}/save` - 저장
+- `POST /letters/{letterId}/like` - 좋아요 토글
+- `POST /letters/{letterId}/save` - 저장 토글
+- `POST /letters/{letterId}/report` - 편지 신고
 - `DELETE /letters/{letterId}` - 편지 삭제
 
 #### 친구 API
-- `POST /friends/invite` - 친구 추가
-- `GET /friends` - 친구 목록
-- `DELETE /friends/{friendId}` - 친구 삭제
+- `POST /friends/invite` - 초대 코드로 친구 추가 (검증 및 양방향 관계 생성)
+- `GET /friends` - 친구 목록 조회
+- `DELETE /friends/{friendId}` - 친구 삭제 (양방향 관계 삭제)
 
 #### 꽃다발 API
 - `GET /bouquets` - 꽃다발 목록
@@ -487,9 +527,10 @@ curl -X GET http://localhost:8080/api/v1/users/{userId} \
 - `GET /invite-codes/current` - 현재 초대 코드 조회
 
 #### 알림 API
-- `GET /notifications` - 알림 목록
+- `GET /notifications` - 알림 목록 (카테고리별 필터링 지원)
 - `PUT /notifications/{notificationId}/read` - 읽음 처리
-- `PUT /notifications/read-all` - 전체 읽음 처리
+- `PUT /notifications/read-all` - 전체 읽음 처리 (배치 업데이트 최적화)
+- `DELETE /notifications/{notificationId}` - 알림 삭제
 
 ### 4. Swagger UI 사용
 
@@ -646,6 +687,7 @@ server:
 - 토큰 만료 확인 (7일)
 - JWT_SECRET 환경 변수 확인
 - Authorization 헤더 형식 확인: `Bearer {token}`
+- 로그아웃된 토큰인지 확인 (Redis 블랙리스트)
 
 ### 4. 빌드 실패
 
@@ -654,6 +696,21 @@ server:
 **해결**:
 ```bash
 ./gradlew clean build --refresh-dependencies
+```
+
+### 5. Redis 연결 실패
+
+**증상**: `Unable to connect to Redis`
+
+**해결**:
+- Redis 서비스 실행 확인
+- Redis 포트 확인 (기본: 6379)
+- Redis 비밀번호 확인 (설정된 경우)
+
+```bash
+# Redis 서비스 확인
+redis-cli ping
+# 응답: PONG
 ```
 
 ---

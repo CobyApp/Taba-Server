@@ -6,7 +6,12 @@ import com.taba.auth.dto.SignupRequest;
 import com.taba.auth.service.AuthService;
 import com.taba.common.dto.ApiResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,8 +56,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<?>> logout() {
-        // TODO: 토큰 블랙리스트 처리
+    public ResponseEntity<ApiResponse<?>> logout(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            authService.logout(token);
+        }
         return ResponseEntity.ok(ApiResponse.success("로그아웃되었습니다."));
     }
 

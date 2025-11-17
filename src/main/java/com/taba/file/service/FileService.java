@@ -31,8 +31,12 @@ public class FileService {
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath);
             
-            // TODO: 실제 URL 반환
-            return "/uploads/" + fileName;
+            // 실제 URL 반환 (서버 주소 + 경로)
+            String baseUrl = System.getenv("SERVER_URL");
+            if (baseUrl == null || baseUrl.isEmpty()) {
+                baseUrl = "http://localhost:8080/api/v1";
+            }
+            return baseUrl + "/uploads/" + fileName;
         } catch (IOException e) {
             log.error("File upload failed", e);
             throw new RuntimeException("파일 업로드에 실패했습니다.", e);

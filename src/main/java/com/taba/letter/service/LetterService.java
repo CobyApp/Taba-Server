@@ -11,6 +11,7 @@ import com.taba.letter.entity.LetterLike;
 import com.taba.letter.entity.LetterSave;
 import com.taba.letter.repository.LetterLikeRepository;
 import com.taba.letter.repository.LetterRepository;
+import com.taba.letter.repository.LetterReportRepository;
 import com.taba.letter.repository.LetterSaveRepository;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
@@ -31,6 +32,7 @@ public class LetterService {
     private final LetterRepository letterRepository;
     private final LetterLikeRepository letterLikeRepository;
     private final LetterSaveRepository letterSaveRepository;
+    private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -149,6 +151,26 @@ public class LetterService {
 
         letterRepository.save(letter);
         return toDto(letter, user.getId());
+    }
+
+    @Transactional
+    public void reportLetter(String letterId, String reason) {
+        Letter letter = letterRepository.findActiveById(letterId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LETTER_NOT_FOUND));
+
+        User reporter = SecurityUtil.getCurrentUser();
+        if (reporter == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // 이미 신고한 경우 확인
+        if (letterReportRepository.existsByLetterIdAndReporterId(letterId, reporter.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        com.taba.letter.entity.LetterReport report = new com.taba.letter.entity.LetterReport(
+                letter, reporter, reason);
+        letterReportRepository.save(report);
     }
 
     @Transactional
