@@ -61,10 +61,31 @@ jobs:
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
           REMOTE_SCRIPT
 
+      - name: Check container status
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
+            cd ~/taba_backend
+            echo "=== Container Status ==="
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+            echo ""
+            echo "=== Backend Logs (last 50 lines) ==="
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend || true
+          REMOTE_SCRIPT
+
       - name: Health Check
         run: |
-          sleep 10
-          curl -f http://cobyserver.iptime.org:8080/api/v1/actuator/health || exit 1
+          echo "Waiting for application to start..."
+          sleep 30
+          for i in {1..10}; do
+            echo "Health check attempt $i/10..."
+            if curl -f http://cobyserver.iptime.org:8080/api/v1/actuator/health; then
+              echo "Health check passed!"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Health check failed after 10 attempts"
+          exit 1
 
       - name: Deployment Summary
         run: |
