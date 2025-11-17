@@ -26,7 +26,7 @@ public class InviteCodeService {
         }
 
         // 기존 활성 코드가 있으면 반환
-        InviteCode existingCode = inviteCodeRepository.findActiveByUserId(currentUser.getId()).orElse(null);
+        InviteCode existingCode = inviteCodeRepository.findFirstActiveByUserId(currentUser.getId()).orElse(null);
         if (existingCode != null && !existingCode.isExpired()) {
             return toDto(existingCode);
         }
@@ -52,7 +52,7 @@ public class InviteCodeService {
             throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
         }
 
-        InviteCode inviteCode = inviteCodeRepository.findActiveByUserId(currentUser.getId())
+        InviteCode inviteCode = inviteCodeRepository.findFirstActiveByUserId(currentUser.getId())
                 .orElse(null);
 
         if (inviteCode == null || inviteCode.isExpired()) {

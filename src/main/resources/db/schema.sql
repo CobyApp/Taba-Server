@@ -62,6 +62,15 @@
 -- - image_url (VARCHAR(500))
 -- - image_order (INTEGER)
 
+-- letter_recipients: 편지 수신자 (공개 편지의 경우 복수 수신자 지원)
+-- - id (VARCHAR(36), PK)
+-- - letter_id (VARCHAR(36), FK -> letters.id)
+-- - user_id (VARCHAR(36), FK -> users.id)
+-- - is_read (BOOLEAN, default false)
+-- - read_at (TIMESTAMP, nullable)
+-- - created_at, updated_at, deleted_at (TIMESTAMP)
+-- - UNIQUE(letter_id, user_id)
+
 -- letter_reports: 편지 신고
 -- - id (VARCHAR(36), PK)
 -- - letter_id (VARCHAR(36), FK -> letters.id)
@@ -103,5 +112,8 @@
 -- 1. 친구 간 편지 조회는 letters 테이블을 직접 조회합니다.
 --    - sender_id와 recipient_id를 이용하여 양방향 조회
 --    - visibility = 'DIRECT'인 편지만 조회
--- 2. 읽음 상태는 letters.is_read 필드로 관리됩니다.
---    - recipient 기준으로 읽음 상태 관리
+-- 2. 읽음 상태 관리:
+--    - DIRECT 편지: letters.is_read 필드로 관리 (recipient 기준)
+--    - PUBLIC 편지: letter_recipients 테이블로 관리 (복수 수신자 지원)
+--      - 공개 편지를 읽은 모든 사용자가 letter_recipients에 기록됨
+--      - 각 사용자별로 읽음 상태(is_read)와 읽은 시간(read_at) 관리

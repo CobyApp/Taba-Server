@@ -6,15 +6,14 @@ import com.taba.auth.dto.SignupRequest;
 import com.taba.auth.service.AuthService;
 import com.taba.common.dto.ApiResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/auth")
@@ -23,9 +22,11 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<AuthResponse>> signup(@Valid @RequestBody SignupRequest request) {
-        AuthResponse response = authService.signup(request);
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<AuthResponse>> signup(
+            @Valid @ModelAttribute SignupRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+        AuthResponse response = authService.signup(request, profileImage);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "회원가입이 완료되었습니다."));
     }

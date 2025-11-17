@@ -54,11 +54,12 @@ public class User extends BaseEntity {
     }
 
     @Builder
-    public User(String email, String password, String username, String nickname) {
+    public User(String email, String password, String username, String nickname, String avatarUrl) {
         this.email = email;
         this.password = password;
         this.username = username;
         this.nickname = nickname;
+        this.avatarUrl = avatarUrl;
     }
 
     public void updateProfile(String nickname, String statusMessage, String avatarUrl) {

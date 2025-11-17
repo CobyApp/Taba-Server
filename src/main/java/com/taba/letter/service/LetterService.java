@@ -7,7 +7,9 @@ import com.taba.letter.dto.LetterCreateRequest;
 import com.taba.letter.dto.LetterDto;
 import com.taba.letter.entity.Letter;
 import com.taba.letter.entity.LetterImage;
+import com.taba.letter.entity.LetterRecipient;
 import com.taba.letter.repository.LetterRepository;
+import com.taba.letter.repository.LetterRecipientRepository;
 import com.taba.letter.repository.LetterReportRepository;
 import com.taba.friendship.service.FriendshipService;
 import com.taba.user.entity.User;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 public class LetterService {
 
     private final LetterRepository letterRepository;
+    private final LetterRecipientRepository letterRecipientRepository;
     private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
     private final FriendshipService friendshipService;
@@ -163,11 +166,39 @@ public class LetterService {
 
         letter.incrementViews();
         
-        // recipient가 현재 사용자이고 아직 읽지 않은 경우 읽음 처리
-        if (letter.getRecipient() != null && 
-            letter.getRecipient().getId().equals(currentUserId) && 
-            (letter.getIsRead() == null || !letter.getIsRead())) {
-            letter.markAsRead();
+        // 공개 편지인 경우 LetterRecipient로 읽음 처리
+        if (letter.getVisibility() == Letter.Visibility.PUBLIC && currentUserId != null && !currentUserId.isEmpty()) {
+            User currentUser = userRepository.findActiveUserById(currentUserId)
+                    .orElse(null);
+            
+            if (currentUser != null && !letter.getSender().getId().equals(currentUserId)) {
+                // 이미 LetterRecipient가 있는지 확인
+                LetterRecipient letterRecipient = letterRecipientRepository
+                        .findByLetterIdAndUserId(letterId, currentUserId)
+                        .orElse(null);
+                
+                if (letterRecipient == null) {
+                    // 새로운 LetterRecipient 생성
+                    letterRecipient = LetterRecipient.builder()
+                            .letter(letter)
+                            .user(currentUser)
+                            .build();
+                    letterRecipient = letterRecipientRepository.save(letterRecipient);
+                }
+                
+                // 읽지 않은 경우 읽음 처리
+                if (letterRecipient.getIsRead() == null || !letterRecipient.getIsRead()) {
+                    letterRecipient.markAsRead();
+                    letterRecipientRepository.save(letterRecipient);
+                }
+            }
+        } else if (letter.getVisibility() == Letter.Visibility.DIRECT) {
+            // DIRECT 편지의 경우 기존 로직 유지 (recipient 필드 사용)
+            if (letter.getRecipient() != null && 
+                letter.getRecipient().getId().equals(currentUserId) && 
+                (letter.getIsRead() == null || !letter.getIsRead())) {
+                letter.markAsRead();
+            }
         }
         
         letterRepository.save(letter);

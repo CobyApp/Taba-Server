@@ -83,6 +83,16 @@ spring:
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
+### 주요 테이블 구조
+
+- `users`: 사용자 정보 (프로필 이미지 포함)
+- `letters`: 편지 정보
+- `letter_recipients`: 편지 수신자 (공개 편지의 복수 수신자 지원)
+- `letter_images`: 편지 첨부 이미지
+- `friendships`: 친구 관계
+- `invite_codes`: 초대 코드
+- `notifications`: 알림
+
 ### 프로덕션 환경
 
 프로덕션에서는 `ddl-auto: validate`를 사용하여 스키마 검증만 수행합니다.

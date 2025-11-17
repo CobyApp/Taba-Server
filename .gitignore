@@ -47,6 +47,12 @@ logs/
 .env
 .env.local
 
+### SSH Keys (GitHub Actions) ###
+*.pem
+*.key
+github_actions_deploy
+github_actions_deploy.pub
+
 ### QueryDSL ###
 **/generated/querydsl/
 

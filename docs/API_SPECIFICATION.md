@@ -49,15 +49,24 @@ Authorization: Bearer {token}
 
 **인증**: 불필요
 
-**Request Body**:
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "nickname": "사용자",
-  "agreeTerms": true,
-  "agreePrivacy": true
-}
+**Content-Type**: `multipart/form-data`
+
+**Request**:
+- `email`: 이메일 (필수)
+- `password`: 비밀번호 (필수, 최소 8자)
+- `nickname`: 닉네임 (필수, 2-50자)
+- `agreeTerms`: 이용약관 동의 (필수, boolean)
+- `agreePrivacy`: 개인정보처리방침 동의 (필수, boolean)
+- `profileImage`: 프로필 이미지 파일 (선택사항)
+
+**Request Body 예시** (multipart/form-data):
+```
+email: user@example.com
+password: password123
+nickname: 사용자
+agreeTerms: true
+agreePrivacy: true
+profileImage: [파일]
 ```
 
 **Response** (201 Created):
@@ -229,13 +238,21 @@ Authorization: Bearer {token}
 
 **인증**: 필요 (본인만 수정 가능)
 
-**Request Body**:
-```json
-{
-  "nickname": "새 닉네임",
-  "statusMessage": "새 상태 메시지",
-  "avatarUrl": "http://localhost:8080/api/v1/uploads/new-avatar.jpg"
-}
+**Content-Type**: `multipart/form-data`
+
+**Request**:
+- `nickname`: 닉네임 (선택사항)
+- `statusMessage`: 상태 메시지 (선택사항)
+- `avatarUrl`: 기존 아바타 URL (선택사항, profileImage가 있으면 무시됨)
+- `profileImage`: 프로필 이미지 파일 (선택사항)
+
+**참고**: `profileImage`가 제공되면 자동으로 업로드되어 `avatarUrl`이 업데이트됩니다. `avatarUrl`과 `profileImage`를 동시에 제공하면 `profileImage`가 우선됩니다.
+
+**Request Body 예시** (multipart/form-data):
+```
+nickname: 새 닉네임
+statusMessage: 새 상태 메시지
+profileImage: [파일]
 ```
 
 **Response** (200 OK):
@@ -959,6 +976,12 @@ Swagger UI에서:
 - 로그인한 사용자는 자신이 작성한 편지가 목록에 표시되지 않습니다
 - 비로그인 사용자는 모든 공개 편지를 볼 수 있습니다
 
+### 공개 편지 수신자 관리
+- 공개 편지(`PUBLIC`)는 여러 사용자가 읽을 수 있습니다
+- 공개 편지를 읽은 모든 사용자는 `letter_recipients` 테이블에 기록됩니다
+- 각 사용자별로 읽음 상태(`isRead`)와 읽은 시간(`readAt`)이 관리됩니다
+- 편지 상세 조회 시 자동으로 `LetterRecipient` 레코드가 생성/업데이트됩니다
+
 ### 친구 간 편지 조회
 - 친구 간 주고받은 편지는 `Letter` 테이블을 직접 조회합니다
 - `sender_id`와 `recipient_id`를 이용하여 양방향 편지를 조회합니다
@@ -973,11 +996,12 @@ Swagger UI에서:
 
 ---
 
-**문서 버전**: 1.1.0  
-**최종 업데이트**: 2024-11-17
+**문서 버전**: 1.2.0  
+**최종 업데이트**: 2024-12-XX
 
 **주요 변경사항**:
-- 좋아요/스크랩 기능 제거
-- 친구 간 편지 조회 방식 변경 (SharedFlower → Letter 직접 조회)
-- 읽음 상태 관리 추가 (Letter.isRead)
+- 회원가입 시 프로필 이미지 업로드 지원 (multipart/form-data)
+- 프로필 수정 시 프로필 이미지 업로드 지원 (multipart/form-data)
+- 공개 편지 복수 수신자 지원 (LetterRecipient 엔티티 추가)
+- 공개 편지 읽음 상태 개별 관리 (사용자별 읽음 상태 추적)
 

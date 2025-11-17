@@ -2,6 +2,7 @@ package com.taba.user.service;
 
 import com.taba.common.exception.BusinessException;
 import com.taba.common.exception.ErrorCode;
+import com.taba.file.service.FileService;
 import com.taba.friendship.repository.FriendshipRepository;
 import com.taba.letter.repository.LetterRepository;
 import com.taba.user.dto.UserDto;
@@ -9,9 +10,12 @@ import com.taba.user.dto.UserMapper;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserService {
@@ -20,6 +24,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final FriendshipRepository friendshipRepository;
     private final LetterRepository letterRepository;
+    private final FileService fileService;
 
     @Transactional(readOnly = true)
     public UserDto getProfile(String userId) {
@@ -41,11 +46,22 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto updateProfile(String userId, String nickname, String statusMessage, String avatarUrl) {
+    public UserDto updateProfile(String userId, String nickname, String statusMessage, String avatarUrl, MultipartFile profileImage) {
         User user = userRepository.findActiveUserById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        user.updateProfile(nickname, statusMessage, avatarUrl);
+        // 프로필 이미지 업로드 처리
+        String finalAvatarUrl = avatarUrl;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                finalAvatarUrl = fileService.uploadImage(profileImage);
+            } catch (Exception e) {
+                log.error("프로필 이미지 업로드 실패", e);
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        user.updateProfile(nickname, statusMessage, finalAvatarUrl);
         user = userRepository.save(user);
 
         return userMapper.toDto(user);

@@ -313,9 +313,22 @@ redis-cli ping
 
 2. **회원가입 및 로그인 테스트**
    ```bash
+   # 프로필 이미지 없이 회원가입
    curl -X POST http://localhost:8080/api/v1/auth/signup \
-     -H "Content-Type: application/json" \
-     -d '{"email":"test@example.com","password":"password123","nickname":"테스트","agreeTerms":true,"agreePrivacy":true}'
+     -F "email=test@example.com" \
+     -F "password=password123" \
+     -F "nickname=테스트" \
+     -F "agreeTerms=true" \
+     -F "agreePrivacy=true"
+   
+   # 프로필 이미지와 함께 회원가입
+   curl -X POST http://localhost:8080/api/v1/auth/signup \
+     -F "email=test@example.com" \
+     -F "password=password123" \
+     -F "nickname=테스트" \
+     -F "agreeTerms=true" \
+     -F "agreePrivacy=true" \
+     -F "profileImage=@/path/to/image.jpg"
    ```
 
 3. **상세 가이드 읽기**

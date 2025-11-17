@@ -8,6 +8,7 @@ import com.taba.auth.repository.PasswordResetTokenRepository;
 import com.taba.auth.util.JwtTokenProvider;
 import com.taba.common.exception.BusinessException;
 import com.taba.common.exception.ErrorCode;
+import com.taba.file.service.FileService;
 import com.taba.user.dto.UserDto;
 import com.taba.user.dto.UserMapper;
 import com.taba.user.entity.User;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -34,9 +36,10 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserMapper userMapper;
     private final TokenBlacklistService tokenBlacklistService;
+    private final FileService fileService;
 
     @Transactional
-    public AuthResponse signup(SignupRequest request) {
+    public AuthResponse signup(SignupRequest request, MultipartFile profileImage) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -44,11 +47,23 @@ public class AuthService {
         String username = generateUniqueUsername();
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
+        // 프로필 이미지 업로드 처리
+        String avatarUrl = null;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            try {
+                avatarUrl = fileService.uploadImage(profileImage);
+            } catch (Exception e) {
+                log.error("프로필 이미지 업로드 실패", e);
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+            }
+        }
+
         User user = User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
                 .username(username)
                 .nickname(request.getNickname())
+                .avatarUrl(avatarUrl)
                 .build();
 
         user = userRepository.save(user);

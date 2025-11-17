@@ -88,6 +88,9 @@ public class Letter extends BaseEntity {
     @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LetterImage> images = new ArrayList<>();
 
+    @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LetterRecipient> recipients = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
@@ -126,6 +129,11 @@ public class Letter extends BaseEntity {
     public void addImage(LetterImage image) {
         this.images.add(image);
         image.setLetter(this);
+    }
+
+    public void addRecipient(LetterRecipient recipient) {
+        this.recipients.add(recipient);
+        recipient.setLetter(this);
     }
 
     public void markAsRead() {

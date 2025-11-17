@@ -1,0 +1,80 @@
+version: '3.8'
+
+# 프로덕션 환경용 docker-compose 설정
+# 사용법: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  backend:
+    ports:
+      # 외부 포트:내부 포트 (포트포워드 설정 필요)
+      # 예: 8080:8080 (외부 8080 -> 내부 8080)
+      # 또는 다른 포트 사용: 3001:8080 (외부 3001 -> 내부 8080)
+      - "${EXTERNAL_PORT:-8080}:8080"
+    environment:
+      # 환경 변수는 GitHub Actions Secrets에서 주입됨
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-604800000}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      SERVER_URL: ${SERVER_URL}
+      FILE_UPLOAD_DIR: ${FILE_UPLOAD_DIR:-/app/uploads}
+    # 프로덕션에서는 리소스 제한 설정 권장
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    # 로그 설정
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mysql:
+    # 프로덕션에서는 외부 포트 노출 불필요 (내부 네트워크만 사용)
+    ports: []
+    # 프로덕션에서는 리소스 제한 설정 권장
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    # 프로덕션에서는 외부 포트 노출 불필요 (내부 네트워크만 사용)
+    ports: []
+    # 프로덕션에서는 리소스 제한 설정 권장
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+

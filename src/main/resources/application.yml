@@ -62,15 +62,7 @@ server:
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-environment}
-  expiration: 604800000 # 7일 (밀리초)
-
-# AWS S3 설정
-aws:
-  s3:
-    bucket: ${AWS_S3_BUCKET:taba-bucket}
-    region: ${AWS_S3_REGION:ap-northeast-2}
-    access-key: ${AWS_ACCESS_KEY:}
-    secret-key: ${AWS_SECRET_KEY:}
+  expiration: ${JWT_EXPIRATION:604800000} # 7일 (밀리초)
 
 # 파일 업로드 설정
 file:
