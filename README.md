@@ -4,15 +4,19 @@ Taba 백엔드 서버 - Spring Boot 기반 REST API
 
 ## 기술 스택
 
-- **Spring Boot 3.2.0**
-- **Java 17**
-- **Spring Security 6.x** (JWT 인증)
-- **Spring Data JPA**
-- **MySQL 8.0**
-- **Redis** (캐싱)
-- **QueryDSL** (복잡한 쿼리)
-- **MapStruct** (DTO 매핑)
-- **Swagger/OpenAPI 3** (API 문서화)
+- **Spring Boot 3.2.0** - 핵심 프레임워크
+- **Java 17** - 프로그래밍 언어
+- **Spring Security 6.x** - JWT 기반 인증 및 보안
+- **Spring Data JPA** - 데이터베이스 접근 추상화
+- **MySQL 8.0** - 관계형 데이터베이스
+- **Redis** - 캐싱 및 세션 관리
+- **QueryDSL 5.0.0** - 타입 안전한 동적 쿼리
+- **MapStruct 1.5.5** - DTO 매핑 자동화
+- **Swagger/OpenAPI 3** - API 문서화 및 테스트
+- **Gradle 8.5** - 빌드 도구
+- **HikariCP** - 커넥션 풀링
+- **BCrypt** - 비밀번호 암호화
+- **JJWT 0.12.3** - JWT 토큰 처리
 
 ## 프로젝트 구조
 
@@ -43,6 +47,12 @@ gradle wrapper --gradle-version 8.5
 또는 직접 다운로드:
 - https://gradle.org/releases/ 에서 Gradle 8.5 다운로드
 - `gradle/wrapper/gradle-wrapper.jar` 파일을 다운로드하여 배치
+
+## 📚 상세 가이드
+
+프로젝트의 상세한 설명, 기술 스택, 실행 방법, API 사용법은 다음 문서를 참고하세요:
+
+👉 **[프로젝트 가이드 (PROJECT_GUIDE.md)](docs/PROJECT_GUIDE.md)**
 
 ## 실행 방법
 
