@@ -51,22 +51,47 @@ gradle wrapper --gradle-version 8.5
 `.env` 파일을 생성하거나 환경 변수를 설정합니다:
 
 ```bash
+# MySQL 설정
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=taba
 DB_USERNAME=root
-DB_PASSWORD=password
+DB_PASSWORD=your_password
+
+# Redis 설정
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# JWT 설정
 JWT_SECRET=your-256-bit-secret-key-change-this-in-production
+
+# AWS S3 설정 (선택사항)
 AWS_S3_BUCKET=taba-bucket
 AWS_S3_REGION=ap-northeast-2
+AWS_ACCESS_KEY=
+AWS_SECRET_KEY=
 ```
 
-### 2. 데이터베이스 설정
+### 2. MySQL 데이터베이스 설정
 
-MySQL 데이터베이스를 생성합니다:
+MySQL을 설치하고 데이터베이스를 생성합니다:
 
-```sql
+```bash
+# MySQL 접속
+mysql -u root -p
+
+# 데이터베이스 생성
 CREATE DATABASE taba CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+
+또는 스크립트 실행:
+
+```bash
+mysql -u root -p < src/main/resources/db/init.sql
+```
+
+자세한 설정 방법은 [DATABASE_SETUP.md](docs/DATABASE_SETUP.md)를 참고하세요.
 
 ### 3. 애플리케이션 실행
 
