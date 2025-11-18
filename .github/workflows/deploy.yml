@@ -21,7 +21,7 @@ jobs:
     name: Deploy to ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
     runs-on: ubuntu-latest
     env:
-      DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+      DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' ? 'prod' : 'dev' }}
     
     steps:
       - name: Checkout code
@@ -187,7 +187,7 @@ jobs:
             fi
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' ? 'prod' : 'dev' }}
 
       - name: Check container status
         run: |
@@ -258,7 +258,7 @@ jobs:
             fi
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' ? 'prod' : 'dev' }}
 
       - name: Health Check (Internal)
         continue-on-error: true
@@ -314,12 +314,12 @@ jobs:
             exit 1
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' ? 'prod' : 'dev' }}
 
       - name: Health Check (External) - Optional
         continue-on-error: true
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' ? 'prod' : 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
           else
@@ -343,7 +343,7 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' ? 'prod' : 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
             ENV_NAME="프로덕션"
