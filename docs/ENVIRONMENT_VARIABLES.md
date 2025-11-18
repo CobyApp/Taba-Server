@@ -8,9 +8,9 @@
 | `DB_USERNAME` | 데이터베이스 사용자명 | `taba_user` | `DB_USERNAME` |
 | `DB_PASSWORD` | 데이터베이스 비밀번호 | `MySecurePassword123!` | `DB_PASSWORD` |
 | `JWT_SECRET` | JWT 서명 키 (256비트, 64자리) | `openssl rand -hex 32` 출력 | `JWT_SECRET` |
-| `SERVER_URL` | 서버 전체 URL (파일 업로드 URL 생성용) | `https://www.taba.asia/api/v1` | `SERVER_URL` |
+| `SERVER_URL` | 서버 전체 URL (파일 업로드 URL 생성용) | `https://api.example.com/api/v1` | `SERVER_URL` |
 | `SSH_PRIVATE_KEY` | SSH 개인 키 (배포용) | SSH 키 전체 내용 | `SSH_PRIVATE_KEY` |
-| `SSH_USER` | SSH 사용자명 (배포용) | `coby` | `SSH_USER` |
+| `SSH_USER` | SSH 사용자명 (배포용) | `user` | `SSH_USER` |
 | `SSH_HOST` | SSH 서버 호스트 주소 (배포용) | 예: `server.example.com` | `SSH_HOST` |
 | `FCM_SERVICE_ACCOUNT_KEY_JSON` | Firebase 서비스 계정 키 JSON (전체 내용) | JSON 파일 전체 내용 | `FCM_SERVICE_ACCOUNT_KEY_JSON` |
 
@@ -83,13 +83,13 @@ GitHub Secrets에 다음을 설정하면 자동으로 환경 변수로 전달됩
 ### 필수 Secrets (9개)
 
 1. **`SSH_PRIVATE_KEY`** - SSH 개인 키 (배포용)
-2. **`SSH_USER`** - SSH 사용자명 (`coby`)
+2. **`SSH_USER`** - SSH 사용자명 (예: `user`)
 3. **`SSH_HOST`** - SSH 서버 호스트 주소 (예: `server.example.com`)
 4. **`DB_NAME`** - 데이터베이스 이름 (`taba`)
 5. **`DB_USERNAME`** - 데이터베이스 사용자명 (`taba_user`)
 6. **`DB_PASSWORD`** - 데이터베이스 비밀번호
 7. **`JWT_SECRET`** - JWT 비밀키 (`openssl rand -hex 32` 출력)
-8. **`SERVER_URL`** - 서버 전체 URL (`https://www.taba.asia/api/v1`)
+8. **`SERVER_URL`** - 서버 전체 URL (예: `https://api.example.com/api/v1`)
 9. **`FCM_SERVICE_ACCOUNT_KEY_JSON`** - Firebase 서비스 계정 키 JSON 전체 내용
 
 ### 선택사항 Secrets (2개)

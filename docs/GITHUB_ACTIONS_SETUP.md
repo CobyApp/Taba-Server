@@ -24,12 +24,12 @@ GitHub 저장소 > Settings > Secrets and variables > Actions에서 다음 Secre
 | Secret 이름 | 설명 | 예시 |
 |------------|------|------|
 | `SSH_PRIVATE_KEY` | SSH 개인 키 전체 내용 | `cat ~/.ssh/github_actions_deploy` 출력 |
-| `SSH_USER` | SSH 사용자 이름 | `coby` |
+| `SSH_USER` | SSH 사용자 이름 | `user` |
 | `DB_NAME` | 데이터베이스 이름 | `taba` |
 | `DB_USERNAME` | DB 사용자 이름 | `taba_user` |
 | `DB_PASSWORD` | DB 비밀번호 | |
 | `JWT_SECRET` | JWT 비밀키 | `openssl rand -hex 32` |
-| `SERVER_URL` | 서버 URL | `https://taba.asia/api/v1` |
+| `SERVER_URL` | 서버 URL | `https://api.example.com/api/v1` |
 | `FCM_SERVICE_ACCOUNT_KEY_JSON` | Firebase 서비스 계정 키 JSON | |
 
 **상세 가이드**: [GitHub Secrets 설정](GITHUB_SECRETS.md)

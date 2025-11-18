@@ -27,14 +27,9 @@ services:
       SERVER_URL: ${SERVER_URL}
       FILE_UPLOAD_DIR: ${FILE_UPLOAD_DIR:-/app/uploads}
     # 프로덕션에서는 리소스 제한 설정 권장
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '1'
-          memory: 1G
+    # 주의: deploy 섹션은 Docker Swarm 모드에서만 작동합니다.
+    # 일반 docker-compose에서는 리소스 제한을 위해 docker run --cpus, --memory 옵션을 사용하거나
+    # 컨테이너 런타임 설정에서 제한해야 합니다.
     # 로그 설정
     logging:
       driver: "json-file"
@@ -45,15 +40,7 @@ services:
   mysql:
     # 프로덕션에서는 외부 포트 노출 불필요 (내부 네트워크만 사용)
     ports: []
-    # 프로덕션에서는 리소스 제한 설정 권장
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
+    # 프로덕션에서는 리소스 제한 설정 권장 (deploy 섹션은 Swarm 모드에서만 작동)
     logging:
       driver: "json-file"
       options:
@@ -63,15 +50,7 @@ services:
   redis:
     # 프로덕션에서는 외부 포트 노출 불필요 (내부 네트워크만 사용)
     ports: []
-    # 프로덕션에서는 리소스 제한 설정 권장
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
+    # 프로덕션에서는 리소스 제한 설정 권장 (deploy 섹션은 Swarm 모드에서만 작동)
     logging:
       driver: "json-file"
       options:

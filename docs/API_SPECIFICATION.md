@@ -3,7 +3,7 @@
 ## 기본 정보
 
 - **로컬 Base URL**: `http://localhost:8080/api/v1`
-- **프로덕션 Base URL**: `https://www.taba.asia/api/v1`
+- **프로덕션 Base URL**: `https://api.example.com/api/v1` (실제 서버 주소로 변경하세요)
 - **인증 방식**: JWT Bearer Token
 - **Content-Type**: `application/json`
 - **API 버전**: v1
@@ -951,7 +951,7 @@ file: [이미지 파일]
 애플리케이션 실행 후 다음 URL에서 인터랙티브 API 문서를 확인할 수 있습니다:
 
 - **로컬**: http://localhost:8080/api/v1/swagger-ui/index.html
-- **프로덕션**: https://www.taba.asia/api/v1/swagger-ui/index.html
+- **프로덕션**: https://api.example.com/api/v1/swagger-ui/index.html (실제 서버 주소로 변경하세요)
 
 **참고**: Swagger UI는 실제 코드에서 자동으로 생성되며, 존재하는 엔드포인트만 표시됩니다. 제거된 엔드포인트(예: `/bouquets/**`)는 표시되지 않습니다.
 

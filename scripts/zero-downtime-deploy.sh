@@ -49,7 +49,14 @@ docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" pull mysql redis || {
 # 3. 새 이미지 빌드 (clean 빌드로 오래된 클래스 파일 제거)
 echo -e "${YELLOW}📦 새 이미지 빌드 중...${NC}"
 echo -e "${YELLOW}   (clean 빌드로 오래된 클래스 파일 제거)${NC}"
-docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" build --no-cache "$CURRENT_SERVICE"
+echo -e "${YELLOW}   빌드 로그를 확인하세요 (시간이 오래 걸릴 수 있습니다)...${NC}"
+if ! docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" build --no-cache --progress=plain "$CURRENT_SERVICE"; then
+    echo -e "${RED}❌ 이미지 빌드 실패!${NC}"
+    echo -e "${YELLOW}로그를 확인하세요:${NC}"
+    docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" logs "$CURRENT_SERVICE" || true
+    exit 1
+fi
+echo -e "${GREEN}✅ 이미지 빌드 완료${NC}"
 
 # 4. 임시 포트로 새 컨테이너 시작
 echo -e "${YELLOW}🔄 새 인스턴스 시작 중 (임시 포트 ${TEMP_PORT})...${NC}"
@@ -98,7 +105,15 @@ services:
 EOF
 
 # 임시 컨테이너 시작
-docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" up -d backend-temp
+echo -e "${YELLOW}   임시 컨테이너 시작 중...${NC}"
+if ! docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" up -d backend-temp; then
+    echo -e "${RED}❌ 임시 컨테이너 시작 실패!${NC}"
+    echo -e "${YELLOW}로그를 확인하세요:${NC}"
+    docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" logs backend-temp || true
+    rm -f "${PROJECT_DIR}/docker-compose.temp.yml"
+    exit 1
+fi
+echo -e "${GREEN}✅ 임시 컨테이너 시작 완료${NC}"
 
 # 5. 새 컨테이너 헬스체크
 echo -e "${YELLOW}🏥 새 인스턴스 헬스체크 중...${NC}"
@@ -106,6 +121,15 @@ elapsed=0
 health_check_passed=false
 
 while [ $elapsed -lt $HEALTH_CHECK_TIMEOUT ]; do
+  # 컨테이너가 실행 중인지 확인
+  if ! docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" ps backend-temp | grep -q "Up"; then
+    echo -e "${RED}❌ 임시 컨테이너가 중지되었습니다!${NC}"
+    echo -e "${YELLOW}로그 확인:${NC}"
+    docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" logs --tail=50 backend-temp || true
+    health_check_passed=false
+    break
+  fi
+  
   if docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" exec -T backend-temp wget --no-verbose --tries=1 --spider "http://localhost:8080/api/v1/actuator/health" 2>&1 > /dev/null; then
     echo -e "${GREEN}✅ 새 인스턴스 헬스체크 통과!${NC}"
     health_check_passed=true
@@ -113,6 +137,11 @@ while [ $elapsed -lt $HEALTH_CHECK_TIMEOUT ]; do
   fi
   
   echo -e "${YELLOW}⏳ 헬스체크 대기 중... (${elapsed}/${HEALTH_CHECK_TIMEOUT}초)${NC}"
+  # 30초마다 로그 확인
+  if [ $((elapsed % 30)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+    echo -e "${YELLOW}   현재 상태 확인 중...${NC}"
+    docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" logs --tail=20 backend-temp || true
+  fi
   sleep $HEALTH_CHECK_INTERVAL
   elapsed=$((elapsed + HEALTH_CHECK_INTERVAL))
 done

@@ -24,11 +24,11 @@ sudo apt install -y nginx
 sudo nano /etc/nginx/sites-available/taba-backend
 ```
 
-다음 내용 입력 (도메인을 `taba.asia`로 변경):
+다음 내용 입력 (도메인을 실제 도메인으로 변경):
 ```nginx
 server {
     listen 80;
-    server_name taba.asia www.taba.asia;
+    server_name example.com www.example.com;
 
     client_max_body_size 10M;
 
@@ -62,7 +62,7 @@ sudo apt install -y certbot python3-certbot-nginx
 
 ### SSL 인증서 발급
 ```bash
-sudo certbot --nginx -d taba.asia -d www.taba.asia
+sudo certbot --nginx -d example.com -d www.example.com
 ```
 
 Certbot 실행 시:
@@ -79,13 +79,13 @@ sudo certbot renew --dry-run
 ## 5. 확인
 ```bash
 # DNS 전파 확인
-nslookup taba.asia
+nslookup example.com
 
 # HTTP 확인
-curl http://taba.asia/api/v1/actuator/health
+curl http://example.com/api/v1/actuator/health
 
 # HTTPS 확인
-curl https://taba.asia/api/v1/actuator/health
+curl https://example.com/api/v1/actuator/health
 ```
 
 ## 문제 해결
