@@ -5,10 +5,9 @@ version: '3.8'
 
 services:
   backend:
+    container_name: taba-backend-prod
     ports:
-      # 외부 포트:내부 포트 (포트포워드 설정 필요)
-      # 예: 8080:8080 (외부 8080 -> 내부 8080)
-      # 또는 다른 포트 사용: 3001:8080 (외부 3001 -> 내부 8080)
+      # 프로덕션 환경: 외부 포트 8080 -> 내부 포트 8080
       - "${EXTERNAL_PORT:-8080}:8080"
     environment:
       # 환경 변수는 GitHub Actions Secrets에서 주입됨

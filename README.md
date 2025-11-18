@@ -158,6 +158,10 @@ docker-compose up -d
 ### 문제 해결
 - **[502 Bad Gateway 해결 가이드](docs/TROUBLESHOOTING_502.md)** - 502 에러 진단 및 해결 방법
 
+### 서버 설정
+- **[Nginx 설정 가이드](docs/NGINX_SETUP.md)** 🌐 - 개발/프로덕션 환경 동시 실행을 위한 Nginx 리버스 프록시 설정
+- **[서버 설정 명령어 모음](docs/SERVER_SETUP_COMMANDS.md)** 🛠️ - 서버에서 실행할 명령어 정리
+
 ## 라이선스
 
 MIT

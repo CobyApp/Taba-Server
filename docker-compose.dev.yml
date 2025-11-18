@@ -102,7 +102,8 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     ports:
-      - "${SERVER_EXTERNAL_PORT:-8080}:8080"
+      # 개발 환경: 외부 포트 8081 -> 내부 포트 8080
+      - "${SERVER_EXTERNAL_PORT:-8081}:8080"
     volumes:
       - uploads_data:/app/uploads
     depends_on:
