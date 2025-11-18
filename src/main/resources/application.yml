@@ -82,13 +82,20 @@ fcm:
 springdoc:
   api-docs:
     path: /v3/api-docs
+    enabled: true
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
     operations-sorter: method
     tags-sorter: alpha
     try-it-out-enabled: true
+    urls:
+      - url: /v3/api-docs
+        name: Taba API
+    config-url: /v3/api-docs/swagger-config
   show-actuator: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 # 로깅
 logging:

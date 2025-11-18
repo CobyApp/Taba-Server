@@ -42,13 +42,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleNoResourceFoundException(NoResourceFoundException e) {
-        log.warn("Resource not found: {}", e.getResourcePath());
-        // actuator/health는 헬스체크용이므로 404 대신 200 반환
-        if (e.getResourcePath() != null && e.getResourcePath().contains("actuator/health")) {
+        String resourcePath = e.getResourcePath();
+        log.warn("Resource not found: {}", resourcePath);
+        
+        // Swagger UI 관련 리소스는 조용히 처리 (404는 정상)
+        if (resourcePath != null && (
+                resourcePath.contains("swagger-ui") ||
+                resourcePath.contains("webjars") ||
+                resourcePath.contains("swagger-resources") ||
+                resourcePath.contains("v3/api-docs"))) {
+            // Swagger UI 리소스는 조용히 404 반환 (브라우저가 처리)
             return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(ApiResponse.success(Map.of("status", "UP"), "Service is running"));
+                    .status(HttpStatus.NOT_FOUND)
+                    .build();
         }
+        
         // 그 외의 경우는 404 반환
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)

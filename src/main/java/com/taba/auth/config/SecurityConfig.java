@@ -52,11 +52,17 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/swagger-ui/index.html",
                                 "/swagger-ui/swagger-initializer.js",
+                                "/swagger-ui/favicon-32x32.png",
+                                "/swagger-ui/favicon-16x16.png",
+                                "/swagger-ui/swagger-ui-bundle.js",
+                                "/swagger-ui/swagger-ui-standalone-preset.js",
+                                "/swagger-ui/swagger-ui.css",
                                 "/error",
-                                "/actuator/**",  // actuator 엔드포인트 전체 허용
+                                "/actuator/**",  // actuator 엔드포인트 전체 허용 (헬스체크 포함)
                                 "/uploads/**"  // 업로드된 이미지 파일 접근 허용
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS 요청 허용
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/v3/api-docs/**").permitAll() // OpenAPI 문서 허용
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -82,7 +88,14 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("*")); // 모든 Origin 허용 (패턴 사용)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count"));
+        configuration.setExposedHeaders(Arrays.asList(
+                "Authorization", 
+                "Content-Type", 
+                "X-Total-Count",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Methods",
+                "Access-Control-Allow-Headers"
+        ));
         configuration.setAllowCredentials(false); // Swagger UI에서 사용할 때는 false로 설정
         configuration.setMaxAge(3600L);
 
