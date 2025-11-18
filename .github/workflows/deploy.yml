@@ -19,10 +19,10 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to ${{ github.ref == 'refs/heads/release' && 'Production' || github.ref == 'refs/heads/main' && 'Production' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
+    name: Deploy to ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'Production' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
     runs-on: ubuntu-latest
     env:
-      DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+      DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}
     
     steps:
       - name: Checkout code
@@ -137,22 +137,27 @@ jobs:
             # 배포 시작
             echo "=== Starting deployment ==="
             
-            # 1. 기존 컨테이너 중지 및 제거
-            echo "Stopping existing containers..."
-            \$COMPOSE_CMD down || true
+            # 1. 백엔드 컨테이너만 중지 및 제거 (MySQL, Redis는 유지)
+            echo "Stopping existing backend container..."
+            \$COMPOSE_CMD stop backend || true
+            \$COMPOSE_CMD rm -f backend || true
             
             # 2. 새 이미지 빌드
-            echo "Building new image..."
+            echo "Building new backend image..."
             if ! \$COMPOSE_CMD build --no-cache --progress=plain backend; then
               echo "❌ Image build failed!"
               exit 1
             fi
             
-            # 3. MySQL, Redis 시작 (존재하지 않으면 생성)
-            echo "Starting MySQL and Redis..."
+            # 3. MySQL, Redis 시작 (이미 실행 중이면 무시)
+            echo "Ensuring MySQL and Redis are running..."
             \$COMPOSE_CMD up -d mysql redis || true
             
-            # 4. 백엔드 서비스 시작
+            # 4. MySQL, Redis 헬스체크 대기
+            echo "Waiting for MySQL and Redis to be healthy..."
+            sleep 10
+            
+            # 5. 백엔드 서비스 시작
             echo "Starting backend service..."
             if ! \$COMPOSE_CMD up -d backend; then
               echo "❌ Backend service start failed!"
@@ -171,7 +176,7 @@ jobs:
             \$COMPOSE_CMD logs --tail=50 backend 2>&1 || echo "No logs available"
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}
 
       - name: Check container status
         run: |
@@ -233,7 +238,7 @@ jobs:
             fi
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}
 
       - name: Health Check (Internal)
         continue-on-error: true
@@ -289,12 +294,12 @@ jobs:
             exit 1
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}
 
       - name: Health Check (External) - Optional
         continue-on-error: true
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
           else
@@ -318,7 +323,7 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
             ENV_NAME="프로덕션"
