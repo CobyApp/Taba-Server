@@ -78,6 +78,18 @@ fcm:
   service-account-key-path: ${FCM_SERVICE_ACCOUNT_KEY_PATH:}
   service-account-key-classpath: ${FCM_SERVICE_ACCOUNT_KEY_CLASSPATH:firebase-service-account.json}
 
+# SpringDoc OpenAPI (Swagger UI) 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+
 # 로깅
 logging:
   level:
