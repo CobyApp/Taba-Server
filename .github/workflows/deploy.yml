@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to cobyserver.iptime.org
+    name: Deploy to Production Server
     runs-on: ubuntu-latest
     
     steps:
@@ -22,11 +22,11 @@ jobs:
 
       - name: Add server to known hosts
         run: |
-          ssh-keyscan -H cobyserver.iptime.org >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Create remote directory
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org "mkdir -p ~/taba_backend"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p ~/taba_backend"
 
       - name: Create Firebase service account key file
         run: |
@@ -37,19 +37,19 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp -o StrictHostKeyChecking=no docker-compose.yml docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
-          scp -o StrictHostKeyChecking=no build.gradle settings.gradle gradle.properties ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
-          scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
-          scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
+          scp -o StrictHostKeyChecking=no docker-compose.yml docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          scp -o StrictHostKeyChecking=no build.gradle settings.gradle gradle.properties ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
 
       - name: Copy deployment script
         run: |
-          scp -o StrictHostKeyChecking=no scripts/zero-downtime-deploy.sh ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org "chmod +x ~/taba_backend/zero-downtime-deploy.sh"
+          scp -o StrictHostKeyChecking=no scripts/zero-downtime-deploy.sh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "chmod +x ~/taba_backend/zero-downtime-deploy.sh"
 
       - name: Deploy with Zero-Downtime
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             export DB_HOST=mysql
             export DB_PORT=3306
@@ -90,7 +90,7 @@ jobs:
 
       - name: Check container status
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             echo "=== Container Status ==="
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
@@ -105,7 +105,7 @@ jobs:
       - name: Health Check (Internal)
         continue-on-error: true
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             echo "Waiting for application to start..."
             sleep 60

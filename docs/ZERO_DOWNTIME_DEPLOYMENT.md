@@ -21,7 +21,7 @@ git push origin main  # 자동으로 무중단 배포 실행
 
 ### 수동 배포
 ```bash
-ssh user@cobyserver.iptime.org
+ssh user@server
 cd ~/taba_backend
 ./zero-downtime-deploy.sh ~/taba_backend
 ```

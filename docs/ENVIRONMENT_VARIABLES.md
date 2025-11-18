@@ -11,6 +11,7 @@
 | `SERVER_URL` | 서버 전체 URL (파일 업로드 URL 생성용) | `https://www.taba.asia/api/v1` | `SERVER_URL` |
 | `SSH_PRIVATE_KEY` | SSH 개인 키 (배포용) | SSH 키 전체 내용 | `SSH_PRIVATE_KEY` |
 | `SSH_USER` | SSH 사용자명 (배포용) | `coby` | `SSH_USER` |
+| `SSH_HOST` | SSH 서버 호스트 주소 (배포용) | 예: `server.example.com` | `SSH_HOST` |
 | `FCM_SERVICE_ACCOUNT_KEY_JSON` | Firebase 서비스 계정 키 JSON (전체 내용) | JSON 파일 전체 내용 | `FCM_SERVICE_ACCOUNT_KEY_JSON` |
 
 ## 🔧 선택사항 환경 변수 (기본값 있음)
@@ -52,6 +53,8 @@
 | 변수 | 설명 | 기본값 |
 |------|------|--------|
 | `EXTERNAL_PORT` | 외부 포트 (배포 스크립트용) | `8080` |
+| `SSH_HOST` | SSH 서버 호스트 주소 | 없음 (필수) |
+| `REMOTE_DIR` | 원격 서버 배포 디렉토리 | `~/taba_backend` |
 
 ---
 
@@ -77,16 +80,17 @@ export SERVER_URL=http://localhost:8080/api/v1
 
 GitHub Secrets에 다음을 설정하면 자동으로 환경 변수로 전달됩니다:
 
-### 필수 Secrets (8개)
+### 필수 Secrets (9개)
 
 1. **`SSH_PRIVATE_KEY`** - SSH 개인 키 (배포용)
 2. **`SSH_USER`** - SSH 사용자명 (`coby`)
-3. **`DB_NAME`** - 데이터베이스 이름 (`taba`)
-4. **`DB_USERNAME`** - 데이터베이스 사용자명 (`taba_user`)
-5. **`DB_PASSWORD`** - 데이터베이스 비밀번호
-6. **`JWT_SECRET`** - JWT 비밀키 (`openssl rand -hex 32` 출력)
-7. **`SERVER_URL`** - 서버 전체 URL (`https://www.taba.asia/api/v1`)
-8. **`FCM_SERVICE_ACCOUNT_KEY_JSON`** - Firebase 서비스 계정 키 JSON 전체 내용
+3. **`SSH_HOST`** - SSH 서버 호스트 주소 (예: `server.example.com`)
+4. **`DB_NAME`** - 데이터베이스 이름 (`taba`)
+5. **`DB_USERNAME`** - 데이터베이스 사용자명 (`taba_user`)
+6. **`DB_PASSWORD`** - 데이터베이스 비밀번호
+7. **`JWT_SECRET`** - JWT 비밀키 (`openssl rand -hex 32` 출력)
+8. **`SERVER_URL`** - 서버 전체 URL (`https://www.taba.asia/api/v1`)
+9. **`FCM_SERVICE_ACCOUNT_KEY_JSON`** - Firebase 서비스 계정 키 JSON 전체 내용
 
 ### 선택사항 Secrets (2개)
 

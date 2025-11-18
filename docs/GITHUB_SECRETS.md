@@ -1,6 +1,6 @@
 # GitHub Secrets 설정 가이드
 
-## 필수 Secrets
+## 필수 Secrets (9개)
 
 GitHub 저장소 > Settings > Secrets and variables > Actions에서 다음 Secrets를 추가하세요.
 
@@ -8,6 +8,7 @@ GitHub 저장소 > Settings > Secrets and variables > Actions에서 다음 Secre
 |------------|------|--------------|
 | `SSH_PRIVATE_KEY` | SSH 개인 키 전체 내용 | `ssh-keygen -t ed25519 -f ~/.ssh/github_actions_deploy` 후 `cat ~/.ssh/github_actions_deploy` |
 | `SSH_USER` | SSH 사용자 이름 | `coby` |
+| `SSH_HOST` | SSH 서버 호스트 주소 | 예: `server.example.com` 또는 `192.168.1.100` |
 | `DB_NAME` | 데이터베이스 이름 | `taba` |
 | `DB_USERNAME` | DB 사용자 이름 | `taba_user` |
 | `DB_PASSWORD` | DB 비밀번호 | 강력한 비밀번호 |
