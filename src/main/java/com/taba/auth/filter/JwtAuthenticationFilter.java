@@ -33,6 +33,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String path = request.getRequestURI();
+        
+        // permitAll 경로는 필터를 건너뛰기 (SecurityConfig에서 이미 처리됨)
+        // 하지만 명시적으로 체크하여 불필요한 처리 방지
+        if (shouldSkipFilter(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         try {
             String jwt = getJwtFromRequest(request);
 
@@ -64,6 +73,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+    
+    private boolean shouldSkipFilter(String path) {
+        // permitAll 경로 체크 (context-path 포함)
+        return path.startsWith("/api/v1/auth/signup") ||
+               path.startsWith("/api/v1/auth/login") ||
+               path.startsWith("/api/v1/auth/forgot-password") ||
+               path.startsWith("/api/v1/auth/reset-password") ||
+               path.startsWith("/api/v1/swagger-ui") ||
+               path.startsWith("/api/v1/v3/api-docs") ||
+               path.startsWith("/api/v1/swagger-resources") ||
+               path.startsWith("/api/v1/webjars") ||
+               path.startsWith("/api/v1/actuator") ||
+               path.startsWith("/api/v1/uploads") ||
+               path.equals("/error") ||
+               // context-path 없이도 체크
+               path.startsWith("/auth/signup") ||
+               path.startsWith("/auth/login") ||
+               path.startsWith("/auth/forgot-password") ||
+               path.startsWith("/auth/reset-password") ||
+               path.startsWith("/swagger-ui") ||
+               path.startsWith("/v3/api-docs") ||
+               path.startsWith("/swagger-resources") ||
+               path.startsWith("/webjars") ||
+               path.startsWith("/actuator") ||
+               path.startsWith("/uploads") ||
+               path.equals("/error");
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

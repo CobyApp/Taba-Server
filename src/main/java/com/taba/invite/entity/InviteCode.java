@@ -30,7 +30,7 @@ public class InviteCode {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "code", unique = true, nullable = false, length = 20)
+    @Column(name = "code", unique = true, nullable = false, length = 100)
     private String code;
 
     @Column(name = "expires_at", nullable = false)

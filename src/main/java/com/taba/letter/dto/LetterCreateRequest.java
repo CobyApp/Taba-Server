@@ -1,5 +1,6 @@
 package com.taba.letter.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.taba.letter.entity.Letter;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true) // 알 수 없는 필드 무시 (flowerType 등)
 public class LetterCreateRequest {
     @NotBlank(message = "제목은 필수입니다.")
     private String title;

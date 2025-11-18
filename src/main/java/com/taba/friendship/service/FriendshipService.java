@@ -36,8 +36,17 @@ public class FriendshipService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
+        // 초대 코드 형식 검증 (6자리 고정)
+        if (inviteCode == null || inviteCode.trim().isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INVITE_CODE);
+        }
+        String trimmedCode = inviteCode.trim().toUpperCase();
+        if (trimmedCode.length() != 6) {
+            throw new BusinessException(ErrorCode.INVALID_INVITE_CODE);
+        }
+
         // InviteCode 검증
-        InviteCode code = inviteCodeRepository.findByCode(inviteCode)
+        InviteCode code = inviteCodeRepository.findByCode(trimmedCode)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INVITE_CODE));
 
         if (code.isExpired()) {

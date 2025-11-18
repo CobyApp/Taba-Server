@@ -16,6 +16,9 @@ import java.util.Random;
 @Service
 public class InviteCodeService {
 
+    private static final int INVITE_CODE_LENGTH = 6; // 초대 코드는 6자리로 고정
+    private static final String INVITE_CODE_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     private final InviteCodeRepository inviteCodeRepository;
 
     @Transactional
@@ -34,7 +37,7 @@ public class InviteCodeService {
         // 새 코드 생성 (6자리 숫자+영문 조합)
         String code;
         do {
-            code = generateRandomAlphanumeric(6);
+            code = generateRandomAlphanumeric(INVITE_CODE_LENGTH);
         } while (inviteCodeRepository.findByCode(code).isPresent()); // 중복 체크
         
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(3);
@@ -69,13 +72,16 @@ public class InviteCodeService {
     /**
      * 6자리 숫자+영문 조합 코드 생성
      * 대문자 영문과 숫자만 사용 (0-9, A-Z)
+     * 항상 정확히 6자리로 생성됨
      */
     private String generateRandomAlphanumeric(int length) {
-        String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        if (length != INVITE_CODE_LENGTH) {
+            throw new IllegalArgumentException("초대 코드는 " + INVITE_CODE_LENGTH + "자리여야 합니다.");
+        }
         Random random = new Random();
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
+        StringBuilder sb = new StringBuilder(INVITE_CODE_LENGTH);
+        for (int i = 0; i < INVITE_CODE_LENGTH; i++) {
+            sb.append(INVITE_CODE_CHARS.charAt(random.nextInt(INVITE_CODE_CHARS.length())));
         }
         return sb.toString();
     }
