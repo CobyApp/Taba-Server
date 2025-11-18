@@ -42,16 +42,15 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+  
+  lifecycle:
+    timeout-per-shutdown-phase: 30s # 종료 타임아웃 (진행 중인 요청 완료 대기 시간)
 
 server:
   port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api/v1
   shutdown: graceful # Graceful shutdown 활성화
-
-spring:
-  lifecycle:
-    timeout-per-shutdown-phase: 30s # 종료 타임아웃 (진행 중인 요청 완료 대기 시간)
 
 jwt:
   secret: ${JWT_SECRET:your-256-bit-secret-key-change-this-in-production-environment}
