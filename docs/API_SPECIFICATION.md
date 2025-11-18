@@ -325,6 +325,11 @@ profileImage: [파일]
 }
 ```
 
+**필드 설명**:
+- `attachedImages`: 이미지 URL 배열 (선택사항). 이미지는 먼저 `/files/upload` API로 업로드한 후 반환된 URL을 사용합니다. 순서대로 저장되며, 조회 시에도 동일한 순서로 반환됩니다.
+- `scheduledAt`: 예약 발송 시간 (선택사항). 미지정 시 즉시 발송됩니다.
+- `recipientId`: 수신자 ID (선택사항). `DIRECT` 편지인 경우 필수입니다.
+
 **Visibility**: `PUBLIC`, `FRIENDS`, `DIRECT`, `PRIVATE`
 
 **Response** (201 Created):
@@ -982,6 +987,7 @@ Swagger UI에서:
 **주요 변경사항**:
 - 회원가입 시 프로필 이미지 업로드 지원 (multipart/form-data)
 - 프로필 수정 시 프로필 이미지 업로드 지원 (multipart/form-data)
+- 편지 작성/답장 시 이미지 첨부 지원 (다중 이미지, 순서 보장)
 - 공개 편지 복수 수신자 지원 (LetterRecipient 엔티티 추가)
 - 공개 편지 읽음 상태 개별 관리 (사용자별 읽음 상태 추적)
 - 꽃다발(bouquet) 기능 제거

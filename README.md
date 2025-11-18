@@ -27,7 +27,7 @@ src/main/java/com/taba/
 ├── auth/              # 인증 관련
 ├── user/              # 사용자 관리
 ├── letter/            # 편지 관리
-├── friendship/        # 친구 관계 및 꽃다발
+├── friendship/        # 친구 관계
 ├── invite/            # 초대 코드
 ├── notification/      # 알림
 ├── settings/          # 설정
@@ -78,15 +78,11 @@ mysql -u root -p -e "CREATE DATABASE taba CHARACTER SET utf8mb4 COLLATE utf8mb4_
 - 편지 삭제
 
 ### 친구
-- 초대 코드 생성/조회 (3분 유효)
+- 초대 코드 생성/조회 (3분 유효, 6자리 숫자+영문 조합)
 - 초대 코드로 친구 추가 (양방향 관계 생성)
 - 친구 목록 조회
+- 친구별 편지 목록 조회 (읽지 않은 편지 수 포함)
 - 친구 삭제 (양방향 관계 삭제)
-
-### 꽃다발
-- 꽃다발 목록 조회 (친구별, 읽지 않은 편지 수 포함)
-- 친구별 편지 목록 조회 (Letter 테이블 직접 조회)
-- 꽃다발 이름 변경
 
 ### 알림
 - 알림 목록 조회 (카테고리별 필터링)

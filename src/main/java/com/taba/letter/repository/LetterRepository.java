@@ -16,21 +16,27 @@ import java.util.Optional;
 @Repository
 public interface LetterRepository extends JpaRepository<Letter, String> {
     
+    @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.id = :id AND l.deletedAt IS NULL")
     Optional<Letter> findActiveById(@Param("id") String id);
 
+    @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL ORDER BY l.sentAt DESC")
     Page<Letter> findPublicLetters(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL AND l.sender.id != :excludeUserId ORDER BY l.sentAt DESC")
     Page<Letter> findPublicLettersExcludingUser(@Param("excludeUserId") String excludeUserId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL ORDER BY l.createdAt DESC")
     Page<Letter> findBySenderId(@Param("userId") String userId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.recipient.id = :userId AND l.visibility = 'DIRECT' AND l.deletedAt IS NULL ORDER BY l.sentAt DESC")
     Page<Letter> findByRecipientId(@Param("userId") String userId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.scheduledAt <= :now AND l.sentAt IS NULL AND l.deletedAt IS NULL")
     List<Letter> findScheduledLettersToSend(@Param("now") LocalDateTime now);
 
@@ -40,9 +46,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
      * sender가 friendId이고 recipient가 currentUserId인 편지
      * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,desc)
      * 
-     * EntityGraph를 사용하여 sender와 recipient를 eagerly fetch합니다.
+     * EntityGraph를 사용하여 sender, recipient, images를 eagerly fetch합니다.
      */
-    @EntityGraph(attributePaths = {"sender", "recipient"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
+    @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l " +
            "WHERE ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
            "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +

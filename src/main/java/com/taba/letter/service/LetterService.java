@@ -12,6 +12,7 @@ import com.taba.letter.repository.LetterRepository;
 import com.taba.letter.repository.LetterRecipientRepository;
 import com.taba.letter.repository.LetterReportRepository;
 import com.taba.friendship.service.FriendshipService;
+import com.taba.friendship.repository.FriendshipRepository;
 import com.taba.notification.service.NotificationService;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
@@ -34,6 +35,7 @@ public class LetterService {
     private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
     private final FriendshipService friendshipService;
+    private final FriendshipRepository friendshipRepository;
     private final NotificationService notificationService;
 
     @Transactional
@@ -271,7 +273,16 @@ public class LetterService {
                  (letter.getRecipient() == null || !letter.getRecipient().getId().equals(currentUserId)))) {
                 throw new BusinessException(ErrorCode.FORBIDDEN);
             }
+        } else if (letter.getVisibility() == Letter.Visibility.FRIENDS) {
+            if (currentUserId == null) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            }
+            if (!letter.getSender().getId().equals(currentUserId) &&
+                    !friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(currentUserId, letter.getSender().getId())) {
+                throw new BusinessException(ErrorCode.FORBIDDEN);
+            }
         }
+        // PUBLIC 편지는 누구나 접근 가능
     }
 
     private LetterDto toDto(Letter letter, String currentUserId) {
