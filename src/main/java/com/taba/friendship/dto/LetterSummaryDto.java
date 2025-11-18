@@ -13,5 +13,6 @@ public class LetterSummaryDto {
     private String id;
     private String title;
     private String preview;
+    private String fontFamily; // 폰트 이름
 }
 

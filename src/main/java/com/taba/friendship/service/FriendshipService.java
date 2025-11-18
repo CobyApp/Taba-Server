@@ -13,12 +13,14 @@ import com.taba.invite.repository.InviteCodeRepository;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class FriendshipService {
@@ -145,35 +147,50 @@ public class FriendshipService {
                 letterRepository.findLettersBetweenFriends(currentUser.getId(), friendId, pageable);
 
         return letters.map(letter -> {
-            // LetterSummaryDto 생성
-            com.taba.friendship.dto.LetterSummaryDto letterSummary = 
-                    com.taba.friendship.dto.LetterSummaryDto.builder()
-                            .id(letter.getId())
-                            .title(letter.getTitle() != null ? letter.getTitle() : "")
-                            .preview(letter.getPreview() != null ? letter.getPreview() : "")
-                            .build();
+            try {
+                // LetterSummaryDto 생성
+                com.taba.friendship.dto.LetterSummaryDto letterSummary = 
+                        com.taba.friendship.dto.LetterSummaryDto.builder()
+                                .id(letter.getId())
+                                .title(letter.getTitle() != null ? letter.getTitle() : "")
+                                .preview(letter.getPreview() != null ? letter.getPreview() : "")
+                                .fontFamily(letter.getTemplateFontFamily() != null ? letter.getTemplateFontFamily() : null)
+                                .build();
 
-            // recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
-            Boolean isRead = null;
-            if (letter.getRecipient() != null && 
-                letter.getRecipient().getId().equals(currentUser.getId())) {
-                // 내가 받은 편지인 경우 읽음 상태 반환
-                isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
+                // recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
+                Boolean isRead = null;
+                if (letter.getRecipient() != null) {
+                    String recipientId = letter.getRecipient().getId();
+                    if (recipientId != null && recipientId.equals(currentUser.getId())) {
+                        // 내가 받은 편지인 경우 읽음 상태 반환
+                        isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
+                    }
+                }
+                // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
+
+                // sentByMe 확인
+                boolean sentByMe = false;
+                if (letter.getSender() != null) {
+                    String senderId = letter.getSender().getId();
+                    if (senderId != null && senderId.equals(currentUser.getId())) {
+                        sentByMe = true;
+                    }
+                }
+
+                return com.taba.friendship.dto.SharedFlowerDto.builder()
+                        .id(letter.getId())
+                        .letter(letterSummary)
+                        .flowerType(letter.getFlowerType() != null ? letter.getFlowerType().name() : "ROSE")
+                        .sentAt(letter.getSentAt())
+                        .sentByMe(sentByMe)
+                        .isRead(isRead)
+                        .fontFamily(letter.getTemplateFontFamily() != null ? letter.getTemplateFontFamily() : null) // 폰트 이름 추가
+                        .build();
+            } catch (Exception e) {
+                log.error("Error mapping letter to SharedFlowerDto: letterId={}, error={}", 
+                        letter.getId(), e.getMessage(), e);
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
-            // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
-
-            // sentByMe 확인
-            boolean sentByMe = letter.getSender() != null && 
-                    letter.getSender().getId().equals(currentUser.getId());
-
-            return com.taba.friendship.dto.SharedFlowerDto.builder()
-                    .id(letter.getId())
-                    .letter(letterSummary)
-                    .flowerType(letter.getFlowerType() != null ? letter.getFlowerType().name() : "ROSE")
-                    .sentAt(letter.getSentAt())
-                    .sentByMe(sentByMe)
-                    .isRead(isRead)
-                    .build();
         });
     }
 

@@ -38,9 +38,12 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
      * sender가 currentUserId이고 recipient가 friendId이거나,
      * sender가 friendId이고 recipient가 currentUserId인 편지
      * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,desc)
+     * 
+     * 주의: JOIN FETCH는 Pageable과 함께 사용할 수 없으므로,
+     * @Transactional(readOnly = true)로 세션을 유지하여 Lazy 로딩을 지원합니다.
      */
-    @Query("SELECT l FROM Letter l WHERE " +
-           "((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
+    @Query("SELECT l FROM Letter l " +
+           "WHERE ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
            "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
            "AND l.visibility = 'DIRECT' " +
            "AND l.sentAt IS NOT NULL " +

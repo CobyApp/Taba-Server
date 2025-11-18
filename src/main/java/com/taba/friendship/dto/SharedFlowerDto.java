@@ -18,5 +18,6 @@ public class SharedFlowerDto {
     private LocalDateTime sentAt;
     private Boolean sentByMe;
     private Boolean isRead;
+    private String fontFamily; // 폰트 이름 (편지 표시용)
 }
 

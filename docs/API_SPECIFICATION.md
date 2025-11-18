@@ -392,17 +392,33 @@ profileImage: [파일]
     "title": "편지 제목",
     "content": "편지 전체 내용",
     "preview": "미리보기",
-    "sender": { ... },
+    "sender": {
+      "id": "sender-uuid",
+      "nickname": "작성자"
+    },
     "flowerType": "ROSE",
     "visibility": "PUBLIC",
     "isAnonymous": false,
     "sentAt": "2024-01-01T00:00:00",
     "views": 51,
-    "attachedImages": [ ... ],
-    "template": { ... }
+    "attachedImages": [
+      "http://localhost:8080/api/v1/uploads/image1.jpg"
+    ],
+    "template": {
+      "background": "pink",
+      "textColor": "black",
+      "fontFamily": "Arial",
+      "fontSize": 14.0
+    }
   }
 }
 ```
+
+**참고**:
+- `template.fontFamily`: 편지에 사용된 폰트 이름 (편지 표시 시 적용)
+- `template.fontSize`: 폰트 크기
+- `template.background`: 배경 색상
+- `template.textColor`: 텍스트 색상
 
 ### 3.4 편지 답장 (자동 친구 추가)
 
@@ -615,12 +631,14 @@ profileImage: [파일]
         "letter": {
           "id": "letter-uuid",
           "title": "편지 제목",
-          "preview": "미리보기"
+          "preview": "미리보기",
+          "fontFamily": "Arial"
         },
         "flowerType": "ROSE",
         "sentAt": "2024-01-01T00:00:00",
         "sentByMe": false,
-        "isRead": true
+        "isRead": true,
+        "fontFamily": "Arial"
       }
     ],
     "totalElements": 50,
@@ -635,6 +653,8 @@ profileImage: [파일]
 - `id`: 편지 ID (Letter 테이블의 ID)
 - `sentByMe`: 현재 사용자가 보낸 편지인지 여부
 - `isRead`: 내가 받은 편지인 경우 읽음 상태 (내가 보낸 편지는 null)
+- `fontFamily`: 편지에 사용된 폰트 이름 (편지 표시용)
+- `letter.fontFamily`: 편지 요약 정보의 폰트 이름
 
 ### 5.3 꽃다발 이름 변경
 
