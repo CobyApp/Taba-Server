@@ -46,7 +46,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto updateProfile(String userId, String nickname, String statusMessage, String avatarUrl, MultipartFile profileImage) {
+    public UserDto updateProfile(String userId, String nickname, String avatarUrl, MultipartFile profileImage) {
         User user = userRepository.findActiveUserById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -61,10 +61,20 @@ public class UserService {
             }
         }
 
-        user.updateProfile(nickname, statusMessage, finalAvatarUrl);
+        user.updateProfile(nickname, finalAvatarUrl);
         user = userRepository.save(user);
 
         return userMapper.toDto(user);
+    }
+
+    @Transactional
+    public void updateFcmToken(String userId, String fcmToken) {
+        User user = userRepository.findActiveUserById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        
+        user.updateFcmToken(fcmToken);
+        userRepository.save(user);
+        log.info("FCM token updated for user: {}", userId);
     }
 }
 

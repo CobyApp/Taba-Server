@@ -45,6 +45,17 @@ Taba Backend에서 사용하는 모든 환경 변수를 정리한 문서입니�
 |------|------|------|--------|
 | `FILE_UPLOAD_DIR` | 파일 업로드 디렉토리 | `/app/uploads` | `uploads` |
 
+### Firebase Cloud Messaging (FCM)
+
+| 변수 | 설명 | 예시 | 기본값 |
+|------|------|------|--------|
+| `FCM_SERVICE_ACCOUNT_KEY_PATH` | Firebase 서비스 계정 키 파일 경로 | `/path/to/firebase-service-account.json` | 없음 |
+| `FCM_SERVICE_ACCOUNT_KEY_CLASSPATH` | 클래스패스에서 Firebase 키 파일 경로 | `firebase-service-account.json` | `firebase-service-account.json` |
+
+**참고**: 
+- 로컬 개발: `src/main/resources/firebase-service-account.json` 파일 배치
+- 서버 배포: GitHub Secrets의 `FCM_SERVICE_ACCOUNT_KEY_JSON` 사용 (자동으로 파일 생성)
+
 ### 메일 (선택사항)
 
 | 변수 | 설명 | 예시 | 기본값 |
@@ -75,7 +86,7 @@ export SPRING_PROFILES_ACTIVE=dev
 
 GitHub Secrets에 다음을 설정:
 
-**필수 Secrets (7개)**:
+**필수 Secrets (8개)**:
 1. `SSH_PRIVATE_KEY` - SSH 개인 키
 2. `SSH_USER` - `coby`
 3. `DB_NAME` - `taba`
@@ -83,6 +94,7 @@ GitHub Secrets에 다음을 설정:
 5. `DB_PASSWORD` - 데이터베이스 비밀번호
 6. `JWT_SECRET` - `openssl rand -hex 32` 출력
 7. `SERVER_URL` - `http://cobyserver.iptime.org:8080/api/v1`
+8. `FCM_SERVICE_ACCOUNT_KEY_JSON` - Firebase 서비스 계정 키 JSON 전체 내용
 
 **선택사항 Secrets**:
 - `JWT_EXPIRATION` - `604800000` (기본값 사용 가능)

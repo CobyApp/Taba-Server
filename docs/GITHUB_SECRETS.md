@@ -56,6 +56,21 @@ GitHub 저장소의 **Settings > Secrets and variables > Actions**에서 다음 
 - **설명**: 서버 전체 URL
 - **값**: `http://cobyserver.iptime.org:8080/api/v1`
 
+### 5. Firebase 설정
+
+#### FCM_SERVICE_ACCOUNT_KEY_JSON
+- **설명**: Firebase Cloud Messaging 서비스 계정 키 JSON 파일 전체 내용
+- **생성 방법**:
+  1. Firebase Console (https://console.firebase.google.com/) 접속
+  2. 프로젝트 선택
+  3. 프로젝트 설정 > 서비스 계정 탭
+  4. "새 비공개 키 생성" 클릭하여 JSON 파일 다운로드
+  5. 다운로드한 JSON 파일의 전체 내용을 복사
+- **값**: JSON 파일의 전체 내용 (한 줄로 또는 멀티라인 모두 가능)
+- **주의**: 
+  - 민감한 정보이므로 절대 코드에 커밋하지 마세요
+  - GitHub Secrets에 저장하면 자동으로 안전하게 관리됩니다
+
 ## 🔧 선택사항 Secrets
 
 ### Redis 설정 (Redis 사용 시)
@@ -103,6 +118,7 @@ GitHub 저장소의 **Settings > Secrets and variables > Actions**에서 다음 
 - ✅ DB_PASSWORD
 - ✅ JWT_SECRET
 - ✅ SERVER_URL
+- ✅ FCM_SERVICE_ACCOUNT_KEY_JSON
 - ⚪ JWT_EXPIRATION (선택사항)
 - ⚪ REDIS_PASSWORD (선택사항)
 - ⚪ MAIL_HOST (선택사항)

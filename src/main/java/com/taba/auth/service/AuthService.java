@@ -44,7 +44,6 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        String username = generateUniqueUsername();
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         // 프로필 이미지 업로드 처리
@@ -61,7 +60,6 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
-                .username(username)
                 .nickname(request.getNickname())
                 .avatarUrl(avatarUrl)
                 .build();
@@ -162,14 +160,6 @@ public class AuthService {
         } catch (Exception e) {
             log.debug("Failed to add token to blacklist (Redis may be unavailable): {}", e.getMessage());
         }
-    }
-
-    private String generateUniqueUsername() {
-        String username;
-        do {
-            username = "user" + System.currentTimeMillis();
-        } while (userRepository.existsByUsername(username));
-        return username;
     }
 }
 

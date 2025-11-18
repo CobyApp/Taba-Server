@@ -36,19 +36,37 @@ public class UserController {
         UserDto userDto = userService.updateProfile(
                 userId,
                 request.getNickname(),
-                request.getStatusMessage(),
                 request.getAvatarUrl(),
                 profileImage
         );
         return ResponseEntity.ok(ApiResponse.success(userDto));
     }
 
+    @PutMapping("/{userId}/fcm-token")
+    public ResponseEntity<ApiResponse<?>> updateFcmToken(
+            @PathVariable String userId,
+            @RequestBody FcmTokenRequest request) {
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (!currentUserId.equals(userId)) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.FORBIDDEN);
+        }
+
+        userService.updateFcmToken(userId, request.getFcmToken());
+        return ResponseEntity.ok(ApiResponse.success(null, "FCM 토큰이 등록되었습니다."));
+    }
+
     @lombok.Getter
     @lombok.Setter
     static class UpdateProfileRequest {
         private String nickname;
-        private String statusMessage;
         private String avatarUrl;
+    }
+
+    @lombok.Getter
+    @lombok.Setter
+    static class FcmTokenRequest {
+        @jakarta.validation.constraints.NotBlank
+        private String fcmToken;
     }
 }
 

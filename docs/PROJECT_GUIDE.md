@@ -12,15 +12,15 @@
 
 ## 프로젝트 개요
 
-Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하는 소셜 플랫폼입니다. 이 백엔드는 Spring Boot 기반의 RESTful API 서버로, 모바일 앱과 웹 클라이언트를 위한 모든 기능을 제공합니다.
+Taba는 편지를 주고받으며 친구와의 관계를 쌓아가는 소셜 플랫폼입니다. 이 백엔드는 Spring Boot 기반의 RESTful API 서버로, 모바일 앱과 웹 클라이언트를 위한 모든 기능을 제공합니다.
 
 ### 주요 기능
 - **인증 시스템**: JWT 기반 회원가입/로그인, 비밀번호 재설정, 토큰 블랙리스트 관리
 - **사용자 관리**: 프로필 이미지 업로드 (회원가입/수정 시), 프로필 정보 수정
 - **편지 관리**: 공개/비공개 편지 작성, 템플릿 및 이미지 첨부, 신고, 예약 발송, 답장 (자동 친구 추가)
 - **공개 편지 수신자 관리**: 공개 편지의 복수 수신자 지원, 사용자별 읽음 상태 추적
-- **친구 시스템**: 초대 코드 기반 친구 추가 (3분 유효), 친구 목록 조회, 꽃다발 관리, 친구별 편지 목록 조회
-- **알림 시스템**: 실시간 알림 발송 및 관리, 배치 읽음 처리 최적화
+- **친구 시스템**: 초대 코드 기반 친구 추가 (3분 유효, 6자리 숫자+영문 조합), 친구 목록 조회, 친구별 편지 목록 조회
+- **알림 시스템**: 실시간 알림 발송 및 관리, FCM 푸시 알림 지원, 배치 읽음 처리 최적화
 - **파일 업로드**: 이미지 업로드 및 URL 반환 (로컬 저장)
 
 ---
@@ -136,6 +136,18 @@ Taba는 편지를 주고받으며 친구와의 관계를 꽃다발로 표현하�
   - 솔트 자동 생성
   - 단방향 암호화
   - Rainbow Table 공격 방지
+
+#### Firebase Cloud Messaging (FCM)
+- **역할**: 푸시 알림 발송
+- **라이브러리**: Firebase Admin SDK 9.2.0
+- **기능**:
+  - 편지 수신 시 푸시 알림 자동 발송
+  - 사용자별 FCM 토큰 관리
+  - 푸시 알림 설정 (활성화/비활성화)
+- **설정**:
+  - 서비스 계정 키 파일: `firebase-service-account.json`
+  - 로컬: `src/main/resources/firebase-service-account.json`
+  - 서버: GitHub Secrets에서 자동 생성
 
 ### 4. API 문서화
 
@@ -526,6 +538,7 @@ curl -X GET http://localhost:8080/api/v1/users/{userId} \
 #### 사용자 API
 - `GET /users/{userId}` - 프로필 조회
 - `PUT /users/{userId}` - 프로필 수정
+- `PUT /users/{userId}/fcm-token` - FCM 토큰 등록/업데이트
 
 #### 편지 API
 - `POST /letters` - 편지 작성 (예약 발송 지원)
@@ -539,21 +552,23 @@ curl -X GET http://localhost:8080/api/v1/users/{userId} \
 - `POST /friends/invite` - 초대 코드로 친구 추가 (검증 및 양방향 관계 생성)
 - `GET /friends` - 친구 목록 조회
 - `DELETE /friends/{friendId}` - 친구 삭제 (양방향 관계 삭제)
-
-#### 꽃다발 API
-- `GET /bouquets` - 꽃다발 목록 (읽지 않은 편지 수 포함)
-- `GET /bouquets/{friendId}/letters` - 친구별 편지 목록 (Letter 테이블 직접 조회)
-- `PUT /bouquets/{friendId}/name` - 꽃다발 이름 변경
+- `GET /friends/{friendId}/letters` - 친구별 편지 목록 (Letter 테이블 직접 조회)
 
 #### 초대 코드 API
-- `POST /invite-codes/generate` - 초대 코드 생성
+- `POST /invite-codes/generate` - 초대 코드 생성 (6자리 숫자+영문 조합)
 - `GET /invite-codes/current` - 현재 초대 코드 조회
+- **형식**: 6자리 숫자+영문 조합 (예: `A1B2C3`, `9X7Y2Z`)
+- **유효 시간**: 3분
 
 #### 알림 API
 - `GET /notifications` - 알림 목록 (카테고리별 필터링 지원)
 - `PUT /notifications/{notificationId}/read` - 읽음 처리
 - `PUT /notifications/read-all` - 전체 읽음 처리 (배치 업데이트 최적화)
 - `DELETE /notifications/{notificationId}` - 알림 삭제
+- **FCM 푸시 알림**: 편지 수신 시 자동으로 푸시 알림 발송 (FCM 토큰이 등록된 경우)
+
+#### 사용자 API
+- `PUT /users/{userId}/fcm-token` - FCM 토큰 등록/업데이트
 
 ### 4. Swagger UI 사용
 

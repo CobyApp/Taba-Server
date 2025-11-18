@@ -21,9 +21,6 @@ public class LetterCreateRequest {
     @NotBlank(message = "미리보기는 필수입니다.")
     private String preview;
 
-    @NotNull(message = "꽃 종류는 필수입니다.")
-    private Letter.FlowerType flowerType;
-
     @NotNull(message = "공개 설정은 필수입니다.")
     private Letter.Visibility visibility;
 

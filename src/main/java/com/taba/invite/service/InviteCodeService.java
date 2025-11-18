@@ -31,8 +31,12 @@ public class InviteCodeService {
             return toDto(existingCode);
         }
 
-        // 새 코드 생성
-        String code = currentUser.getUsername() + "-" + generateRandomDigits();
+        // 새 코드 생성 (6자리 숫자+영문 조합)
+        String code;
+        do {
+            code = generateRandomAlphanumeric(6);
+        } while (inviteCodeRepository.findByCode(code).isPresent()); // 중복 체크
+        
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(3);
 
         InviteCode inviteCode = InviteCode.builder()
@@ -62,9 +66,18 @@ public class InviteCodeService {
         return toDto(inviteCode);
     }
 
-    private String generateRandomDigits() {
+    /**
+     * 6자리 숫자+영문 조합 코드 생성
+     * 대문자 영문과 숫자만 사용 (0-9, A-Z)
+     */
+    private String generateRandomAlphanumeric(int length) {
+        String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         Random random = new Random();
-        return String.format("%06d", random.nextInt(1000000));
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private InviteCodeDto toDto(InviteCode inviteCode) {

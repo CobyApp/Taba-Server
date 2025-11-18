@@ -3,7 +3,6 @@ package com.taba.friendship.service;
 import com.taba.common.exception.BusinessException;
 import com.taba.common.exception.ErrorCode;
 import com.taba.common.util.SecurityUtil;
-import com.taba.friendship.dto.BouquetDto;
 import com.taba.friendship.entity.Friendship;
 import com.taba.friendship.repository.FriendshipRepository;
 import com.taba.letter.entity.Letter;
@@ -81,43 +80,6 @@ public class FriendshipService {
     }
 
     @Transactional(readOnly = true)
-    public List<BouquetDto> getBouquets() {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        List<Friendship> friendships = friendshipRepository.findByUserId(currentUser.getId());
-        return friendships.stream()
-                .map(friendship -> {
-                    long unreadCount = letterRepository.countUnreadLettersBetweenFriends(
-                            currentUser.getId(), friendship.getFriend().getId());
-                    return BouquetDto.builder()
-                            .friend(com.taba.user.dto.UserMapper.INSTANCE.toDto(friendship.getFriend()))
-                            .bloomLevel(friendship.getBloomLevel())
-                            .trustScore(friendship.getTrustScore())
-                            .bouquetName(friendship.getBouquetName())
-                            .unreadCount((int) unreadCount)
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
-
-    @Transactional
-    public void updateBouquetName(String friendId, String bouquetName) {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Friendship friendship = friendshipRepository.findByUserIds(currentUser.getId(), friendId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FRIENDSHIP_NOT_FOUND));
-
-        friendship.updateBouquetName(bouquetName);
-        friendshipRepository.save(friendship);
-    }
-
-    @Transactional(readOnly = true)
     public List<com.taba.user.dto.UserDto> getFriends() {
         User currentUser = SecurityUtil.getCurrentUser();
         if (currentUser == null) {
@@ -186,7 +148,6 @@ public class FriendshipService {
                 return com.taba.friendship.dto.SharedFlowerDto.builder()
                         .id(letter.getId())
                         .letter(letterSummary)
-                        .flowerType(letter.getFlowerType() != null ? letter.getFlowerType().name() : "ROSE")
                         .sentAt(letter.getSentAt())
                         .sentByMe(sentByMe)
                         .isRead(isRead)

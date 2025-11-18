@@ -28,6 +28,13 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org "mkdir -p ~/taba_backend"
 
+      - name: Create Firebase service account key file
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/firebase-service-account.json << 'EOF'
+          ${{ secrets.FCM_SERVICE_ACCOUNT_KEY_JSON }}
+          EOF
+
       - name: Copy files to server
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.yml docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/

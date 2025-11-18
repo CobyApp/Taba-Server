@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class SharedFlowerDto {
     private String id;
     private LetterSummaryDto letter;
-    private String flowerType;
     private LocalDateTime sentAt;
     private Boolean sentByMe;
     private Boolean isRead;

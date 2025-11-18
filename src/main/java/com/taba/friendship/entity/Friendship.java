@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -34,15 +33,6 @@ public class Friendship extends BaseEntity {
     @JoinColumn(name = "friend_id", nullable = false)
     private User friend;
 
-    @Column(name = "bouquet_name", length = 100)
-    private String bouquetName;
-
-    @Column(name = "bloom_level", columnDefinition = "DECIMAL(3,2) DEFAULT 0.0")
-    private BigDecimal bloomLevel = BigDecimal.ZERO;
-
-    @Column(name = "trust_score")
-    private Integer trustScore = 0;
-
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
@@ -54,18 +44,6 @@ public class Friendship extends BaseEntity {
     public Friendship(User user, User friend) {
         this.user = user;
         this.friend = friend;
-    }
-
-    public void updateBouquetName(String bouquetName) {
-        this.bouquetName = bouquetName;
-    }
-
-    public void updateBloomLevel(BigDecimal bloomLevel) {
-        this.bloomLevel = bloomLevel;
-    }
-
-    public void updateTrustScore(Integer trustScore) {
-        this.trustScore = trustScore;
     }
 }
 

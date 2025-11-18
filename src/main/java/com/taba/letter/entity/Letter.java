@@ -48,10 +48,6 @@ public class Letter extends BaseEntity {
     private String preview;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "flower_type", nullable = false, length = 20)
-    private FlowerType flowerType;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false, length = 20)
     private Visibility visibility;
 
@@ -100,7 +96,7 @@ public class Letter extends BaseEntity {
 
     @Builder
     public Letter(User sender, User recipient, String title, String content, String preview,
-                  FlowerType flowerType, Visibility visibility, Boolean isAnonymous,
+                  Visibility visibility, Boolean isAnonymous,
                   String templateBackground, String templateTextColor, String templateFontFamily,
                   Double templateFontSize, LocalDateTime scheduledAt) {
         this.sender = sender;
@@ -108,7 +104,6 @@ public class Letter extends BaseEntity {
         this.title = title;
         this.content = content;
         this.preview = preview;
-        this.flowerType = flowerType;
         this.visibility = visibility;
         this.isAnonymous = isAnonymous;
         this.templateBackground = templateBackground;
@@ -139,10 +134,6 @@ public class Letter extends BaseEntity {
     public void markAsRead() {
         this.isRead = true;
         this.readAt = LocalDateTime.now();
-    }
-
-    public enum FlowerType {
-        ROSE, TULIP, SAKURA, SUNFLOWER, DAISY, LAVENDER
     }
 
     public enum Visibility {

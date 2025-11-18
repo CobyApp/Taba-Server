@@ -85,13 +85,14 @@ spring:
 
 ### 주요 테이블 구조
 
-- `users`: 사용자 정보 (프로필 이미지 포함)
+- `users`: 사용자 정보 (프로필 이미지, FCM 토큰 포함)
+  - 주요 필드: `id`, `email`, `password`, `nickname`, `avatar_url`, `fcm_token`, `push_notification_enabled`
 - `letters`: 편지 정보
 - `letter_recipients`: 편지 수신자 (공개 편지의 복수 수신자 지원)
 - `letter_images`: 편지 첨부 이미지
 - `friendships`: 친구 관계
-- `invite_codes`: 초대 코드
-- `notifications`: 알림
+- `invite_codes`: 초대 코드 (6자리 숫자+영문 조합, 3분 유효)
+- `notifications`: 알림 (FCM 푸시 알림 지원)
 
 ### 프로덕션 환경
 

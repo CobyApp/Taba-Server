@@ -210,7 +210,7 @@ mysql -u root -p taba < src/main/resources/db/mock-data.sql
 
 ```sql
 -- 사용자 확인
-SELECT id, email, username, nickname FROM users;
+SELECT id, email, nickname FROM users;
 
 -- 친구 관계 확인
 SELECT u1.nickname AS user, u2.nickname AS friend 
@@ -313,7 +313,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 #### 친구 목록 조회
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/bouquets \
+curl -X GET http://localhost:8080/api/v1/friends \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -321,7 +321,7 @@ curl -X GET http://localhost:8080/api/v1/bouquets \
 
 ```bash
 # 밥의 ID를 friendId로 사용
-curl -X GET "http://localhost:8080/api/v1/bouquets/22222222-2222-2222-2222-222222222222/letters?page=0&size=20" \
+curl -X GET "http://localhost:8080/api/v1/friends/22222222-2222-2222-2222-222222222222/letters?page=0&size=20" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -344,7 +344,8 @@ curl -X GET "http://localhost:8080/api/v1/letters/public?page=0&size=20" \
 
 3. **요청 예시**
    - `POST {{base_url}}/auth/login`
-   - `GET {{base_url}}/bouquets` (Header: `Authorization: Bearer {{token}}`)
+   - `GET {{base_url}}/friends` (Header: `Authorization: Bearer {{token}}`)
+   - `GET {{base_url}}/friends/{friendId}/letters` (Header: `Authorization: Bearer {{token}}`)
 
 ---
 

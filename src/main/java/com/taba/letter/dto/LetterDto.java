@@ -20,7 +20,6 @@ public class LetterDto {
     private String content;
     private String preview;
     private UserDto sender;
-    private Letter.FlowerType flowerType;
     private Letter.Visibility visibility;
     private Boolean isAnonymous;
     private LocalDateTime sentAt;

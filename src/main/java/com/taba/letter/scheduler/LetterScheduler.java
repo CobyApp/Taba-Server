@@ -2,8 +2,7 @@ package com.taba.letter.scheduler;
 
 import com.taba.letter.entity.Letter;
 import com.taba.letter.repository.LetterRepository;
-import com.taba.notification.entity.Notification;
-import com.taba.notification.repository.NotificationRepository;
+import com.taba.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,7 +18,7 @@ import java.util.List;
 public class LetterScheduler {
 
     private final LetterRepository letterRepository;
-    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
 
     @Scheduled(fixedRate = 60000) // 1분마다 실행
     @Transactional
@@ -32,18 +31,15 @@ public class LetterScheduler {
             letterRepository.save(letter);
             log.info("Scheduled letter sent: {}", letter.getId());
             
-            // 알림 발송 로직
+            // 알림 발송 로직 (FCM 푸시 포함)
             if (letter.getRecipient() != null) {
-                Notification notification = Notification.builder()
-                        .user(letter.getRecipient())
-                        .title("새로운 편지가 도착했습니다")
-                        .subtitle(letter.getTitle())
-                        .category(Notification.NotificationCategory.LETTER)
-                        .relatedId(letter.getId())
-                        .build();
-                notificationRepository.save(notification);
-                log.info("Notification sent to user: {} for letter: {}", 
-                        letter.getRecipient().getId(), letter.getId());
+                notificationService.createAndSendNotification(
+                        letter.getRecipient(),
+                        "새로운 편지가 도착했습니다",
+                        letter.getTitle(),
+                        com.taba.notification.entity.Notification.NotificationCategory.LETTER,
+                        letter.getId()
+                );
             }
         }
     }

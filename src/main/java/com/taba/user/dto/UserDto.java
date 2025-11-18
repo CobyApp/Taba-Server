@@ -16,10 +16,8 @@ import java.time.LocalDateTime;
 public class UserDto {
     private String id;
     private String email;
-    private String username;
     private String nickname;
     private String avatarUrl;
-    private String statusMessage;
     private LocalDateTime joinedAt;
     private Integer friendCount;
     private Integer sentLetters;

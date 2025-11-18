@@ -56,3 +56,7 @@ github_actions_deploy.pub
 ### QueryDSL ###
 **/generated/querydsl/
 
+### Firebase ###
+firebase-service-account.json
+**/firebase-service-account.json
+

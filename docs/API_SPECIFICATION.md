@@ -75,12 +75,11 @@ profileImage: [파일]
   "success": true,
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "uuid",
-      "email": "user@example.com",
-      "username": "user1234567890",
-      "nickname": "사용자"
-    }
+      "user": {
+        "id": "uuid",
+        "email": "user@example.com",
+        "nickname": "사용자"
+      }
   },
   "message": "회원가입이 완료되었습니다."
 }
@@ -106,12 +105,11 @@ profileImage: [파일]
   "success": true,
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "uuid",
-      "email": "user@example.com",
-      "username": "user1234567890",
-      "nickname": "사용자"
-    }
+      "user": {
+        "id": "uuid",
+        "email": "user@example.com",
+        "nickname": "사용자"
+      }
   }
 }
 ```
@@ -221,10 +219,8 @@ Authorization: Bearer {token}
   "data": {
     "id": "uuid",
     "email": "user@example.com",
-    "username": "user1234567890",
     "nickname": "사용자",
     "avatarUrl": "http://localhost:8080/api/v1/uploads/avatar.jpg",
-    "statusMessage": "상태 메시지",
     "joinedAt": "2024-01-01T00:00:00",
     "friendCount": 10,
     "sentLetters": 25
@@ -242,7 +238,6 @@ Authorization: Bearer {token}
 
 **Request**:
 - `nickname`: 닉네임 (선택사항)
-- `statusMessage`: 상태 메시지 (선택사항)
 - `avatarUrl`: 기존 아바타 URL (선택사항, profileImage가 있으면 무시됨)
 - `profileImage`: 프로필 이미지 파일 (선택사항)
 
@@ -251,7 +246,6 @@ Authorization: Bearer {token}
 **Request Body 예시** (multipart/form-data):
 ```
 nickname: 새 닉네임
-statusMessage: 새 상태 메시지
 profileImage: [파일]
 ```
 
@@ -262,16 +256,41 @@ profileImage: [파일]
   "data": {
     "id": "uuid",
     "email": "user@example.com",
-    "username": "user1234567890",
     "nickname": "새 닉네임",
     "avatarUrl": "http://localhost:8080/api/v1/uploads/new-avatar.jpg",
-    "statusMessage": "새 상태 메시지",
     "joinedAt": "2024-01-01T00:00:00",
     "friendCount": 10,
     "sentLetters": 25
   }
 }
 ```
+
+### 2.3 FCM 토큰 등록
+
+**PUT** `/users/{userId}/fcm-token`
+
+**인증**: 필요 (본인만 수정 가능)
+
+**Request Body**:
+```json
+{
+  "fcmToken": "클라이언트에서 받은 FCM 토큰"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "FCM 토큰이 등록되었습니다."
+}
+```
+
+**참고**:
+- FCM 토큰은 푸시 알림 발송에 사용됩니다
+- 편지 수신 시 자동으로 푸시 알림이 발송됩니다
+- 푸시 알림이 비활성화되어 있으면(`pushNotificationEnabled = false`) 푸시는 발송되지 않지만 알림은 저장됩니다
 
 ---
 
@@ -289,7 +308,6 @@ profileImage: [파일]
   "title": "편지 제목",
   "content": "편지 내용",
   "preview": "미리보기 텍스트",
-  "flowerType": "ROSE",
   "visibility": "PUBLIC",
   "isAnonymous": false,
   "template": {
@@ -307,8 +325,6 @@ profileImage: [파일]
 }
 ```
 
-**FlowerType**: `ROSE`, `TULIP`, `SAKURA`, `SUNFLOWER`, `DAISY`, `LAVENDER`
-
 **Visibility**: `PUBLIC`, `FRIENDS`, `DIRECT`, `PRIVATE`
 
 **Response** (201 Created):
@@ -324,7 +340,6 @@ profileImage: [파일]
       "id": "sender-uuid",
       "nickname": "작성자"
     },
-    "flowerType": "ROSE",
     "visibility": "PUBLIC",
     "isAnonymous": false,
     "sentAt": "2024-01-01T00:00:00",
@@ -363,7 +378,6 @@ profileImage: [파일]
         "title": "편지 제목",
         "preview": "미리보기",
         "sender": { ... },
-        "flowerType": "ROSE",
         "views": 50,
         "attachedImages": [ ... ],
         "template": { ... }
@@ -396,7 +410,6 @@ profileImage: [파일]
       "id": "sender-uuid",
       "nickname": "작성자"
     },
-    "flowerType": "ROSE",
     "visibility": "PUBLIC",
     "isAnonymous": false,
     "sentAt": "2024-01-01T00:00:00",
@@ -432,7 +445,6 @@ profileImage: [파일]
   "title": "답장 제목",
   "content": "답장 내용",
   "preview": "답장 미리보기",
-  "flowerType": "ROSE",
   "isAnonymous": false,
   "template": {
     "background": "blue",
@@ -509,7 +521,7 @@ profileImage: [파일]
 **Request Body**:
 ```json
 {
-  "inviteCode": "user123-456789"
+  "inviteCode": "A1B2C3"
 }
 ```
 
@@ -543,10 +555,8 @@ profileImage: [파일]
     {
       "id": "friend-uuid",
       "email": "friend@example.com",
-      "username": "friend123",
       "nickname": "친구",
       "avatarUrl": "...",
-      "statusMessage": "...",
       "joinedAt": "2024-01-01T00:00:00",
       "friendCount": 5,
       "sentLetters": 10
@@ -570,41 +580,9 @@ profileImage: [파일]
 }
 ```
 
----
+### 4.4 친구별 편지 목록 조회
 
-## 5. 꽃다발 API (`/bouquets`)
-
-### 5.1 꽃다발 목록 조회
-
-**GET** `/bouquets`
-
-**인증**: 필요
-
-**설명**: 현재 로그인한 사용자의 모든 친구와의 꽃다발 정보를 조회합니다. 각 꽃다발은 친구와의 관계 정보와 읽지 않은 편지 수를 포함합니다.
-
-**Response** (200 OK):
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "friend": {
-        "id": "friend-uuid",
-        "nickname": "친구",
-        ...
-      },
-      "bloomLevel": 0.75,
-      "trustScore": 50,
-      "bouquetName": "친구의 꽃다발",
-      "unreadCount": 3
-    }
-  ]
-}
-```
-
-### 5.2 친구별 편지 목록 조회
-
-**GET** `/bouquets/{friendId}/letters?page=0&size=20&sort=sentAt,desc`
+**GET** `/friends/{friendId}/letters?page=0&size=20&sort=sentAt,desc`
 
 **인증**: 필요
 
@@ -634,7 +612,6 @@ profileImage: [파일]
           "preview": "미리보기",
           "fontFamily": "Arial"
         },
-        "flowerType": "ROSE",
         "sentAt": "2024-01-01T00:00:00",
         "sentByMe": false,
         "isRead": true,
@@ -656,32 +633,11 @@ profileImage: [파일]
 - `fontFamily`: 편지에 사용된 폰트 이름 (편지 표시용)
 - `letter.fontFamily`: 편지 요약 정보의 폰트 이름
 
-### 5.3 꽃다발 이름 변경
-
-**PUT** `/bouquets/{friendId}/name`
-
-**인증**: 필요
-
-**Request Body**:
-```json
-{
-  "bouquetName": "새 꽃다발 이름"
-}
-```
-
-**Response** (200 OK):
-```json
-{
-  "success": true,
-  "data": null
-}
-```
-
 ---
 
-## 6. 초대 코드 API (`/invite-codes`)
+## 5. 초대 코드 API (`/invite-codes`)
 
-### 6.1 초대 코드 생성
+### 5.1 초대 코드 생성
 
 **POST** `/invite-codes/generate`
 
@@ -692,7 +648,7 @@ profileImage: [파일]
 {
   "success": true,
   "data": {
-    "code": "user123-456789",
+    "code": "A1B2C3",
     "expiresAt": "2024-01-01T00:03:00",
     "remainingMinutes": 3
   }
@@ -702,9 +658,9 @@ profileImage: [파일]
 **참고**: 
 - 기존 활성 코드가 있으면 새로 생성하지 않고 기존 코드 반환
 - 코드 유효 시간: **3분**
-- 형식: `{username}-{6자리 숫자}`
+- 형식: `6자리 숫자+영문 조합` (예: `A1B2C3`, `9X7Y2Z`)
 
-### 6.2 현재 초대 코드 조회
+### 5.2 현재 초대 코드 조회
 
 **GET** `/invite-codes/current`
 
@@ -715,7 +671,7 @@ profileImage: [파일]
 {
   "success": true,
   "data": {
-    "code": "user123-456789",
+    "code": "A1B2C3",
     "expiresAt": "2024-01-01T00:03:00",
     "remainingMinutes": 2
   }
@@ -726,9 +682,9 @@ profileImage: [파일]
 
 ---
 
-## 7. 알림 API (`/notifications`)
+## 6. 알림 API (`/notifications`)
 
-### 7.1 알림 목록 조회
+### 6.1 알림 목록 조회
 
 **GET** `/notifications?category=LETTER&page=0&size=20`
 
@@ -767,7 +723,7 @@ profileImage: [파일]
 }
 ```
 
-### 7.2 알림 읽음 처리
+### 6.2 알림 읽음 처리
 
 **PUT** `/notifications/{notificationId}/read`
 
@@ -786,7 +742,7 @@ profileImage: [파일]
 }
 ```
 
-### 7.3 전체 알림 읽음 처리
+### 6.3 전체 알림 읽음 처리
 
 **PUT** `/notifications/read-all`
 
@@ -803,7 +759,7 @@ profileImage: [파일]
 }
 ```
 
-### 7.4 알림 삭제
+### 6.4 알림 삭제
 
 **DELETE** `/notifications/{notificationId}`
 
@@ -820,9 +776,9 @@ profileImage: [파일]
 
 ---
 
-## 8. 파일 API (`/files`)
+## 7. 파일 API (`/files`)
 
-### 8.1 이미지 업로드
+### 7.1 이미지 업로드
 
 **POST** `/files/upload`
 
@@ -985,9 +941,10 @@ Swagger UI에서:
 
 ## 참고사항
 
-### 친구 코드
+### 초대 코드
 - 유효 시간: **3분**
-- 형식: `{username}-{6자리 숫자}` (예: `user123-456789`)
+- 형식: `6자리 숫자+영문 조합` (예: `A1B2C3`, `9X7Y2Z`)
+- 대문자 영문(A-Z)과 숫자(0-9) 조합
 - 기존 활성 코드가 있으면 새로 생성하지 않고 기존 코드 반환
 - 만료되면 새 코드 생성 가능
 
@@ -1027,4 +984,10 @@ Swagger UI에서:
 - 프로필 수정 시 프로필 이미지 업로드 지원 (multipart/form-data)
 - 공개 편지 복수 수신자 지원 (LetterRecipient 엔티티 추가)
 - 공개 편지 읽음 상태 개별 관리 (사용자별 읽음 상태 추적)
+- 꽃다발(bouquet) 기능 제거
+- 꽃 종류(flowerType) 제거
+- username, statusMessage 필드 제거
+- 초대 코드 형식 변경: 6자리 숫자+영문 조합 (예: `A1B2C3`)
+- FCM 푸시 알림 지원 추가
+- 친구 API에 편지 목록 조회 추가 (`GET /friends/{friendId}/letters`)
 

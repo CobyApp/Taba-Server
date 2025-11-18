@@ -16,12 +16,11 @@
 -- users: 사용자 정보
 -- - id (VARCHAR(36), PK)
 -- - email (VARCHAR(255), UNIQUE)
--- - username (VARCHAR(50), UNIQUE)
 -- - password (VARCHAR(255))
 -- - nickname (VARCHAR(50))
 -- - avatar_url (VARCHAR(500))
--- - status_message (VARCHAR(200))
 -- - push_notification_enabled (BOOLEAN)
+-- - fcm_token (VARCHAR(500)) -- FCM 푸시 알림 토큰
 -- - language (VARCHAR(10))
 -- - created_at, updated_at, deleted_at (TIMESTAMP)
 
@@ -32,7 +31,6 @@
 -- - title (VARCHAR(200))
 -- - content (TEXT)
 -- - preview (VARCHAR(500))
--- - flower_type (VARCHAR(20), ENUM)
 -- - visibility (VARCHAR(20), ENUM: PUBLIC, FRIENDS, DIRECT, PRIVATE)
 -- - is_anonymous (BOOLEAN)
 -- - template_background (VARCHAR(50))
@@ -50,9 +48,6 @@
 -- - id (VARCHAR(36), PK)
 -- - user_id (VARCHAR(36), FK -> users.id)
 -- - friend_id (VARCHAR(36), FK -> users.id)
--- - bouquet_name (VARCHAR(100))
--- - bloom_level (DECIMAL(3,2), default 0.0)
--- - trust_score (INTEGER, default 0)
 -- - created_at, updated_at, deleted_at (TIMESTAMP)
 -- - UNIQUE(user_id, friend_id)
 

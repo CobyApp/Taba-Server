@@ -12,6 +12,7 @@ import com.taba.letter.repository.LetterRepository;
 import com.taba.letter.repository.LetterRecipientRepository;
 import com.taba.letter.repository.LetterReportRepository;
 import com.taba.friendship.service.FriendshipService;
+import com.taba.notification.service.NotificationService;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class LetterService {
     private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
     private final FriendshipService friendshipService;
+    private final NotificationService notificationService;
 
     @Transactional
     public LetterDto createLetter(LetterCreateRequest request) {
@@ -53,7 +55,6 @@ public class LetterService {
                 .title(request.getTitle())
                 .content(request.getContent())
                 .preview(request.getPreview())
-                .flowerType(request.getFlowerType())
                 .visibility(request.getVisibility())
                 .isAnonymous(request.getIsAnonymous())
                 .templateBackground(request.getTemplate() != null ? request.getTemplate().getBackground() : null)
@@ -71,6 +72,17 @@ public class LetterService {
 
         if (request.getScheduledAt() == null || request.getScheduledAt().isBefore(LocalDateTime.now())) {
             letter.send();
+            
+            // 즉시 발송된 편지인 경우 알림 발송 (FCM 푸시 포함)
+            if (recipient != null) {
+                notificationService.createAndSendNotification(
+                        recipient,
+                        "새로운 편지가 도착했습니다",
+                        letter.getTitle(),
+                        com.taba.notification.entity.Notification.NotificationCategory.LETTER,
+                        letter.getId()
+                );
+            }
         }
 
         letter = letterRepository.save(letter);
@@ -112,7 +124,6 @@ public class LetterService {
                 .title(request.getTitle())
                 .content(request.getContent())
                 .preview(request.getPreview())
-                .flowerType(request.getFlowerType())
                 .visibility(Letter.Visibility.DIRECT) // 답장은 항상 DIRECT
                 .isAnonymous(request.getIsAnonymous() != null ? request.getIsAnonymous() : false)
                 .templateBackground(request.getTemplate() != null ? request.getTemplate().getBackground() : null)
@@ -130,6 +141,15 @@ public class LetterService {
 
         if (request.getScheduledAt() == null || request.getScheduledAt().isBefore(LocalDateTime.now())) {
             replyLetter.send();
+            
+            // 즉시 발송된 답장인 경우 알림 발송 (FCM 푸시 포함)
+            notificationService.createAndSendNotification(
+                    recipient,
+                    "새로운 편지가 도착했습니다",
+                    replyLetter.getTitle(),
+                    com.taba.notification.entity.Notification.NotificationCategory.LETTER,
+                    replyLetter.getId()
+            );
         }
 
         replyLetter = letterRepository.save(replyLetter);
@@ -280,7 +300,6 @@ public class LetterService {
                 .content(letter.getContent())
                 .preview(letter.getPreview())
                 .sender(com.taba.user.dto.UserMapper.INSTANCE.toDto(letter.getSender()))
-                .flowerType(letter.getFlowerType())
                 .visibility(letter.getVisibility())
                 .isAnonymous(letter.getIsAnonymous())
                 .sentAt(letter.getSentAt())

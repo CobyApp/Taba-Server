@@ -103,6 +103,18 @@ GitHub 저장소에서 다음 Secrets를 설정해야 합니다:
 - **값**: `http://cobyserver.iptime.org:8080/api/v1`
 - **설명**: 서버 전체 URL
 
+#### FCM_SERVICE_ACCOUNT_KEY_JSON
+- **이름**: `FCM_SERVICE_ACCOUNT_KEY_JSON`
+- **값**: Firebase 서비스 계정 키 JSON 파일 전체 내용
+- **설명**: Firebase Cloud Messaging 푸시 알림용 서비스 계정 키
+- **생성 방법**:
+  1. Firebase Console (https://console.firebase.google.com/) 접속
+  2. 프로젝트 선택
+  3. 프로젝트 설정 > 서비스 계정 탭
+  4. "새 비공개 키 생성" 클릭하여 JSON 파일 다운로드
+  5. 다운로드한 JSON 파일의 전체 내용을 복사하여 Secrets에 추가
+- **주의**: 민감한 정보이므로 절대 코드에 커밋하지 마세요
+
 #### REDIS_PASSWORD (선택사항)
 - **이름**: `REDIS_PASSWORD`
 - **값**: Redis 비밀번호 (없으면 빈 문자열)
@@ -131,7 +143,7 @@ openssl rand -hex 32
 
 ### 전체 Secrets 목록
 
-필수 Secrets (7개):
+필수 Secrets (8개):
 1. `SSH_PRIVATE_KEY` - SSH 개인 키
 2. `SSH_USER` - `coby`
 3. `DB_NAME` - `taba`
@@ -139,6 +151,7 @@ openssl rand -hex 32
 5. `DB_PASSWORD` - 데이터베이스 비밀번호
 6. `JWT_SECRET` - `openssl rand -hex 32` 출력
 7. `SERVER_URL` - `http://cobyserver.iptime.org:8080/api/v1`
+8. `FCM_SERVICE_ACCOUNT_KEY_JSON` - Firebase 서비스 계정 키 JSON 전체 내용
 
 선택사항 Secrets:
 - `JWT_EXPIRATION` - `604800000` (기본값 사용 가능)
