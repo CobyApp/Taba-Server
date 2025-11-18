@@ -47,8 +47,8 @@ git push origin main  # 자동 배포!
 - Swagger: http://localhost:8080/api/v1/swagger-ui/index.html
 
 ### 서버
-- API: http://cobyserver.iptime.org:8080/api/v1
-- Swagger: http://cobyserver.iptime.org:8080/api/v1/swagger-ui/index.html
+- API: https://www.taba.asia/api/v1
+- Swagger: https://www.taba.asia/api/v1/swagger-ui/index.html
 
 ## 🛠️ 주요 명령어
 

@@ -79,7 +79,7 @@ export DB_NAME=taba
 export DB_USERNAME=taba_user
 export DB_PASSWORD=your_password
 export JWT_SECRET=$(openssl rand -hex 32)
-export SERVER_URL=http://cobyserver.iptime.org:8080/api/v1
+export SERVER_URL=https://www.taba.asia/api/v1
 
 ./deploy.sh coby@cobyserver.iptime.org 8080
 ```
@@ -186,9 +186,9 @@ docker-compose down -v
 - Health Check: http://localhost:8080/api/v1/actuator/health
 
 ### 서버 배포
-- API: http://cobyserver.iptime.org:8080/api/v1
-- Swagger UI: http://cobyserver.iptime.org:8080/api/v1/swagger-ui/index.html
-- Health Check: http://cobyserver.iptime.org:8080/api/v1/actuator/health
+- API: https://www.taba.asia/api/v1
+- Swagger UI: https://www.taba.asia/api/v1/swagger-ui/index.html
+- Health Check: https://www.taba.asia/api/v1/actuator/health
 
 ---
 

@@ -29,7 +29,7 @@ GitHub 저장소 **Settings > Secrets and variables > Actions**에서 다음 Sec
   # 출력 복사
   ```
 
-- [ ] `SERVER_URL` - `http://cobyserver.iptime.org:8080/api/v1`
+- [ ] `SERVER_URL` - `https://www.taba.asia/api/v1`
 
 ### 선택사항 Secrets
 
@@ -57,11 +57,11 @@ ssh-copy-id -i ~/.ssh/github_actions_deploy.pub coby@cobyserver.iptime.org
 
 2. **Health Check**
    ```bash
-   curl http://cobyserver.iptime.org:8080/api/v1/actuator/health
+   curl https://www.taba.asia/api/v1/actuator/health
    ```
 
 3. **Swagger UI 확인**
-   - http://cobyserver.iptime.org:8080/api/v1/swagger-ui/index.html
+   - https://www.taba.asia/api/v1/swagger-ui/index.html
 
 ## 📚 참고 문서
 

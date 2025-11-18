@@ -56,6 +56,7 @@ mysql -u root -p -e "CREATE DATABASE taba CHARACTER SET utf8mb4 COLLATE utf8mb4_
 애플리케이션 실행 후 다음 URL에서 Swagger UI를 확인할 수 있습니다:
 
 - **로컬**: http://localhost:8080/api/v1/swagger-ui/index.html
+- **프로덕션**: https://www.taba.asia/api/v1/swagger-ui/index.html
 
 ## 주요 기능
 
@@ -146,7 +147,7 @@ docker-compose up -d
 
 ### 빠른 시작
 - **[사용 가이드](USAGE.md)** ⭐ - 핵심 사용법 정리
-- **[시작하기](docs/GETTING_STARTED.md)** - 가장 빠른 시작 방법
+- **[빠른 시작 가이드](docs/QUICK_START.md)** ⭐ - 5분 안에 시작하기
 - **[API 명세서](docs/API_SPECIFICATION.md)** - 전체 API 엔드포인트 상세 명세
 
 ### 배포
@@ -154,13 +155,13 @@ docker-compose up -d
 - **[GitHub Secrets 설정](docs/GITHUB_SECRETS.md)** ⭐ - 필수 환경변수 설정 가이드
 - **[GitHub Actions 설정](docs/GITHUB_ACTIONS_SETUP.md)** - 자동 배포 설정
 - **[무중단 배포 가이드](docs/ZERO_DOWNTIME_DEPLOYMENT.md)** 🚀 - Blue-Green 배포 방식
-- **[환경 변수 가이드](docs/ENVIRONMENT_VARIABLES.md)** - 전체 환경 변수 목록
-- **[서버 배포 가이드](docs/DEPLOYMENT_SERVER.md)** - 수동 서버 배포 방법
-- **[Docker 배포 가이드](docs/DOCKER_DEPLOYMENT.md)** - 로컬 Docker 사용법
+- **[도메인 & HTTPS 설정](docs/DOMAIN_HTTPS_SETUP.md)** 🌐 - 도메인 연결 및 SSL 인증서 설정
+- **[Docker 배포 가이드](docs/DOCKER_DEPLOYMENT.md)** - Docker 사용법
 
-### 개발
+### 개발 및 설정
+- **[데이터베이스 설정](docs/DATABASE_SETUP.md)** - MySQL 설정
+- **[환경 변수 가이드](docs/ENVIRONMENT_VARIABLES.md)** - 전체 환경 변수 목록
 - **[프로젝트 가이드](docs/PROJECT_GUIDE.md)** - 프로젝트 구조 및 개발 가이드
-- **[빠른 시작 가이드](docs/QUICK_START.md)** - 상세한 실행 가이드
 
 ## 라이선스
 

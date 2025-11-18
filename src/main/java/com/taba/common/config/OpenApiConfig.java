@@ -23,7 +23,7 @@ public class OpenApiConfig {
                 .servers(List.of(
                         new Server().url("/api/v1").description("현재 서버"),
                         new Server().url("http://localhost:8080/api/v1").description("로컬 서버"),
-                        new Server().url("http://cobyserver.iptime.org:8080/api/v1").description("프로덕션 서버")
+                        new Server().url("https://www.taba.asia/api/v1").description("프로덕션 서버")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new io.swagger.v3.oas.models.Components()
