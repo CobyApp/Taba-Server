@@ -31,8 +31,9 @@ echo -e "${GREEN}🚀 무중단 배포 시작${NC}"
 
 cd "$PROJECT_DIR" || exit 1
 
-# 1. 새 이미지 빌드
+# 1. 새 이미지 빌드 (clean 빌드로 오래된 클래스 파일 제거)
 echo -e "${YELLOW}📦 새 이미지 빌드 중...${NC}"
+echo -e "${YELLOW}   (clean 빌드로 오래된 클래스 파일 제거)${NC}"
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" build --no-cache "$CURRENT_SERVICE"
 
 # 2. 임시 포트로 새 컨테이너 시작

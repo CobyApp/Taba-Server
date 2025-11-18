@@ -13,6 +13,7 @@ RUN gradle dependencies --no-daemon || true
 
 # 소스 코드 복사 및 빌드
 COPY src ./src
+# clean 빌드로 오래된 클래스 파일 제거
 RUN gradle clean build -x test --no-daemon
 
 # Stage 2: 실행 스테이지
