@@ -3,8 +3,8 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - main  # 프로덕션 배포
-      - dev   # 개발 환경 배포
+      - release  # 프로덕션 배포
+      - develop   # 개발 환경 배포
   workflow_dispatch: # 수동 실행 (환경 선택 가능)
     inputs:
       environment:
@@ -18,10 +18,10 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to ${{ github.ref == 'refs/heads/main' && 'Production' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
+    name: Deploy to ${{ github.ref == 'refs/heads/release' && 'Production' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
     runs-on: ubuntu-latest
     env:
-      DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+      DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
     
     steps:
       - name: Checkout code
@@ -187,7 +187,7 @@ jobs:
             fi
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Check container status
         run: |
@@ -258,7 +258,7 @@ jobs:
             fi
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Health Check (Internal)
         continue-on-error: true
@@ -314,12 +314,12 @@ jobs:
             exit 1
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Health Check (External) - Optional
         continue-on-error: true
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
           else
@@ -343,7 +343,7 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
             ENV_NAME="프로덕션"
