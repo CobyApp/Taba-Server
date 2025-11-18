@@ -117,19 +117,19 @@ mysql -u root -p -e "CREATE DATABASE taba CHARACTER SET utf8mb4 COLLATE utf8mb4_
 ### 자동 배포 (GitHub Actions) - 권장 ⭐
 
 ```bash
-git push origin main  # 무중단 배포 실행!
+git push origin main     # 프로덕션 배포
+git push origin release  # 프로덕션 배포
+git push origin develop  # 개발 환경 배포
 ```
 
 **특징**:
-- 🚀 **무중단 배포**: Blue-Green 배포 방식으로 서비스 중단 없이 배포
-- ✅ **자동 헬스체크**: 배포 전 새 인스턴스가 정상 작동하는지 확인
-- 🔄 **Graceful Shutdown**: 진행 중인 요청 완료 후 기존 인스턴스 종료
-- 📊 **자동 롤백**: 헬스체크 실패 시 자동으로 롤백
+- ✅ **자동 배포**: GitHub Actions를 통한 자동 배포
+- ✅ **자동 헬스체크**: 배포 후 새 인스턴스가 정상 작동하는지 확인
+- 🔄 **환경 분리**: 프로덕션/개발 환경 분리 배포
 
 **초기 설정** (최초 1회): 
 - [GitHub Actions 설정 가이드](docs/GITHUB_ACTIONS_SETUP.md)
 - [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS.md) ⭐
-- [무중단 배포 가이드](docs/ZERO_DOWNTIME_DEPLOYMENT.md) 🚀
 
 ### 수동 배포
 
@@ -154,7 +154,6 @@ docker-compose up -d
 - **[설정 체크리스트](SETUP_CHECKLIST.md)** ⭐ - 초기 설정 확인 항목
 - **[GitHub Secrets 설정](docs/GITHUB_SECRETS.md)** ⭐ - 필수 환경변수 설정 가이드
 - **[GitHub Actions 설정](docs/GITHUB_ACTIONS_SETUP.md)** - 자동 배포 설정
-- **[무중단 배포 가이드](docs/ZERO_DOWNTIME_DEPLOYMENT.md)** 🚀 - Blue-Green 배포 방식
 - **[도메인 & HTTPS 설정](docs/DOMAIN_HTTPS_SETUP.md)** 🌐 - 도메인 연결 및 SSL 인증서 설정
 - **[Docker 배포 가이드](docs/DOCKER_DEPLOYMENT.md)** - Docker 사용법
 

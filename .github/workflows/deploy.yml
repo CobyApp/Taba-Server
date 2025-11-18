@@ -3,6 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
+      - main     # 프로덕션 배포
       - release  # 프로덕션 배포
       - develop   # 개발 환경 배포
   workflow_dispatch: # 수동 실행 (환경 선택 가능)
@@ -18,10 +19,10 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to ${{ github.ref == 'refs/heads/release' && 'Production' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
+    name: Deploy to ${{ github.ref == 'refs/heads/release' && 'Production' || github.ref == 'refs/heads/main' && 'Production' || github.event.inputs.environment == 'prod' && 'Production' || 'Development' }} Server
     runs-on: ubuntu-latest
     env:
-      DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+      DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
     
     steps:
       - name: Checkout code
@@ -54,12 +55,7 @@ jobs:
           scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
           scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
 
-      - name: Copy deployment script
-        run: |
-          scp -o StrictHostKeyChecking=no scripts/zero-downtime-deploy.sh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "chmod +x ~/taba_backend/zero-downtime-deploy.sh"
-
-      - name: Deploy with Zero-Downtime
+      - name: Deploy Application
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << REMOTE_SCRIPT
             cd ~/taba_backend
@@ -131,63 +127,51 @@ jobs:
             echo "REDIS_EXTERNAL_PORT=\$REDIS_EXTERNAL_PORT"
             echo "================================"
             
-            # 무중단 배포 스크립트 실행
-            echo "=== Starting deployment script ==="
-            DEPLOYMENT_EXIT_CODE=0
+            # Docker Compose 명령어 구성
             if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              ./zero-downtime-deploy.sh ~/taba_backend "\$COMPOSE_FILE" "\$COMPOSE_ENV_FILE" || DEPLOYMENT_EXIT_CODE=\$?
+              COMPOSE_CMD="docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE"
             else
-              ./zero-downtime-deploy.sh ~/taba_backend "\$COMPOSE_FILE" || DEPLOYMENT_EXIT_CODE=\$?
+              COMPOSE_CMD="docker-compose -f \$COMPOSE_FILE"
             fi
             
-            if [ \$DEPLOYMENT_EXIT_CODE -ne 0 ]; then
-              echo "=== Deployment script failed with exit code \$DEPLOYMENT_EXIT_CODE ==="
-              echo "Checking current state..."
-              echo ""
-              echo "=== All Docker Containers ==="
-              docker ps -a || true
-              echo ""
-              echo "=== Docker Images ==="
-              docker images | grep -E "(taba|backend)" || true
-              echo ""
-              echo "=== Docker Compose Status ==="
-              if [ -n "\$COMPOSE_ENV_FILE" ]; then
-                docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps || true
-              else
-                docker-compose -f \$COMPOSE_FILE ps || true
-              fi
-              echo ""
-              echo "=== Checking for any backend container logs ==="
-              if docker ps -a | grep -q "taba-backend"; then
-                echo "Found backend container, showing logs:"
-                if [ -n "\$COMPOSE_ENV_FILE" ]; then
-                  docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=100 backend 2>&1 || docker logs taba-backend-dev 2>&1 | tail -100 || docker logs taba-backend-prod 2>&1 | tail -100 || true
-                else
-                  docker-compose -f \$COMPOSE_FILE logs --tail=100 backend 2>&1 || docker logs taba-backend-dev 2>&1 | tail -100 || true
-                fi
-              else
-                echo "No backend container found"
-              fi
-              exit \$DEPLOYMENT_EXIT_CODE
+            # 배포 시작
+            echo "=== Starting deployment ==="
+            
+            # 1. 기존 컨테이너 중지 및 제거
+            echo "Stopping existing containers..."
+            \$COMPOSE_CMD down || true
+            
+            # 2. 새 이미지 빌드
+            echo "Building new image..."
+            if ! \$COMPOSE_CMD build --no-cache --progress=plain backend; then
+              echo "❌ Image build failed!"
+              exit 1
             fi
             
-            echo "=== Container Status After Deployment ==="
-            if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps || echo "docker-compose ps failed"
-            else
-              docker-compose -f \$COMPOSE_FILE ps || echo "docker-compose ps failed"
+            # 3. MySQL, Redis 시작 (존재하지 않으면 생성)
+            echo "Starting MySQL and Redis..."
+            \$COMPOSE_CMD up -d mysql redis || true
+            
+            # 4. 백엔드 서비스 시작
+            echo "Starting backend service..."
+            if ! \$COMPOSE_CMD up -d backend; then
+              echo "❌ Backend service start failed!"
+              echo "=== Backend Logs ==="
+              \$COMPOSE_CMD logs --tail=100 backend 2>&1 || true
+              exit 1
             fi
+            
+            echo "✅ Deployment completed"
+            echo ""
+            echo "=== Container Status ==="
+            \$COMPOSE_CMD ps || echo "docker-compose ps failed"
             echo ""
             echo "=== Backend Logs (first 50 lines) ==="
             sleep 5
-            if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=50 backend 2>&1 || echo "No logs available"
-            else
-              docker-compose -f \$COMPOSE_FILE logs --tail=50 backend 2>&1 || echo "No logs available"
-            fi
+            \$COMPOSE_CMD logs --tail=50 backend 2>&1 || echo "No logs available"
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Check container status
         run: |
@@ -245,20 +229,11 @@ jobs:
               docker ps -a | grep "taba-backend"
             else
               echo "Backend container does not exist!"
-              echo "This suggests the deployment script may have failed."
-            fi
-            echo ""
-            
-            echo "=== Checking deployment script ==="
-            if [ -f "./zero-downtime-deploy.sh" ]; then
-              echo "Deployment script exists"
-              ls -la ./zero-downtime-deploy.sh
-            else
-              echo "Deployment script not found!"
+              echo "This suggests the deployment may have failed."
             fi
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Health Check (Internal)
         continue-on-error: true
@@ -314,12 +289,12 @@ jobs:
             exit 1
           REMOTE_SCRIPT
         env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          DEPLOY_ENV: ${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Health Check (External) - Optional
         continue-on-error: true
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
           else
@@ -343,7 +318,7 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/release' && 'prod' || github.ref == 'refs/heads/main' && 'prod' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
             ENV_NAME="프로덕션"
