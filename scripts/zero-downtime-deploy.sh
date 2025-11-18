@@ -57,13 +57,22 @@ $COMPOSE_CMD pull mysql redis || {
 echo -e "${YELLOW}📦 새 이미지 빌드 중...${NC}"
 echo -e "${YELLOW}   (clean 빌드로 오래된 클래스 파일 제거)${NC}"
 echo -e "${YELLOW}   빌드 로그를 확인하세요 (시간이 오래 걸릴 수 있습니다)...${NC}"
+echo -e "${YELLOW}   빌드 명령어: $COMPOSE_CMD build --no-cache --progress=plain $CURRENT_SERVICE${NC}"
 if ! $COMPOSE_CMD build --no-cache --progress=plain "$CURRENT_SERVICE"; then
     echo -e "${RED}❌ 이미지 빌드 실패!${NC}"
+    echo -e "${YELLOW}빌드 실패 상세 정보:${NC}"
+    echo -e "${YELLOW}현재 디렉토리: $(pwd)${NC}"
+    echo -e "${YELLOW}Dockerfile 존재 여부: $([ -f Dockerfile ] && echo 'Yes' || echo 'No')${NC}"
+    echo -e "${YELLOW}소스 디렉토리 존재 여부: $([ -d src ] && echo 'Yes' || echo 'No')${NC}"
     echo -e "${YELLOW}로그를 확인하세요:${NC}"
     $COMPOSE_CMD logs "$CURRENT_SERVICE" || true
+    echo -e "${YELLOW}Docker 이미지 확인:${NC}"
+    docker images | grep -E "(taba|backend)" || echo "No backend images found"
     exit 1
 fi
 echo -e "${GREEN}✅ 이미지 빌드 완료${NC}"
+echo -e "${YELLOW}빌드된 이미지 확인:${NC}"
+docker images | grep -E "(taba|backend)" | head -5 || echo "No backend images found"
 
 # 4. 임시 포트로 새 컨테이너 시작
 echo -e "${YELLOW}🔄 새 인스턴스 시작 중 (임시 포트 ${TEMP_PORT})...${NC}"
@@ -114,14 +123,29 @@ EOF
 # 임시 컨테이너 시작
 echo -e "${YELLOW}   임시 컨테이너 시작 중...${NC}"
 TEMP_COMPOSE_CMD="$COMPOSE_CMD -f ${PROJECT_DIR}/docker-compose.temp.yml"
+echo -e "${YELLOW}   시작 명령어: $TEMP_COMPOSE_CMD up -d backend-temp${NC}"
+echo -e "${YELLOW}   환경 변수 확인:${NC}"
+echo -e "${YELLOW}     DB_NAME=${DB_NAME}${NC}"
+echo -e "${YELLOW}     DB_USERNAME=${DB_USERNAME}${NC}"
+echo -e "${YELLOW}     DB_PASSWORD=${DB_PASSWORD:+***설정됨***}${DB_PASSWORD:-***설정되지 않음***}${NC}"
+echo -e "${YELLOW}     JWT_SECRET=${JWT_SECRET:+***설정됨***}${JWT_SECRET:-***설정되지 않음***}${NC}"
 if ! $TEMP_COMPOSE_CMD up -d backend-temp; then
     echo -e "${RED}❌ 임시 컨테이너 시작 실패!${NC}"
-    echo -e "${YELLOW}로그를 확인하세요:${NC}"
-    $TEMP_COMPOSE_CMD logs backend-temp || true
+    echo -e "${YELLOW}상세 정보:${NC}"
+    echo -e "${YELLOW}  Docker Compose 설정 확인:${NC}"
+    $TEMP_COMPOSE_CMD config 2>&1 | head -100 || echo "Config check failed"
+    echo -e "${YELLOW}  모든 컨테이너 상태:${NC}"
+    docker ps -a || echo "docker ps -a failed"
+    echo -e "${YELLOW}  로그를 확인하세요:${NC}"
+    $TEMP_COMPOSE_CMD logs backend-temp 2>&1 || echo "No logs available"
+    echo -e "${YELLOW}  임시 컨테이너가 생성되었는지 확인:${NC}"
+    docker ps -a | grep "backend-temp" || echo "No backend-temp container found"
     rm -f "${PROJECT_DIR}/docker-compose.temp.yml"
     exit 1
 fi
 echo -e "${GREEN}✅ 임시 컨테이너 시작 완료${NC}"
+echo -e "${YELLOW}임시 컨테이너 상태:${NC}"
+$TEMP_COMPOSE_CMD ps backend-temp || docker ps | grep "backend-temp" || echo "Container status check failed"
 
 # 5. 새 컨테이너 헬스체크
 echo -e "${YELLOW}🏥 새 인스턴스 헬스체크 중...${NC}"
@@ -211,10 +235,24 @@ rm -f "${PROJECT_DIR}/docker-compose.temp.yml"
 # MySQL, Redis가 실행 중이 아닌 경우 자동으로 시작됨
 echo -e "${YELLOW}🔄 메인 서비스 시작 중 (MySQL, Redis 확인)...${NC}"
 # MySQL, Redis 컨테이너가 없거나 중지된 경우 시작
-$COMPOSE_CMD up -d mysql redis || {
+if ! $COMPOSE_CMD up -d mysql redis; then
     echo -e "${YELLOW}⚠️  MySQL/Redis 시작 실패 (이미 실행 중이거나 오류)${NC}"
-}
-$COMPOSE_CMD up -d "$CURRENT_SERVICE"
+    echo -e "${YELLOW}MySQL/Redis 상태 확인:${NC}"
+    $COMPOSE_CMD ps mysql redis || docker ps | grep -E "(mysql|redis)" || echo "No mysql/redis containers found"
+fi
+echo -e "${YELLOW}메인 백엔드 서비스 시작 중...${NC}"
+if ! $COMPOSE_CMD up -d "$CURRENT_SERVICE"; then
+    echo -e "${RED}❌ 메인 백엔드 서비스 시작 실패!${NC}"
+    echo -e "${YELLOW}상세 정보:${NC}"
+    echo -e "${YELLOW}  Docker Compose 설정 확인:${NC}"
+    $COMPOSE_CMD config 2>&1 | grep -A 20 "backend:" || echo "Config check failed"
+    echo -e "${YELLOW}  모든 컨테이너 상태:${NC}"
+    docker ps -a || echo "docker ps -a failed"
+    echo -e "${YELLOW}  백엔드 컨테이너 로그:${NC}"
+    $COMPOSE_CMD logs --tail=50 "$CURRENT_SERVICE" 2>&1 || docker ps -a | grep "taba-backend" || echo "No backend container found"
+    exit 1
+fi
+echo -e "${GREEN}✅ 메인 백엔드 서비스 시작 완료${NC}"
 
 # 9. 최종 헬스체크
 echo -e "${YELLOW}🔍 최종 헬스체크 중...${NC}"

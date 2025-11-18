@@ -132,24 +132,58 @@ jobs:
             echo "================================"
             
             # 무중단 배포 스크립트 실행
+            echo "=== Starting deployment script ==="
+            DEPLOYMENT_EXIT_CODE=0
             if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              ./zero-downtime-deploy.sh ~/taba_backend "\$COMPOSE_FILE" "\$COMPOSE_ENV_FILE"
+              ./zero-downtime-deploy.sh ~/taba_backend "\$COMPOSE_FILE" "\$COMPOSE_ENV_FILE" || DEPLOYMENT_EXIT_CODE=\$?
             else
-              ./zero-downtime-deploy.sh ~/taba_backend "\$COMPOSE_FILE"
+              ./zero-downtime-deploy.sh ~/taba_backend "\$COMPOSE_FILE" || DEPLOYMENT_EXIT_CODE=\$?
+            fi
+            
+            if [ \$DEPLOYMENT_EXIT_CODE -ne 0 ]; then
+              echo "=== Deployment script failed with exit code \$DEPLOYMENT_EXIT_CODE ==="
+              echo "Checking current state..."
+              echo ""
+              echo "=== All Docker Containers ==="
+              docker ps -a || true
+              echo ""
+              echo "=== Docker Images ==="
+              docker images | grep -E "(taba|backend)" || true
+              echo ""
+              echo "=== Docker Compose Status ==="
+              if [ -n "\$COMPOSE_ENV_FILE" ]; then
+                docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps || true
+              else
+                docker-compose -f \$COMPOSE_FILE ps || true
+              fi
+              echo ""
+              echo "=== Checking for any backend container logs ==="
+              if docker ps -a | grep -q "taba-backend"; then
+                echo "Found backend container, showing logs:"
+                if [ -n "\$COMPOSE_ENV_FILE" ]; then
+                  docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=100 backend 2>&1 || docker logs taba-backend-dev 2>&1 | tail -100 || docker logs taba-backend-prod 2>&1 | tail -100 || true
+                else
+                  docker-compose -f \$COMPOSE_FILE logs --tail=100 backend 2>&1 || docker logs taba-backend-dev 2>&1 | tail -100 || true
+                fi
+              else
+                echo "No backend container found"
+              fi
+              exit \$DEPLOYMENT_EXIT_CODE
             fi
             
             echo "=== Container Status After Deployment ==="
             if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps
+              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps || echo "docker-compose ps failed"
             else
-              docker-compose -f \$COMPOSE_FILE ps
+              docker-compose -f \$COMPOSE_FILE ps || echo "docker-compose ps failed"
             fi
+            echo ""
             echo "=== Backend Logs (first 50 lines) ==="
             sleep 5
             if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=50 backend || true
+              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=50 backend 2>&1 || echo "No logs available"
             else
-              docker-compose -f \$COMPOSE_FILE logs --tail=50 backend || true
+              docker-compose -f \$COMPOSE_FILE logs --tail=50 backend 2>&1 || echo "No logs available"
             fi
           REMOTE_SCRIPT
         env:
@@ -166,23 +200,61 @@ jobs:
               COMPOSE_FILE="docker-compose.dev.yml"
               COMPOSE_ENV_FILE=""
             fi
+            
+            echo "=== Docker Compose Configuration Check ==="
+            if [ -n "\$COMPOSE_ENV_FILE" ]; then
+              echo "Checking docker-compose config..."
+              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE config 2>&1 | head -50 || echo "Config check failed"
+            else
+              echo "Checking docker-compose config..."
+              docker-compose -f \$COMPOSE_FILE config 2>&1 | head -50 || echo "Config check failed"
+            fi
+            echo ""
+            
+            echo "=== All Docker Containers ==="
+            docker ps -a || echo "docker ps -a failed"
+            echo ""
+            
+            echo "=== Docker Images ==="
+            docker images | grep -E "(taba|backend|mysql|redis)" || echo "No relevant images found"
+            echo ""
+            
             echo "=== Container Status ==="
             if [ -n "\$COMPOSE_ENV_FILE" ]; then
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps
+              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE ps || echo "docker-compose ps failed"
               echo ""
               echo "=== Backend Logs (last 100 lines) ==="
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=100 backend || true
+              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=100 backend 2>&1 || echo "No logs available (container may not exist)"
               echo ""
               echo "=== Backend Logs (with timestamps, last 200 lines) ==="
-              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=200 --timestamps backend 2>&1 | tail -50 || true
+              docker-compose -f \$COMPOSE_FILE -f \$COMPOSE_ENV_FILE logs --tail=200 --timestamps backend 2>&1 | tail -50 || echo "No logs available"
             else
-              docker-compose -f \$COMPOSE_FILE ps
+              docker-compose -f \$COMPOSE_FILE ps || echo "docker-compose ps failed"
               echo ""
               echo "=== Backend Logs (last 100 lines) ==="
-              docker-compose -f \$COMPOSE_FILE logs --tail=100 backend || true
+              docker-compose -f \$COMPOSE_FILE logs --tail=100 backend 2>&1 || echo "No logs available (container may not exist)"
               echo ""
               echo "=== Backend Logs (with timestamps, last 200 lines) ==="
-              docker-compose -f \$COMPOSE_FILE logs --tail=200 --timestamps backend 2>&1 | tail -50 || true
+              docker-compose -f \$COMPOSE_FILE logs --tail=200 --timestamps backend 2>&1 | tail -50 || echo "No logs available"
+            fi
+            echo ""
+            
+            echo "=== Checking if backend container exists ==="
+            if docker ps -a | grep -q "taba-backend"; then
+              echo "Backend container exists"
+              docker ps -a | grep "taba-backend"
+            else
+              echo "Backend container does not exist!"
+              echo "This suggests the deployment script may have failed."
+            fi
+            echo ""
+            
+            echo "=== Checking deployment script ==="
+            if [ -f "./zero-downtime-deploy.sh" ]; then
+              echo "Deployment script exists"
+              ls -la ./zero-downtime-deploy.sh
+            else
+              echo "Deployment script not found!"
             fi
           REMOTE_SCRIPT
         env:
