@@ -21,6 +21,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect  # 명시적으로 MySQL Dialect 설정
         format_sql: true
         use_sql_comments: true
     open-in-view: false

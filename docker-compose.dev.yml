@@ -1,18 +1,23 @@
+version: '3.8'
+
+# 개발 환경용 docker-compose 설정
+# 사용법: docker-compose -f docker-compose.dev.yml up -d
+
 services:
-  # MySQL 데이터베이스
+  # MySQL 데이터베이스 (개발용)
   mysql:
     image: mysql:8.0
-    container_name: taba-mysql
+    container_name: taba-mysql-dev
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-taba_root_password}
       MYSQL_DATABASE: ${DB_NAME:-taba}
       MYSQL_USER: ${DB_USERNAME:-taba_user}
       MYSQL_PASSWORD: ${DB_PASSWORD:-taba_password}
-      # MYSQL_USER가 "root"인 경우 제거 (root는 MYSQL_ROOT_PASSWORD로만 설정)
       TZ: Asia/Seoul
     ports:
-      - "${DB_PORT:-3306}:3306"
+      # 외부 포트 노출 (개발용 DB 접속 허용)
+      - "${DB_EXTERNAL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -28,10 +33,10 @@ services:
     networks:
       - taba-network
 
-  # Redis (선택사항)
+  # Redis (개발용)
   redis:
     image: redis:7-alpine
-    container_name: taba-redis
+    container_name: taba-redis-dev
     restart: unless-stopped
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
@@ -45,7 +50,8 @@ services:
           redis-server --appendonly yes
         fi
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      # 외부 포트 노출 (개발용 Redis 접속 허용)
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -56,16 +62,16 @@ services:
     networks:
       - taba-network
 
-  # Taba Backend 애플리케이션
+  # Taba Backend 애플리케이션 (개발용)
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: taba-backend
+    container_name: taba-backend-dev
     restart: unless-stopped
     environment:
-      # Spring Profile
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      # Spring Profile (개발용)
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       
       # MySQL 설정
       DB_HOST: mysql
@@ -74,7 +80,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:-taba_user}
       DB_PASSWORD: ${DB_PASSWORD:-taba_password}
       
-      # Redis 설정 (선택사항)
+      # Redis 설정
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
@@ -96,7 +102,7 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "${SERVER_EXTERNAL_PORT:-8080}:8080"
     volumes:
       - uploads_data:/app/uploads
     depends_on:
