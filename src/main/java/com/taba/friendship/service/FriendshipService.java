@@ -157,25 +157,31 @@ public class FriendshipService {
                                 .fontFamily(letter.getTemplateFontFamily() != null ? letter.getTemplateFontFamily() : null)
                                 .build();
 
+                // sentByMe 확인 (sender는 nullable=false이므로 항상 존재해야 함)
+                boolean sentByMe = false;
+                try {
+                    User sender = letter.getSender();
+                    if (sender != null && sender.getId() != null && sender.getId().equals(currentUser.getId())) {
+                        sentByMe = true;
+                    }
+                } catch (Exception e) {
+                    log.warn("Error accessing sender for letter: letterId={}, error={}", 
+                            letter.getId(), e.getMessage());
+                }
+
                 // recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
                 Boolean isRead = null;
-                if (letter.getRecipient() != null) {
-                    String recipientId = letter.getRecipient().getId();
-                    if (recipientId != null && recipientId.equals(currentUser.getId())) {
+                try {
+                    User recipient = letter.getRecipient();
+                    if (recipient != null && recipient.getId() != null && recipient.getId().equals(currentUser.getId())) {
                         // 내가 받은 편지인 경우 읽음 상태 반환
                         isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
                     }
+                } catch (Exception e) {
+                    log.warn("Error accessing recipient for letter: letterId={}, error={}", 
+                            letter.getId(), e.getMessage());
                 }
                 // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
-
-                // sentByMe 확인
-                boolean sentByMe = false;
-                if (letter.getSender() != null) {
-                    String senderId = letter.getSender().getId();
-                    if (senderId != null && senderId.equals(currentUser.getId())) {
-                        sentByMe = true;
-                    }
-                }
 
                 return com.taba.friendship.dto.SharedFlowerDto.builder()
                         .id(letter.getId())
@@ -187,7 +193,7 @@ public class FriendshipService {
                         .fontFamily(letter.getTemplateFontFamily() != null ? letter.getTemplateFontFamily() : null) // 폰트 이름 추가
                         .build();
             } catch (Exception e) {
-                log.error("Error mapping letter to SharedFlowerDto: letterId={}, error={}", 
+                log.error("Error mapping letter to SharedFlowerDto: letterId={}, error={}, stackTrace={}", 
                         letter.getId(), e.getMessage(), e);
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }

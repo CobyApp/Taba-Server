@@ -3,6 +3,7 @@ package com.taba.letter.repository;
 import com.taba.letter.entity.Letter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -39,9 +40,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
      * sender가 friendId이고 recipient가 currentUserId인 편지
      * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,desc)
      * 
-     * 주의: JOIN FETCH는 Pageable과 함께 사용할 수 없으므로,
-     * @Transactional(readOnly = true)로 세션을 유지하여 Lazy 로딩을 지원합니다.
+     * EntityGraph를 사용하여 sender와 recipient를 eagerly fetch합니다.
      */
+    @EntityGraph(attributePaths = {"sender", "recipient"})
     @Query("SELECT l FROM Letter l " +
            "WHERE ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
            "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
