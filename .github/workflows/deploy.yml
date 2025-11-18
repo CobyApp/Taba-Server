@@ -247,24 +247,31 @@ jobs:
       - name: Health Check (External) - Optional
         continue-on-error: true
         run: |
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
           else
             SERVER_URL='${{ secrets.SERVER_URL_DEV }}'
           fi
           echo "Checking external health endpoint..."
+          echo "DEPLOY_ENV: $DEPLOY_ENV"
+          echo "SERVER_URL: ${SERVER_URL:0:20}..." # 처음 20자만 표시
+          # SERVER_URL이 비어있거나 잘못된 형식인지 확인
+          if [ -z "$SERVER_URL" ] || [ "$SERVER_URL" = "null" ] || [[ "$SERVER_URL" == *"***"* ]]; then
+            echo "SERVER_URL not properly set, skipping external health check"
+            exit 0
+          fi
           # SERVER_URL에서 도메인 추출 (https://api.example.com/api/v1 -> https://api.example.com)
           SERVER_DOMAIN=$(echo "$SERVER_URL" | sed 's|https\?://||' | sed 's|/.*||')
-          if [ -n "$SERVER_DOMAIN" ]; then
+          if [ -n "$SERVER_DOMAIN" ] && [ "$SERVER_DOMAIN" != "null" ]; then
             curl -f https://${SERVER_DOMAIN}/api/v1/actuator/health || echo "External health check failed"
           else
             echo "SERVER_URL not set, skipping external health check"
           fi
-        env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
 
       - name: Deployment Summary
         run: |
+          DEPLOY_ENV="${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}"
           if [ "$DEPLOY_ENV" = "prod" ]; then
             SERVER_URL='${{ secrets.SERVER_URL_PROD }}'
             ENV_NAME="프로덕션"
@@ -272,14 +279,18 @@ jobs:
             SERVER_URL='${{ secrets.SERVER_URL_DEV }}'
             ENV_NAME="개발"
           fi
-          SERVER_DOMAIN=$(echo "$SERVER_URL" | sed 's|https\?://||' | sed 's|/.*||')
+          SERVER_DOMAIN=$(echo "$SERVER_URL" | sed 's|https\?://||' | sed 's|/.*||' 2>/dev/null || echo "")
           echo "## 🚀 $ENV_NAME 배포 완료!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **환경**: $ENV_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "- **서버**: ${SERVER_DOMAIN:-서버 주소 확인 필요}" >> $GITHUB_STEP_SUMMARY
-          echo "- **API URL**: $SERVER_URL" >> $GITHUB_STEP_SUMMARY
-          echo "- **Health Check**: $SERVER_URL/actuator/health" >> $GITHUB_STEP_SUMMARY
-          echo "- **Swagger UI**: $SERVER_URL/swagger-ui/index.html" >> $GITHUB_STEP_SUMMARY
-        env:
-          DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' || github.event.inputs.environment == 'prod' && 'prod' || 'dev' }}
+          if [ -n "$SERVER_DOMAIN" ] && [ "$SERVER_DOMAIN" != "null" ] && [[ ! "$SERVER_DOMAIN" == *"***"* ]]; then
+            echo "- **서버**: $SERVER_DOMAIN" >> $GITHUB_STEP_SUMMARY
+            echo "- **API URL**: $SERVER_URL" >> $GITHUB_STEP_SUMMARY
+            echo "- **Health Check**: $SERVER_URL/actuator/health" >> $GITHUB_STEP_SUMMARY
+            echo "- **Swagger UI**: $SERVER_URL/swagger-ui/index.html" >> $GITHUB_STEP_SUMMARY
+          else
+            DEPLOY_ENV_UPPER=$(echo "$DEPLOY_ENV" | tr '[:lower:]' '[:upper:]')
+            echo "- **서버**: GitHub Secrets에서 SERVER_URL_${DEPLOY_ENV_UPPER} 설정 필요" >> $GITHUB_STEP_SUMMARY
+            echo "- **API URL**: 설정되지 않음" >> $GITHUB_STEP_SUMMARY
+          fi
 

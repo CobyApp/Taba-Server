@@ -1,7 +1,6 @@
 package com.taba.settings.controller;
 
 import com.taba.common.dto.ApiResponse;
-import com.taba.common.util.SecurityUtil;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
