@@ -600,7 +600,7 @@ profileImage: [파일]
 - `page`: 페이지 번호 (기본값: 0)
 - `size`: 페이지 크기 (기본값: 20)
 - `sort`: 정렬 기준 (기본값: `sentAt,desc`)
-  - 정렬 필드: `sentAt`, `createdAt`
+  - 정렬 필드: `sentAt` (현재는 `sentAt`만 지원)
   - 정렬 방향: `asc`, `desc`
 
 **Response** (200 OK):
@@ -633,10 +633,11 @@ profileImage: [파일]
 
 **참고**:
 - `id`: 편지 ID (Letter 테이블의 ID)
-- `sentByMe`: 현재 사용자가 보낸 편지인지 여부
-- `isRead`: 내가 받은 편지인 경우 읽음 상태 (내가 보낸 편지는 null)
-- `fontFamily`: 편지에 사용된 폰트 이름 (편지 표시용)
-- `letter.fontFamily`: 편지 요약 정보의 폰트 이름
+- `sentByMe`: 현재 사용자가 보낸 편지인지 여부 (`boolean`)
+- `isRead`: 내가 받은 편지인 경우 읽음 상태 (`boolean`), 내가 보낸 편지는 `null`
+- `fontFamily`: 편지에 사용된 폰트 이름 (편지 표시용, 최상위 레벨)
+- `letter.fontFamily`: 편지 요약 정보의 폰트 이름 (`LetterSummaryDto` 내부)
+- 편지는 `sentAt DESC` 순으로 정렬됩니다 (ORDER BY 절에 명시됨)
 
 ---
 
@@ -981,8 +982,8 @@ Swagger UI에서:
 
 ---
 
-**문서 버전**: 1.2.0  
-**최종 업데이트**: 2024-12-XX
+**문서 버전**: 1.3.0  
+**최종 업데이트**: 2025-01-18
 
 **주요 변경사항**:
 - 회원가입 시 프로필 이미지 업로드 지원 (multipart/form-data)
@@ -996,4 +997,6 @@ Swagger UI에서:
 - 초대 코드 형식 변경: 6자리 숫자+영문 조합 (예: `A1B2C3`)
 - FCM 푸시 알림 지원 추가
 - 친구 API에 편지 목록 조회 추가 (`GET /friends/{friendId}/letters`)
+- 친구별 편지 목록 조회 API에 ORDER BY 절 추가 (정렬 안정성 개선)
+- 친구별 편지 목록 API 응답 형식 명확화 (`SharedFlowerDto` 구조)
 

@@ -54,7 +54,8 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
            "AND l.visibility = 'DIRECT' " +
            "AND l.sentAt IS NOT NULL " +
-           "AND l.deletedAt IS NULL")
+           "AND l.deletedAt IS NULL " +
+           "ORDER BY l.sentAt DESC")
     Page<Letter> findLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
             @Param("friendId") String friendId,
