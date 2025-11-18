@@ -330,6 +330,10 @@ profileImage: [파일]
 - `scheduledAt`: 예약 발송 시간 (선택사항). 미지정 시 즉시 발송됩니다.
 - `recipientId`: 수신자 ID (선택사항). `DIRECT` 편지인 경우 필수입니다.
 
+**호환성**:
+- 알 수 없는 필드(예: `flowerType`)는 자동으로 무시됩니다
+- 기존 앱에서 보내는 추가 필드는 에러를 발생시키지 않습니다
+
 **Visibility**: `PUBLIC`, `FRIENDS`, `DIRECT`, `PRIVATE`
 
 **Response** (201 Created):
@@ -530,6 +534,12 @@ profileImage: [파일]
 }
 ```
 
+**초대 코드 형식**:
+- 정확히 **6자리** 숫자+영문 조합
+- 대문자 영문(A-Z)과 숫자(0-9)만 사용
+- 예: `A1B2C3`, `9X7Y2Z`, `ABC123`
+- 대소문자 구분 없음 (자동으로 대문자로 변환됨)
+
 **Response** (201 Created):
 ```json
 {
@@ -540,7 +550,7 @@ profileImage: [파일]
 ```
 
 **에러 코드**:
-- `INVALID_INVITE_CODE`: 유효하지 않은 초대 코드
+- `INVALID_INVITE_CODE`: 유효하지 않은 초대 코드 (형식 불일치, 존재하지 않음, 또는 6자리가 아님)
 - `INVITE_CODE_EXPIRED`: 만료된 초대 코드
 - `INVITE_CODE_ALREADY_USED`: 이미 사용된 초대 코드
 - `CANNOT_USE_OWN_INVITE_CODE`: 자신의 초대 코드는 사용 불가
@@ -664,7 +674,9 @@ profileImage: [파일]
 **참고**: 
 - 기존 활성 코드가 있으면 새로 생성하지 않고 기존 코드 반환
 - 코드 유효 시간: **3분**
-- 형식: `6자리 숫자+영문 조합` (예: `A1B2C3`, `9X7Y2Z`)
+- 형식: 정확히 **6자리** 숫자+영문 조합 (예: `A1B2C3`, `9X7Y2Z`)
+- 대문자 영문(A-Z)과 숫자(0-9)만 사용
+- 항상 6자리로 고정 생성됨
 
 ### 5.2 현재 초대 코드 조회
 
@@ -904,12 +916,13 @@ file: [이미지 파일]
 - `INVALID_EMAIL`: 잘못된 이메일 형식
 - `EMAIL_ALREADY_EXISTS`: 이미 존재하는 이메일
 - `INVALID_PASSWORD`: 잘못된 비밀번호 형식
-- `INVALID_INVITE_CODE`: 유효하지 않은 초대 코드
+- `INVALID_INVITE_CODE`: 유효하지 않은 초대 코드 (존재하지 않음, 형식 불일치, 또는 6자리가 아님)
 - `INVITE_CODE_EXPIRED`: 만료된 초대 코드
 - `INVITE_CODE_ALREADY_USED`: 이미 사용된 초대 코드
 - `CANNOT_USE_OWN_INVITE_CODE`: 자신의 초대 코드는 사용 불가
 - `ALREADY_FRIENDS`: 이미 친구 관계
 - `INVALID_REQUEST`: 잘못된 요청
+- `VALIDATION_ERROR`: 입력값 검증 실패
 
 ### 401 Unauthorized
 - `UNAUTHORIZED`: 인증이 필요합니다
@@ -925,6 +938,7 @@ file: [이미지 파일]
 - `USER_NOT_FOUND`: 사용자를 찾을 수 없습니다
 - `LETTER_NOT_FOUND`: 편지를 찾을 수 없습니다
 - `FRIENDSHIP_NOT_FOUND`: 친구 관계를 찾을 수 없습니다
+- `NOT_FOUND`: 요청한 리소스를 찾을 수 없습니다
 
 ### 500 Internal Server Error
 - `INTERNAL_SERVER_ERROR`: 서버 오류가 발생했습니다
@@ -949,8 +963,11 @@ Swagger UI에서:
 
 ### 초대 코드
 - 유효 시간: **3분**
-- 형식: `6자리 숫자+영문 조합` (예: `A1B2C3`, `9X7Y2Z`)
-- 대문자 영문(A-Z)과 숫자(0-9) 조합
+- 형식: 정확히 **6자리** 숫자+영문 조합 (예: `A1B2C3`, `9X7Y2Z`, `ABC123`)
+- 대문자 영문(A-Z)과 숫자(0-9) 조합만 사용
+- 항상 6자리로 고정 생성됨 (길이 검증 포함)
+- 친구 추가 시 초대 코드는 반드시 6자리여야 함 (형식 불일치 시 `INVALID_INVITE_CODE` 에러)
+- 대소문자 구분 없음 (사용 시 자동으로 대문자로 변환)
 - 기존 활성 코드가 있으면 새로 생성하지 않고 기존 코드 반환
 - 만료되면 새 코드 생성 가능
 
@@ -982,7 +999,7 @@ Swagger UI에서:
 
 ---
 
-**문서 버전**: 1.3.0  
+**문서 버전**: 1.4.0  
 **최종 업데이트**: 2025-01-18
 
 **주요 변경사항**:
@@ -992,11 +1009,14 @@ Swagger UI에서:
 - 공개 편지 복수 수신자 지원 (LetterRecipient 엔티티 추가)
 - 공개 편지 읽음 상태 개별 관리 (사용자별 읽음 상태 추적)
 - 꽃다발(bouquet) 기능 제거
-- 꽃 종류(flowerType) 제거
+- 꽃 종류(flowerType) 제거 (알 수 없는 필드 자동 무시 처리)
 - username, statusMessage 필드 제거
-- 초대 코드 형식 변경: 6자리 숫자+영문 조합 (예: `A1B2C3`)
+- 초대 코드 형식: 정확히 6자리 숫자+영문 조합으로 고정 (길이 검증 추가)
+- 초대 코드 사용 시 6자리 검증 추가
 - FCM 푸시 알림 지원 추가
 - 친구 API에 편지 목록 조회 추가 (`GET /friends/{friendId}/letters`)
 - 친구별 편지 목록 조회 API에 ORDER BY 절 추가 (정렬 안정성 개선)
 - 친구별 편지 목록 API 응답 형식 명확화 (`SharedFlowerDto` 구조)
+- Spring Security 예외 처리 개선 (NoResourceFoundException 처리)
+- JwtAuthenticationFilter 최적화 (permitAll 경로 처리 개선)
 
