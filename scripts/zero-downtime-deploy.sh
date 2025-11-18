@@ -93,16 +93,18 @@ export SERVER_URL=${SERVER_URL:-}
 export SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
 export FILE_UPLOAD_DIR=${FILE_UPLOAD_DIR:-/app/uploads}
 
-# 임시 override 파일 생성 (모든 환경 변수 포함)
+# 임시 override 파일 생성 (standalone 서비스로 생성, extends 사용 불가 - depends_on 때문에)
+# MySQL과 Redis는 이미 실행 중이므로 네트워크를 통해 연결 가능
+# volumes와 networks는 base compose 파일에서 이미 정의되어 있으므로 재정의 불필요
 cat > "${PROJECT_DIR}/docker-compose.temp.yml" << EOF
 version: '3.8'
 services:
   backend-temp:
-    extends:
-      service: backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: taba-backend-temp
-    ports:
-      - "${TEMP_PORT}:8080"
+    restart: "no"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       DB_HOST: ${DB_HOST}
@@ -118,6 +120,22 @@ services:
       SERVER_PORT: 8080
       SERVER_URL: ${SERVER_URL}
       FILE_UPLOAD_DIR: ${FILE_UPLOAD_DIR}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    ports:
+      - "${TEMP_PORT}:8080"
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - taba-network
 EOF
 
 # 임시 컨테이너 시작
