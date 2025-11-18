@@ -42,7 +42,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
      * 
      * EntityGraph를 사용하여 sender와 recipient를 eagerly fetch합니다.
      */
-    @EntityGraph(attributePaths = {"sender", "recipient"})
+    @EntityGraph(attributePaths = {"sender", "recipient"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l " +
            "WHERE ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
            "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
