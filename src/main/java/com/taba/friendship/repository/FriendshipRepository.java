@@ -18,7 +18,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, String> 
     @Query("SELECT f FROM Friendship f WHERE f.user.id = :userId AND f.deletedAt IS NULL")
     List<Friendship> findByUserId(@Param("userId") String userId);
 
-    @Query("SELECT f FROM Friendship f WHERE (f.user.id = :userId AND f.friend.id = :friendId) OR (f.user.id = :friendId AND f.friend.id = :userId) AND f.deletedAt IS NULL")
+    @Query("SELECT f FROM Friendship f WHERE ((f.user.id = :userId AND f.friend.id = :friendId) OR (f.user.id = :friendId AND f.friend.id = :userId)) AND f.deletedAt IS NULL")
     Optional<Friendship> findByUserIds(@Param("userId") String userId, @Param("friendId") String friendId);
 
     boolean existsByUserIdAndFriendIdAndDeletedAtIsNull(String userId, String friendId);

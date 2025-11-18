@@ -588,7 +588,7 @@ profileImage: [파일]
 
 ### 5.2 친구별 편지 목록 조회
 
-**GET** `/bouquets/{friendId}/letters?page=0&size=20`
+**GET** `/bouquets/{friendId}/letters?page=0&size=20&sort=sentAt,desc`
 
 **인증**: 필요
 
@@ -600,6 +600,9 @@ profileImage: [파일]
 **Query Parameters**:
 - `page`: 페이지 번호 (기본값: 0)
 - `size`: 페이지 크기 (기본값: 20)
+- `sort`: 정렬 기준 (기본값: `sentAt,desc`)
+  - 정렬 필드: `sentAt`, `createdAt`
+  - 정렬 방향: `asc`, `desc`
 
 **Response** (200 OK):
 ```json

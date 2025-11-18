@@ -145,25 +145,33 @@ public class FriendshipService {
                 letterRepository.findLettersBetweenFriends(currentUser.getId(), friendId, pageable);
 
         return letters.map(letter -> {
+            // LetterSummaryDto 생성
             com.taba.friendship.dto.LetterSummaryDto letterSummary = 
                     com.taba.friendship.dto.LetterSummaryDto.builder()
                             .id(letter.getId())
-                            .title(letter.getTitle())
-                            .preview(letter.getPreview())
+                            .title(letter.getTitle() != null ? letter.getTitle() : "")
+                            .preview(letter.getPreview() != null ? letter.getPreview() : "")
                             .build();
 
             // recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
-            Boolean isRead = letter.getRecipient() != null && 
-                    letter.getRecipient().getId().equals(currentUser.getId()) 
-                    ? letter.getIsRead() 
-                    : null; // 내가 보낸 편지는 읽음 상태가 의미 없음
+            Boolean isRead = null;
+            if (letter.getRecipient() != null && 
+                letter.getRecipient().getId().equals(currentUser.getId())) {
+                // 내가 받은 편지인 경우 읽음 상태 반환
+                isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
+            }
+            // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
+
+            // sentByMe 확인
+            boolean sentByMe = letter.getSender() != null && 
+                    letter.getSender().getId().equals(currentUser.getId());
 
             return com.taba.friendship.dto.SharedFlowerDto.builder()
                     .id(letter.getId())
                     .letter(letterSummary)
-                    .flowerType(letter.getFlowerType().name())
+                    .flowerType(letter.getFlowerType() != null ? letter.getFlowerType().name() : "ROSE")
                     .sentAt(letter.getSentAt())
-                    .sentByMe(letter.getSender().getId().equals(currentUser.getId()))
+                    .sentByMe(sentByMe)
                     .isRead(isRead)
                     .build();
         });
