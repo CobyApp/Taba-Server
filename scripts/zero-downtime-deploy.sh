@@ -39,12 +39,19 @@ if [ -z "$DB_PASSWORD" ] || [ -z "$JWT_SECRET" ]; then
     exit 1
 fi
 
-# 2. 새 이미지 빌드 (clean 빌드로 오래된 클래스 파일 제거)
+# 2. 필요한 이미지 pull (MySQL, Redis - 서버에서 이미지가 없을 경우 대비)
+echo -e "${YELLOW}📥 필요한 이미지 pull 중 (MySQL, Redis)...${NC}"
+docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" pull mysql redis || {
+    echo -e "${YELLOW}⚠️  이미지 pull 실패 (이미 존재하거나 네트워크 문제일 수 있음)${NC}"
+    echo -e "${YELLOW}   계속 진행합니다...${NC}"
+}
+
+# 3. 새 이미지 빌드 (clean 빌드로 오래된 클래스 파일 제거)
 echo -e "${YELLOW}📦 새 이미지 빌드 중...${NC}"
 echo -e "${YELLOW}   (clean 빌드로 오래된 클래스 파일 제거)${NC}"
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" build --no-cache "$CURRENT_SERVICE"
 
-# 3. 임시 포트로 새 컨테이너 시작
+# 4. 임시 포트로 새 컨테이너 시작
 echo -e "${YELLOW}🔄 새 인스턴스 시작 중 (임시 포트 ${TEMP_PORT})...${NC}"
 
 # 환경 변수 확실히 export (docker-compose가 읽을 수 있도록)
@@ -93,7 +100,7 @@ EOF
 # 임시 컨테이너 시작
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" up -d backend-temp
 
-# 4. 새 컨테이너 헬스체크
+# 5. 새 컨테이너 헬스체크
 echo -e "${YELLOW}🏥 새 인스턴스 헬스체크 중...${NC}"
 elapsed=0
 health_check_passed=false
@@ -117,7 +124,7 @@ if [ "$health_check_passed" = false ]; then
   exit 1
 fi
 
-# 5. 추가 헬스체크 (연속 3번 성공 확인)
+# 6. 추가 헬스체크 (연속 3번 성공 확인)
 echo -e "${YELLOW}🔍 추가 헬스체크 중 (연속 3번 확인)...${NC}"
 health_check_count=0
 for i in {1..3}; do
@@ -138,7 +145,7 @@ if [ $health_check_count -lt 3 ]; then
   exit 1
 fi
 
-# 6. 기존 컨테이너 중지 (Graceful shutdown)
+# 7. 기존 컨테이너 중지 (Graceful shutdown)
 echo -e "${YELLOW}🛑 기존 인스턴스 종료 중 (Graceful shutdown, 30초 대기)...${NC}"
 if docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" ps "$CURRENT_SERVICE" 2>/dev/null | grep -q "Up"; then
   # Graceful shutdown을 위해 stop 사용 (기본 타임아웃 10초, 여기서는 30초로 설정)
@@ -155,7 +162,7 @@ else
   echo -e "${YELLOW}⚠️  기존 인스턴스가 실행 중이 아닙니다.${NC}"
 fi
 
-# 7. 임시 컨테이너 정리 및 메인 서비스 시작
+# 8. 임시 컨테이너 정리 및 메인 서비스 시작
 echo -e "${YELLOW}🔄 새 인스턴스를 메인 포트로 전환 중...${NC}"
 
 # 임시 컨테이너 중지 및 제거
@@ -164,10 +171,15 @@ docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/doc
 rm -f "${PROJECT_DIR}/docker-compose.temp.yml"
 
 # 메인 서비스 시작 (환경 변수는 이미 export되어 있음)
-echo -e "${YELLOW}🔄 메인 서비스 시작 중...${NC}"
+# MySQL, Redis가 실행 중이 아닌 경우 자동으로 시작됨
+echo -e "${YELLOW}🔄 메인 서비스 시작 중 (MySQL, Redis 확인)...${NC}"
+# MySQL, Redis 컨테이너가 없거나 중지된 경우 시작
+docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" up -d mysql redis || {
+    echo -e "${YELLOW}⚠️  MySQL/Redis 시작 실패 (이미 실행 중이거나 오류)${NC}"
+}
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" up -d "$CURRENT_SERVICE"
 
-# 8. 최종 헬스체크
+# 9. 최종 헬스체크
 echo -e "${YELLOW}🔍 최종 헬스체크 중...${NC}"
 sleep 5
 final_check_passed=false
@@ -190,7 +202,7 @@ if [ "$final_check_passed" = false ]; then
   exit 1
 fi
 
-# 9. 오래된 이미지 정리 (선택사항)
+# 10. 오래된 이미지 정리 (선택사항)
 echo -e "${YELLOW}🧹 오래된 이미지 정리 중...${NC}"
 docker image prune -f
 
