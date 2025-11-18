@@ -12,7 +12,7 @@ GitHub 저장소 > Settings > Secrets and variables > Actions에서 다음 Secre
 | `DB_USERNAME` | DB 사용자 이름 | `taba_user` |
 | `DB_PASSWORD` | DB 비밀번호 | 강력한 비밀번호 |
 | `JWT_SECRET` | JWT 비밀키 (256비트) | `openssl rand -hex 32` |
-| `SERVER_URL` | 서버 전체 URL | `https://taba.asia/api/v1` |
+| `SERVER_URL` | 서버 전체 URL | `https://www.taba.asia/api/v1` |
 | `FCM_SERVICE_ACCOUNT_KEY_JSON` | Firebase 서비스 계정 키 JSON | Firebase Console > 프로젝트 설정 > 서비스 계정 > 새 비공개 키 생성 |
 
 ## 선택사항 Secrets

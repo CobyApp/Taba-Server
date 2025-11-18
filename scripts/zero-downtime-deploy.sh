@@ -31,15 +31,39 @@ echo -e "${GREEN}🚀 무중단 배포 시작${NC}"
 
 cd "$PROJECT_DIR" || exit 1
 
-# 1. 새 이미지 빌드 (clean 빌드로 오래된 클래스 파일 제거)
+# 1. 환경 변수 확인
+echo -e "${YELLOW}🔍 환경 변수 확인...${NC}"
+if [ -z "$DB_PASSWORD" ] || [ -z "$JWT_SECRET" ]; then
+    echo -e "${RED}❌ 필수 환경 변수가 설정되지 않았습니다.${NC}"
+    echo -e "${RED}   DB_PASSWORD, JWT_SECRET이 필요합니다.${NC}"
+    exit 1
+fi
+
+# 2. 새 이미지 빌드 (clean 빌드로 오래된 클래스 파일 제거)
 echo -e "${YELLOW}📦 새 이미지 빌드 중...${NC}"
 echo -e "${YELLOW}   (clean 빌드로 오래된 클래스 파일 제거)${NC}"
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" build --no-cache "$CURRENT_SERVICE"
 
-# 2. 임시 포트로 새 컨테이너 시작
+# 3. 임시 포트로 새 컨테이너 시작
 echo -e "${YELLOW}🔄 새 인스턴스 시작 중 (임시 포트 ${TEMP_PORT})...${NC}"
 
-# 임시 override 파일 생성
+# 환경 변수 확실히 export (docker-compose가 읽을 수 있도록)
+export DB_HOST=${DB_HOST:-mysql}
+export DB_PORT=${DB_PORT:-3306}
+export DB_NAME=${DB_NAME:-taba}
+export DB_USERNAME=${DB_USERNAME:-taba_user}
+export DB_PASSWORD=${DB_PASSWORD:-}
+export REDIS_HOST=${REDIS_HOST:-redis}
+export REDIS_PORT=${REDIS_PORT:-6379}
+export REDIS_PASSWORD=${REDIS_PASSWORD:-}
+export JWT_SECRET=${JWT_SECRET:-}
+export JWT_EXPIRATION=${JWT_EXPIRATION:-604800000}
+export SERVER_PORT=${SERVER_PORT:-8080}
+export SERVER_URL=${SERVER_URL:-}
+export SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+export FILE_UPLOAD_DIR=${FILE_UPLOAD_DIR:-/app/uploads}
+
+# 임시 override 파일 생성 (모든 환경 변수 포함)
 cat > "${PROJECT_DIR}/docker-compose.temp.yml" << EOF
 version: '3.8'
 services:
@@ -50,13 +74,26 @@ services:
     ports:
       - "${TEMP_PORT}:8080"
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
       SERVER_PORT: 8080
+      SERVER_URL: ${SERVER_URL}
+      FILE_UPLOAD_DIR: ${FILE_UPLOAD_DIR}
 EOF
 
 # 임시 컨테이너 시작
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" up -d backend-temp
 
-# 3. 새 컨테이너 헬스체크
+# 4. 새 컨테이너 헬스체크
 echo -e "${YELLOW}🏥 새 인스턴스 헬스체크 중...${NC}"
 elapsed=0
 health_check_passed=false
@@ -80,7 +117,7 @@ if [ "$health_check_passed" = false ]; then
   exit 1
 fi
 
-# 4. 추가 헬스체크 (연속 3번 성공 확인)
+# 5. 추가 헬스체크 (연속 3번 성공 확인)
 echo -e "${YELLOW}🔍 추가 헬스체크 중 (연속 3번 확인)...${NC}"
 health_check_count=0
 for i in {1..3}; do
@@ -101,7 +138,7 @@ if [ $health_check_count -lt 3 ]; then
   exit 1
 fi
 
-# 5. 기존 컨테이너 중지 (Graceful shutdown)
+# 6. 기존 컨테이너 중지 (Graceful shutdown)
 echo -e "${YELLOW}🛑 기존 인스턴스 종료 중 (Graceful shutdown, 30초 대기)...${NC}"
 if docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" ps "$CURRENT_SERVICE" 2>/dev/null | grep -q "Up"; then
   # Graceful shutdown을 위해 stop 사용 (기본 타임아웃 10초, 여기서는 30초로 설정)
@@ -118,7 +155,7 @@ else
   echo -e "${YELLOW}⚠️  기존 인스턴스가 실행 중이 아닙니다.${NC}"
 fi
 
-# 6. 임시 컨테이너 정리 및 메인 서비스 시작
+# 7. 임시 컨테이너 정리 및 메인 서비스 시작
 echo -e "${YELLOW}🔄 새 인스턴스를 메인 포트로 전환 중...${NC}"
 
 # 임시 컨테이너 중지 및 제거
@@ -126,10 +163,11 @@ docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/doc
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" -f "${PROJECT_DIR}/docker-compose.temp.yml" rm -f backend-temp || true
 rm -f "${PROJECT_DIR}/docker-compose.temp.yml"
 
-# 메인 서비스 시작 (이미 빌드된 새 이미지 사용)
+# 메인 서비스 시작 (환경 변수는 이미 export되어 있음)
+echo -e "${YELLOW}🔄 메인 서비스 시작 중...${NC}"
 docker-compose -f "$COMPOSE_FILE" -f "$COMPOSE_PROD_FILE" up -d "$CURRENT_SERVICE"
 
-# 7. 최종 헬스체크
+# 8. 최종 헬스체크
 echo -e "${YELLOW}🔍 최종 헬스체크 중...${NC}"
 sleep 5
 final_check_passed=false
@@ -152,7 +190,7 @@ if [ "$final_check_passed" = false ]; then
   exit 1
 fi
 
-# 8. 오래된 이미지 정리 (선택사항)
+# 9. 오래된 이미지 정리 (선택사항)
 echo -e "${YELLOW}🧹 오래된 이미지 정리 중...${NC}"
 docker image prune -f
 
