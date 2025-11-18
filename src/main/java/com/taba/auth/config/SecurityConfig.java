@@ -85,9 +85,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*")); // 모든 Origin 허용 (패턴 사용)
+        
+        // 모든 Origin 허용 (패턴 사용)
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        
+        // 허용할 HTTP 메서드
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        
+        // 허용할 헤더
         configuration.setAllowedHeaders(List.of("*"));
+        
+        // 노출할 헤더
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization", 
                 "Content-Type", 
@@ -96,11 +104,31 @@ public class SecurityConfig {
                 "Access-Control-Allow-Methods",
                 "Access-Control-Allow-Headers"
         ));
-        configuration.setAllowCredentials(false); // Swagger UI에서 사용할 때는 false로 설정
+        
+        // Credentials 허용 여부 (Swagger UI에서 사용할 때는 false)
+        configuration.setAllowCredentials(false);
+        
+        // Preflight 요청 캐시 시간
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        
+        // 모든 경로에 CORS 설정 적용
         source.registerCorsConfiguration("/**", configuration);
+        
+        // Swagger UI 관련 경로에 추가로 명시적 설정
+        CorsConfiguration swaggerConfig = new CorsConfiguration();
+        swaggerConfig.setAllowedOriginPatterns(List.of("*"));
+        swaggerConfig.setAllowedMethods(Arrays.asList("GET", "OPTIONS", "HEAD"));
+        swaggerConfig.setAllowedHeaders(List.of("*"));
+        swaggerConfig.setAllowCredentials(false);
+        swaggerConfig.setMaxAge(3600L);
+        
+        source.registerCorsConfiguration("/v3/api-docs/**", swaggerConfig);
+        source.registerCorsConfiguration("/swagger-ui/**", swaggerConfig);
+        source.registerCorsConfiguration("/swagger-resources/**", swaggerConfig);
+        source.registerCorsConfiguration("/webjars/**", swaggerConfig);
+        
         return source;
     }
 }

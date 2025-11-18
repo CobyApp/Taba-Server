@@ -950,12 +950,25 @@ file: [이미지 파일]
 애플리케이션 실행 후 다음 URL에서 인터랙티브 API 문서를 확인할 수 있습니다:
 
 - **로컬**: http://localhost:8080/api/v1/swagger-ui/index.html
-- **프로덕션**: https://api.taba.app/swagger-ui/index.html
+- **프로덕션**: http://cobyserver.iptime.org:8080/api/v1/swagger-ui/index.html
 
-Swagger UI에서:
+**참고**: Swagger UI는 실제 코드에서 자동으로 생성되며, 존재하는 엔드포인트만 표시됩니다. 제거된 엔드포인트(예: `/bouquets/**`)는 표시되지 않습니다.
+
+Swagger UI 사용 방법:
 1. "Authorize" 버튼 클릭
 2. JWT 토큰 입력: `Bearer {your_token}`
 3. 각 API의 "Try it out" 버튼으로 직접 테스트 가능
+
+**현재 Swagger UI에 표시되는 API**:
+- `/auth/**` - 인증 API
+- `/users/**` - 사용자 API
+- `/friends/**` - 친구 API
+- `/letters/**` - 편지 API
+- `/invite-codes/**` - 초대 코드 API
+- `/notifications/**` - 알림 API
+- `/settings/**` - 설정 API
+- `/files/**` - 파일 API
+- `/actuator/health` - 헬스체크
 
 ---
 
@@ -999,7 +1012,7 @@ Swagger UI에서:
 
 ---
 
-**문서 버전**: 1.4.0  
+**문서 버전**: 1.5.0  
 **최종 업데이트**: 2025-01-18
 
 **주요 변경사항**:
@@ -1008,7 +1021,7 @@ Swagger UI에서:
 - 편지 작성/답장 시 이미지 첨부 지원 (다중 이미지, 순서 보장)
 - 공개 편지 복수 수신자 지원 (LetterRecipient 엔티티 추가)
 - 공개 편지 읽음 상태 개별 관리 (사용자별 읽음 상태 추적)
-- 꽃다발(bouquet) 기능 제거
+- 꽃다발(bouquet) 기능 제거 - `/bouquets/**` 엔드포인트는 존재하지 않음
 - 꽃 종류(flowerType) 제거 (알 수 없는 필드 자동 무시 처리)
 - username, statusMessage 필드 제거
 - 초대 코드 형식: 정확히 6자리 숫자+영문 조합으로 고정 (길이 검증 추가)
@@ -1019,4 +1032,21 @@ Swagger UI에서:
 - 친구별 편지 목록 API 응답 형식 명확화 (`SharedFlowerDto` 구조)
 - Spring Security 예외 처리 개선 (NoResourceFoundException 처리)
 - JwtAuthenticationFilter 최적화 (permitAll 경로 처리 개선)
+- Swagger UI CORS 설정 개선 (SpringDoc 자동 감지 활성화)
+- Graceful Shutdown 설정 추가 (무중단 배포 지원)
+- Health Controller 추가 (`/actuator/health`)
+
+**현재 API 엔드포인트 목록**:
+- `/auth/**` - 인증 (회원가입, 로그인, 비밀번호 관리, 로그아웃)
+- `/users/**` - 사용자 (프로필 조회/수정, FCM 토큰 등록)
+- `/friends/**` - 친구 (추가, 목록 조회, 삭제, 친구별 편지 목록)
+- `/letters/**` - 편지 (작성, 목록 조회, 상세 조회, 답장, 신고, 삭제)
+- `/invite-codes/**` - 초대 코드 (생성, 현재 코드 조회)
+- `/notifications/**` - 알림 (목록 조회, 읽음 처리, 삭제)
+- `/settings/**` - 설정 (푸시 알림, 언어 설정)
+- `/files/**` - 파일 (이미지 업로드)
+- `/actuator/health` - 헬스체크
+
+**제거된 엔드포인트**:
+- `/bouquets/**` - 꽃다발 관련 모든 API는 제거되었습니다
 

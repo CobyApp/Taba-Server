@@ -94,10 +94,9 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     try-it-out-enabled: true
-    urls:
-      - url: /v3/api-docs
-        name: Taba API
-    config-url: /v3/api-docs/swagger-config
+    use-root-path: false
+    disable-swagger-default-url: true
+    # urls와 config-url 제거 - 자동 감지 사용 (같은 서버이므로 CORS 불필요)
   show-actuator: false
   default-consumes-media-type: application/json
   default-produces-media-type: application/json

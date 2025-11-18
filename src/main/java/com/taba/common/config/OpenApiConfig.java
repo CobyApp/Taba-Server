@@ -21,8 +21,8 @@ public class OpenApiConfig {
                         .description("Taba 백엔드 API 명세서")
                         .version("v1"))
                 .servers(List.of(
-                        new Server().url("/api/v1").description("로컬 서버 (상대 경로)"),
-                        new Server().url("http://localhost:8080/api/v1").description("로컬 서버 (절대 경로)"),
+                        new Server().url("/api/v1").description("현재 서버"),
+                        new Server().url("http://localhost:8080/api/v1").description("로컬 서버"),
                         new Server().url("http://cobyserver.iptime.org:8080/api/v1").description("프로덕션 서버")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
