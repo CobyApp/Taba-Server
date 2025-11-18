@@ -217,8 +217,9 @@ lsof -i :8080
 
 ## 📚 더 알아보기
 
-- **시작하기**: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
-- **API 명세**: [docs/API_SPECIFICATION.md](docs/API_SPECIFICATION.md)
-- **GitHub Secrets 설정**: [docs/GITHUB_SECRETS.md](docs/GITHUB_SECRETS.md) ⭐
-- **자동 배포 설정**: [docs/GITHUB_ACTIONS_SETUP.md](docs/GITHUB_ACTIONS_SETUP.md)
+- **빠른 참조**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+- **API 명세 (개발)**: [docs/API_SPECIFICATION_DEV.md](docs/API_SPECIFICATION_DEV.md)
+- **API 명세 (프로덕션)**: [docs/API_SPECIFICATION_PROD.md](docs/API_SPECIFICATION_PROD.md)
+- **설정 체크리스트**: [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) ⭐
+- **환경 변수**: [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)
 

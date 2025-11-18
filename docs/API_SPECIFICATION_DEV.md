@@ -7,7 +7,7 @@
 - **Content-Type**: `application/json`
 - **API 버전**: v1
 
-> **참고**: 이 문서는 개발 환경용 API 명세서입니다. 프로덕션 환경은 [API_SPECIFICATION.md](API_SPECIFICATION.md)를 참고하세요.
+> **참고**: 이 문서는 개발 환경용 API 명세서입니다. 프로덕션 환경은 [API_SPECIFICATION_PROD.md](API_SPECIFICATION_PROD.md)를 참고하세요.
 
 ## 공통 응답 형식
 

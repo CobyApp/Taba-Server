@@ -128,8 +128,8 @@ git push origin develop  # 개발 환경 배포
 - 🔄 **환경 분리**: 프로덕션/개발 환경 분리 배포
 
 **초기 설정** (최초 1회): 
-- [GitHub Actions 설정 가이드](docs/GITHUB_ACTIONS_SETUP.md)
-- [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS.md) ⭐
+- [설정 체크리스트](SETUP_CHECKLIST.md) - GitHub Secrets 및 SSH 키 설정 포함
+- [환경 변수 요약](ENVIRONMENT_VARIABLES.md) - 필수 환경 변수 목록
 
 ### 수동 배포
 
@@ -147,20 +147,16 @@ docker-compose up -d
 
 ### 빠른 시작
 - **[사용 가이드](USAGE.md)** ⭐ - 핵심 사용법 정리
-- **[빠른 시작 가이드](docs/QUICK_START.md)** ⭐ - 5분 안에 시작하기
-- **[API 명세서](docs/API_SPECIFICATION.md)** - 전체 API 엔드포인트 상세 명세
-
-### 배포
+- **[빠른 참조 가이드](QUICK_REFERENCE.md)** ⭐ - 자주 사용하는 명령어와 설정
 - **[설정 체크리스트](SETUP_CHECKLIST.md)** ⭐ - 초기 설정 확인 항목
-- **[GitHub Secrets 설정](docs/GITHUB_SECRETS.md)** ⭐ - 필수 환경변수 설정 가이드
-- **[GitHub Actions 설정](docs/GITHUB_ACTIONS_SETUP.md)** - 자동 배포 설정
-- **[도메인 & HTTPS 설정](docs/DOMAIN_HTTPS_SETUP.md)** 🌐 - 도메인 연결 및 SSL 인증서 설정
-- **[Docker 배포 가이드](docs/DOCKER_DEPLOYMENT.md)** - Docker 사용법
+- **[환경 변수 요약](ENVIRONMENT_VARIABLES.md)** - 환경 변수 빠른 참조
 
-### 개발 및 설정
-- **[데이터베이스 설정](docs/DATABASE_SETUP.md)** - MySQL 설정
-- **[환경 변수 가이드](docs/ENVIRONMENT_VARIABLES.md)** - 전체 환경 변수 목록
-- **[프로젝트 가이드](docs/PROJECT_GUIDE.md)** - 프로젝트 구조 및 개발 가이드
+### API 문서
+- **[API 명세서 (개발 환경)](docs/API_SPECIFICATION_DEV.md)** - 개발 환경 API 엔드포인트 상세 명세
+- **[API 명세서 (프로덕션)](docs/API_SPECIFICATION_PROD.md)** - 프로덕션 환경 API 엔드포인트 상세 명세
+
+### 문제 해결
+- **[502 Bad Gateway 해결 가이드](docs/TROUBLESHOOTING_502.md)** - 502 에러 진단 및 해결 방법
 
 ## 라이선스
 

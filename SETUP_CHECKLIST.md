@@ -65,7 +65,7 @@ ssh-copy-id -i ~/.ssh/github_actions_deploy.pub coby@cobyserver.iptime.org
 
 ## 📚 참고 문서
 
-- [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS.md)
-- [GitHub Actions 설정 가이드](docs/GITHUB_ACTIONS_SETUP.md)
-- [환경 변수 가이드](docs/ENVIRONMENT_VARIABLES.md)
+- [환경 변수 요약](ENVIRONMENT_VARIABLES.md) - 필수 환경 변수 목록
+- [사용 가이드](USAGE.md) - 상세 사용법
+- [빠른 참조 가이드](QUICK_REFERENCE.md) - 자주 사용하는 명령어
 

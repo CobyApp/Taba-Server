@@ -66,6 +66,8 @@ ssh coby@cobyserver.iptime.org "cd ~/taba_backend && docker-compose logs -f back
 ## 📚 상세 문서
 
 - **사용 가이드**: [USAGE.md](USAGE.md)
-- **API 명세**: [docs/API_SPECIFICATION.md](docs/API_SPECIFICATION.md)
-- **자동 배포 설정**: [docs/GITHUB_ACTIONS_SETUP.md](docs/GITHUB_ACTIONS_SETUP.md)
+- **API 명세 (개발)**: [docs/API_SPECIFICATION_DEV.md](docs/API_SPECIFICATION_DEV.md)
+- **API 명세 (프로덕션)**: [docs/API_SPECIFICATION_PROD.md](docs/API_SPECIFICATION_PROD.md)
+- **설정 체크리스트**: [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)
+- **환경 변수**: [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)
 

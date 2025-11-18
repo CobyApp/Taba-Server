@@ -78,6 +78,6 @@ export SERVER_URL=http://localhost:8080/api/v1
 
 ## 🔗 관련 문서
 
-- [환경 변수 상세 가이드](docs/ENVIRONMENT_VARIABLES.md)
-- [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS.md)
+- [사용 가이드](USAGE.md) - 환경 변수 설정 방법 포함
+- [설정 체크리스트](SETUP_CHECKLIST.md) - GitHub Secrets 설정 포함
 
