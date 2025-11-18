@@ -42,7 +42,12 @@ jobs:
           scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
           scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
 
-      - name: Deploy with Docker Compose
+      - name: Copy deployment script
+        run: |
+          scp -o StrictHostKeyChecking=no scripts/zero-downtime-deploy.sh ${{ secrets.SSH_USER }}@cobyserver.iptime.org:~/taba_backend/
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org "chmod +x ~/taba_backend/zero-downtime-deploy.sh"
+
+      - name: Deploy with Zero-Downtime
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@cobyserver.iptime.org bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
@@ -72,13 +77,11 @@ jobs:
             echo "JWT_SECRET=${JWT_SECRET:0:10}***"
             echo "SERVER_URL=$SERVER_URL"
             echo "================================"
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull || true
-            # 기존 이미지 제거 후 재빌드
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml down || true
-            docker rmi taba_backend-backend 2>/dev/null || true
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache --pull backend
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-            echo "=== Container Status After Start ==="
+            
+            # 무중단 배포 스크립트 실행
+            ./zero-downtime-deploy.sh ~/taba_backend
+            
+            echo "=== Container Status After Deployment ==="
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
             echo "=== Backend Logs (first 50 lines) ==="
             sleep 5

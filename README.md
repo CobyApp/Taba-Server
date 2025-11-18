@@ -116,12 +116,19 @@ mysql -u root -p -e "CREATE DATABASE taba CHARACTER SET utf8mb4 COLLATE utf8mb4_
 ### 자동 배포 (GitHub Actions) - 권장 ⭐
 
 ```bash
-git push origin main  # 자동 배포!
+git push origin main  # 무중단 배포 실행!
 ```
+
+**특징**:
+- 🚀 **무중단 배포**: Blue-Green 배포 방식으로 서비스 중단 없이 배포
+- ✅ **자동 헬스체크**: 배포 전 새 인스턴스가 정상 작동하는지 확인
+- 🔄 **Graceful Shutdown**: 진행 중인 요청 완료 후 기존 인스턴스 종료
+- 📊 **자동 롤백**: 헬스체크 실패 시 자동으로 롤백
 
 **초기 설정** (최초 1회): 
 - [GitHub Actions 설정 가이드](docs/GITHUB_ACTIONS_SETUP.md)
 - [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS.md) ⭐
+- [무중단 배포 가이드](docs/ZERO_DOWNTIME_DEPLOYMENT.md) 🚀
 
 ### 수동 배포
 
@@ -146,6 +153,7 @@ docker-compose up -d
 - **[설정 체크리스트](SETUP_CHECKLIST.md)** ⭐ - 초기 설정 확인 항목
 - **[GitHub Secrets 설정](docs/GITHUB_SECRETS.md)** ⭐ - 필수 환경변수 설정 가이드
 - **[GitHub Actions 설정](docs/GITHUB_ACTIONS_SETUP.md)** - 자동 배포 설정
+- **[무중단 배포 가이드](docs/ZERO_DOWNTIME_DEPLOYMENT.md)** 🚀 - Blue-Green 배포 방식
 - **[환경 변수 가이드](docs/ENVIRONMENT_VARIABLES.md)** - 전체 환경 변수 목록
 - **[서버 배포 가이드](docs/DEPLOYMENT_SERVER.md)** - 수동 서버 배포 방법
 - **[Docker 배포 가이드](docs/DOCKER_DEPLOYMENT.md)** - 로컬 Docker 사용법
