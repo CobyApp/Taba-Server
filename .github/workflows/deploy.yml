@@ -195,14 +195,14 @@ jobs:
 
       - name: Check container status
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << REMOTE_SCRIPT
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
-            BACKEND_CONTAINER=\$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
+            BACKEND_CONTAINER=$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
             echo "=== Container Status ==="
             docker ps -a --filter "name=taba" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
             echo ""
             echo "=== Backend Logs ==="
-            docker logs --tail=50 \$BACKEND_CONTAINER 2>&1 || echo "No logs"
+            docker logs --tail=50 "$BACKEND_CONTAINER" 2>&1 || echo "No logs"
           REMOTE_SCRIPT
         env:
           DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}
@@ -210,14 +210,14 @@ jobs:
       - name: Health Check (Internal)
         continue-on-error: true
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << REMOTE_SCRIPT
-            BACKEND_CONTAINER=\$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash << 'REMOTE_SCRIPT'
+            BACKEND_CONTAINER=$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
             sleep 60
             for i in {1..10}; do
-              docker ps | grep -q "\$BACKEND_CONTAINER" && docker exec \$BACKEND_CONTAINER curl -f http://localhost:8080/api/v1/actuator/health 2>&1 && exit 0
+              docker ps | grep -q "$BACKEND_CONTAINER" && docker exec "$BACKEND_CONTAINER" curl -f http://localhost:8080/api/v1/actuator/health 2>&1 && exit 0
               sleep 10
             done
-            docker logs --tail=50 \$BACKEND_CONTAINER 2>&1
+            docker logs --tail=50 "$BACKEND_CONTAINER" 2>&1
             exit 1
           REMOTE_SCRIPT
         env:
