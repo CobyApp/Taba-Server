@@ -45,6 +45,11 @@ public class LetterService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
+        // visibility는 필수 (일반 편지 작성 시)
+        if (request.getVisibility() == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "공개 설정은 필수입니다.");
+        }
+
         User recipient = null;
         if (request.getRecipientId() != null) {
             recipient = userRepository.findActiveUserById(request.getRecipientId())

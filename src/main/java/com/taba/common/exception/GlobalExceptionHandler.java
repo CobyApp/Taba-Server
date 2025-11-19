@@ -35,9 +35,11 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         log.error("ValidationException: {}", errors);
+        
+        // validation 에러 details를 응답에 포함
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("VALIDATION_ERROR", "입력값 검증에 실패했습니다."));
+                .body(ApiResponse.validationError(errors));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

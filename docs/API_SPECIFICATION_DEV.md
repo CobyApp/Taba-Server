@@ -343,6 +343,55 @@ profileImage: [파일]
 }
 ```
 
+### 4.4 편지 답장
+
+**POST** `/letters/{letterId}/reply`
+
+**인증**: 필요
+
+**Request Body**:
+```json
+{
+  "title": "답장 제목",
+  "content": "답장 내용",
+  "preview": "답장 미리보기",
+  "visibility": "DIRECT",
+  "isAnonymous": false,
+  "template": {
+    "background": "#1D1433",
+    "textColor": "#FFFFFF",
+    "fontFamily": "Jua",
+    "fontSize": 16.0
+  },
+  "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
+  "scheduledAt": "2024-01-01T12:00:00"
+}
+```
+
+**참고사항**:
+- `recipientId`는 필요하지 않습니다. 원본 편지의 작성자가 자동으로 수신자가 됩니다.
+- 공개 편지, 친구 전용 편지, 직접 전송 편지 모두에 답장 가능합니다.
+- 답장은 항상 `DIRECT` 타입으로 생성됩니다.
+- 친구가 아닌 사용자에게 답장을 보내면 자동으로 양방향 친구 관계가 생성됩니다.
+- 자기 자신에게 답장할 수 없습니다.
+
+**Response** (201 Created):
+```json
+{
+  "success": true,
+  "data": {
+    "letter": {
+      "id": "uuid",
+      "title": "답장 제목",
+      "content": "답장 내용",
+      "preview": "답장 미리보기",
+      "sentAt": "2024-01-01T00:00:00"
+    }
+  },
+  "message": "답장이 전송되었습니다. 친구가 자동으로 추가되었습니다."
+}
+```
+
 ---
 
 ## 5. 초대 코드 API (`/invite-codes`)

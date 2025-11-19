@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -53,10 +55,23 @@ public class ApiResponse<T> {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    static class ErrorResponse {
+    public static class ErrorResponse {
         private String code;
         private String message;
         private Object details;
+    }
+    
+    public static <T> ApiResponse<T> validationError(Map<String, String> errors) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .code("VALIDATION_ERROR")
+                .message("입력값 검증에 실패했습니다.")
+                .details(errors)
+                .build();
+        
+        return ApiResponse.<T>builder()
+                .success(false)
+                .error(errorResponse)
+                .build();
     }
 }
 

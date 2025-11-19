@@ -3,7 +3,6 @@ package com.taba.letter.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.taba.letter.entity.Letter;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,7 +22,8 @@ public class LetterCreateRequest {
     @NotBlank(message = "미리보기는 필수입니다.")
     private String preview;
 
-    @NotNull(message = "공개 설정은 필수입니다.")
+    // 답장 API에서는 선택사항 (서버에서 자동으로 DIRECT로 설정)
+    // 일반 편지 작성 시에는 서비스 레이어에서 null 체크
     private Letter.Visibility visibility;
 
     private Boolean isAnonymous = false;
