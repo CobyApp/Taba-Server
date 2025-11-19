@@ -57,7 +57,8 @@ jobs:
 
       - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash << 'REMOTE_SCRIPT'
+          DEPLOY_ENV_VALUE="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DEPLOY_ENV="$DEPLOY_ENV_VALUE" bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             
             # 환경별 설정
