@@ -82,6 +82,9 @@ jobs:
               [ -z "\$SERVER_EXTERNAL_PORT" ] && export SERVER_EXTERNAL_PORT=8080
               export DB_EXTERNAL_PORT='${{ secrets.DB_EXTERNAL_PORT_PROD }}'
               export REDIS_EXTERNAL_PORT='${{ secrets.REDIS_EXTERNAL_PORT_PROD }}'
+              # 프로덕션 기본 포트: MySQL 3306, Redis 6379
+              [ -z "\$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3306
+              [ -z "\$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6379
               export SPRING_PROFILES_ACTIVE=prod
               export FILE_UPLOAD_DIR=/app/uploads
               COMPOSE_FILE="docker-compose.dev.yml"
@@ -107,6 +110,9 @@ jobs:
               [ -z "\$SERVER_EXTERNAL_PORT" ] && export SERVER_EXTERNAL_PORT=8081
               export DB_EXTERNAL_PORT='${{ secrets.DB_EXTERNAL_PORT_DEV }}'
               export REDIS_EXTERNAL_PORT='${{ secrets.REDIS_EXTERNAL_PORT_DEV }}'
+              # 개발 환경 기본 포트: MySQL 3307, Redis 6380
+              [ -z "\$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3307
+              [ -z "\$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6380
               export SPRING_PROFILES_ACTIVE=dev
               export FILE_UPLOAD_DIR=/app/uploads
               COMPOSE_FILE="docker-compose.dev.yml"
@@ -116,9 +122,7 @@ jobs:
             # 선택사항 Secrets 기본값 처리
             [ -z "\$JWT_EXPIRATION" ] && export JWT_EXPIRATION=604800000
             [ -z "\$REDIS_PASSWORD" ] && export REDIS_PASSWORD=
-            # 포트 기본값은 위에서 환경별로 설정됨
-            [ -z "\$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3306
-            [ -z "\$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6379
+            # 포트 기본값은 위에서 환경별로 설정됨 (프로덕션: MySQL 3306, Redis 6379 / 개발: MySQL 3307, Redis 6380)
             
             # 환경 변수 확인 (디버깅용, 비밀번호는 일부만 표시)
             echo "=== Environment Variables Check ($DEPLOY_ENV) ==="
@@ -221,6 +225,35 @@ jobs:
               echo "✅ MySQL and Redis are already running for $DEPLOY_ENV"
               echo "Checking MySQL container status..."
               docker ps --filter "name=\$MYSQL_CONTAINER" --format "table {{.Names}}\t{{.Status}}" || true
+              
+              # MySQL이 이미 실행 중이어도 사용자와 데이터베이스가 존재하는지 확인하고 생성
+              echo "Ensuring MySQL user and database exist (even if container is already running)..."
+              sleep 5
+              
+              # MySQL 헬스체크 대기
+              for i in {1..12}; do
+                if docker inspect --format='{{.State.Health.Status}}' \$MYSQL_CONTAINER 2>/dev/null | grep -q "healthy"; then
+                  echo "✅ MySQL is healthy"
+                  break
+                fi
+                sleep 5
+              done
+              
+              # root 연결 테스트
+              ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "SELECT 1" 2>&1) || true
+              if ! echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                echo "✅ Root connection successful, ensuring user and database exist..."
+                # 데이터베이스 생성
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 || echo "Database creation warning"
+                # 사용자 생성 (기존 사용자 삭제 후 재생성하여 비밀번호 업데이트)
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 || echo "Drop user warning"
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 || echo "User creation warning"
+                # 권한 부여
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 || echo "Grant privileges warning"
+                # 권한 새로고침
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "FLUSH PRIVILEGES;" 2>&1 || echo "Flush privileges warning"
+                echo "User and database check completed"
+              fi
             fi
             
             # MySQL 연결 테스트 및 재생성 로직 강화
