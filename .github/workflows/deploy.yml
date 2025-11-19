@@ -156,25 +156,21 @@ jobs:
             
             # 현재 환경의 MySQL/Redis 컨테이너만 완전히 제거 (다른 환경은 건드리지 않음)
             echo "=== Stopping and removing current environment MySQL/Redis containers ==="
-            docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
-            docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
-            
-            # ContainerConfig 에러 방지: docker-compose로 완전히 제거
-            echo "=== Removing containers via docker-compose ==="
-            $COMPOSE_CMD rm -f mysql redis 2>/dev/null || true
-            
-            # 컨테이너가 완전히 제거될 때까지 대기
-            sleep 3
-            
-            # 남아있는 컨테이너 확인 및 강제 제거
-            if docker ps -a --format '{{.Names}}' | grep -q "^${MYSQL_CONTAINER}$"; then
-              echo "⚠️ MySQL container still exists, forcing removal..."
-              docker rm -f "$MYSQL_CONTAINER" 2>/dev/null || true
-            fi
-            if docker ps -a --format '{{.Names}}' | grep -q "^${REDIS_CONTAINER}$"; then
-              echo "⚠️ Redis container still exists, forcing removal..."
-              docker rm -f "$REDIS_CONTAINER" 2>/dev/null || true
-            fi
+            # 여러 번 시도하여 완전히 제거
+            for attempt in {1..3}; do
+              docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
+              docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
+              sleep 1
+              # 컨테이너가 완전히 제거되었는지 확인
+              if ! docker ps -a --format '{{.Names}}' | grep -q "^${MYSQL_CONTAINER}$" && \
+                 ! docker ps -a --format '{{.Names}}' | grep -q "^${REDIS_CONTAINER}$"; then
+                echo "✅ Containers removed successfully"
+                break
+              fi
+              if [ $attempt -eq 3 ]; then
+                echo "⚠️ Some containers may still exist, but continuing..."
+              fi
+            done
             
             # MySQL, Redis 시작 (다른 환경의 컨테이너는 그대로 유지)
             echo "=== Starting MySQL and Redis for current environment ==="
@@ -234,6 +230,14 @@ jobs:
             
             # 백엔드 시작 (MySQL/Redis는 이미 실행 중이므로 --no-deps 사용)
             echo "=== Starting backend ==="
+            # MySQL/Redis가 실행 중인지 확인
+            if ! docker ps --format '{{.Names}}' | grep -q "^${MYSQL_CONTAINER}$" || \
+               ! docker ps --format '{{.Names}}' | grep -q "^${REDIS_CONTAINER}$"; then
+              echo "❌ MySQL or Redis container is not running"
+              docker ps --format '{{.Names}}' | grep -E "${MYSQL_CONTAINER}|${REDIS_CONTAINER}" || true
+              exit 1
+            fi
+            echo "✅ MySQL and Redis are running, starting backend..."
             $COMPOSE_CMD up -d --no-deps backend || exit 1
             sleep 5
             echo "=== Backend logs ==="
