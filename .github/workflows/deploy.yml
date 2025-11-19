@@ -178,11 +178,40 @@ jobs:
             docker stop "\$BACKEND_CONTAINER" 2>/dev/null || true
             docker rm -f "\$BACKEND_CONTAINER" 2>/dev/null || true
             
+            echo "=== Pre-build checks ==="
+            echo "Current directory: \$(pwd)"
+            echo "Files in directory:"
+            ls -la | head -20
+            echo ""
+            echo "Docker Compose command: \$COMPOSE_CMD"
+            echo "Compose file: \$COMPOSE_FILE"
+            echo ""
+            echo "Checking required files:"
+            [ -f "\$COMPOSE_FILE" ] && echo "✅ \$COMPOSE_FILE exists" || echo "❌ \$COMPOSE_FILE NOT FOUND"
+            [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile NOT FOUND"
+            [ -f "build.gradle" ] && echo "✅ build.gradle exists" || echo "❌ build.gradle NOT FOUND"
+            [ -d "src" ] && echo "✅ src directory exists" || echo "❌ src directory NOT FOUND"
+            [ -d "gradle" ] && echo "✅ gradle directory exists" || echo "❌ gradle directory NOT FOUND"
+            echo ""
+            
             echo "=== Building backend image ==="
-            \$COMPOSE_CMD build --no-cache --progress=plain backend || {
+            # 빌드 실행 및 상세 로그 출력
+            if ! \$COMPOSE_CMD build --no-cache --progress=plain backend 2>&1 | tee /tmp/build.log; then
+              echo ""
               echo "❌ Backend build failed"
+              echo "=== Build log (last 200 lines) ==="
+              tail -200 /tmp/build.log || true
+              echo ""
+              echo "=== Error summary ==="
+              grep -i "error\|failed\|exception" /tmp/build.log | tail -50 || echo "No error patterns found"
+              echo ""
+              echo "=== Docker Compose file check ==="
+              ls -la \$COMPOSE_FILE || echo "Compose file not found: \$COMPOSE_FILE"
+              echo "=== Dockerfile check ==="
+              ls -la Dockerfile || echo "Dockerfile not found"
               exit 1
-            }
+            fi
+            echo "✅ Backend build completed successfully"
             
             # MySQL, Redis 시작
             echo "=== Creating network ==="
