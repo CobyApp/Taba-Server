@@ -159,8 +159,12 @@ jobs:
             docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             
-            # ContainerConfig 에러 방지: 컨테이너가 완전히 제거될 때까지 대기
-            sleep 2
+            # ContainerConfig 에러 방지: docker-compose로 완전히 제거
+            echo "=== Removing containers via docker-compose ==="
+            $COMPOSE_CMD rm -f mysql redis 2>/dev/null || true
+            
+            # 컨테이너가 완전히 제거될 때까지 대기
+            sleep 3
             
             # 남아있는 컨테이너 확인 및 강제 제거
             if docker ps -a --format '{{.Names}}' | grep -q "^${MYSQL_CONTAINER}$"; then
@@ -174,7 +178,7 @@ jobs:
             
             # MySQL, Redis 시작 (다른 환경의 컨테이너는 그대로 유지)
             echo "=== Starting MySQL and Redis for current environment ==="
-            $COMPOSE_CMD up -d --force-recreate --no-deps mysql redis
+            $COMPOSE_CMD up -d --no-deps mysql redis
             
             # 컨테이너가 실제로 시작될 때까지 대기
             echo "=== Waiting for containers to start ==="
