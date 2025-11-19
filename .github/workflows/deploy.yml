@@ -239,20 +239,59 @@ jobs:
                 sleep 5
               done
               
-              # root 연결 테스트
-              ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "SELECT 1" 2>&1) || true
+              # root 비밀번호 확인 (MySQL 컨테이너 환경 변수에서 가져오기)
+              MYSQL_ROOT_PASS=\$(docker exec \$MYSQL_CONTAINER printenv MYSQL_ROOT_PASSWORD 2>/dev/null) || true
+              if [ -z "\$MYSQL_ROOT_PASS" ]; then
+                # 환경 변수가 없으면 DB_PASSWORD 사용
+                MYSQL_ROOT_PASS=\$DB_PASSWORD
+              fi
+              
+              echo "Attempting root connection with password from container environment..."
+              # root 연결 테스트 (여러 방법 시도)
+              ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "SELECT 1" 2>&1) || true
+              
+              # 첫 번째 시도 실패 시 DB_PASSWORD로 재시도
+              if echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                echo "⚠️ Root connection with MYSQL_ROOT_PASSWORD failed, trying DB_PASSWORD..."
+                ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+                if ! echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                  MYSQL_ROOT_PASS=\$DB_PASSWORD
+                fi
+              fi
+              
               if ! echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                 echo "✅ Root connection successful, ensuring user and database exist..."
+                echo "Using root password: \${MYSQL_ROOT_PASS:0:3}***"
+                
                 # 데이터베이스 생성
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 || echo "Database creation warning"
+                echo "Creating database \$DB_NAME..."
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 | grep -v "Warning" || echo "Database creation completed"
+                
                 # 사용자 생성 (기존 사용자 삭제 후 재생성하여 비밀번호 업데이트)
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 || echo "Drop user warning"
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 || echo "User creation warning"
+                echo "Creating user \$DB_USERNAME..."
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || true
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 | grep -v "Warning" || echo "User creation completed"
+                
                 # 권한 부여
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 || echo "Grant privileges warning"
+                echo "Granting privileges to \$DB_USERNAME on \$DB_NAME..."
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || echo "Privileges granted"
+                
                 # 권한 새로고침
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "FLUSH PRIVILEGES;" 2>&1 || echo "Flush privileges warning"
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "FLUSH PRIVILEGES;" 2>&1 | grep -v "Warning" || echo "Privileges flushed"
+                
+                # 사용자 연결 테스트
+                echo "Testing user connection..."
+                USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "USE \`\$DB_NAME\`; SELECT 1;" 2>&1) || true
+                if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                  echo "⚠️ User connection test failed: \$USER_TEST"
+                else
+                  echo "✅ User connection test successful"
+                fi
+                
                 echo "User and database check completed"
+              else
+                echo "⚠️ Root connection failed. Cannot create user automatically."
+                echo "Root test result: \$ROOT_TEST"
               fi
             fi
             
@@ -285,18 +324,33 @@ jobs:
                 sleep 5
               done
               
+              # root 비밀번호 확인
+              MYSQL_ROOT_PASS=\$(docker exec \$MYSQL_CONTAINER printenv MYSQL_ROOT_PASSWORD 2>/dev/null) || true
+              if [ -z "\$MYSQL_ROOT_PASS" ]; then
+                MYSQL_ROOT_PASS=\$DB_PASSWORD
+              fi
+              
               # 연결 테스트 (root로 먼저 시도, 그 다음 사용자 계정)
               echo "Testing MySQL connection as root..."
-              ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "SELECT 1" 2>&1) || true
+              ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "SELECT 1" 2>&1) || true
+              
+              # 첫 번째 시도 실패 시 DB_PASSWORD로 재시도
+              if echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                echo "⚠️ Root connection with MYSQL_ROOT_PASSWORD failed, trying DB_PASSWORD..."
+                ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+                if ! echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                  MYSQL_ROOT_PASS=\$DB_PASSWORD
+                fi
+              fi
               
               if echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                 echo "⚠️ Root connection failed. Test result: \$ROOT_TEST"
               else
                 echo "✅ Root connection successful"
                 
-                # 사용자 계정으로 연결 테스트
-                echo "Testing MySQL connection as \$DB_USERNAME..."
-                USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+                # 사용자 계정으로 연결 테스트 (데이터베이스 접근 포함)
+                echo "Testing MySQL connection as \$DB_USERNAME to database \$DB_NAME..."
+                USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "USE \`\$DB_NAME\`; SELECT 1;" 2>&1) || true
                 
                 if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                   echo "⚠️ User connection failed. Attempting to fix user permissions..."
@@ -305,26 +359,37 @@ jobs:
                   # MySQL에서 사용자 재생성 시도
                   echo "Recreating MySQL user \$DB_USERNAME..."
                   
+                  # root 비밀번호 확인
+                  MYSQL_ROOT_PASS=\$(docker exec \$MYSQL_CONTAINER printenv MYSQL_ROOT_PASSWORD 2>/dev/null) || true
+                  if [ -z "\$MYSQL_ROOT_PASS" ]; then
+                    MYSQL_ROOT_PASS=\$DB_PASSWORD
+                  fi
+                  
                   # SQL 명령을 여러 단계로 나누어 실행 (변수 확장 문제 방지)
-                  # 데이터베이스 생성 (CHARACTER SET과 COLLATE는 서버 기본값 사용)
-                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\`;" 2>&1 || echo "Database creation warning"
+                  # 데이터베이스 생성
+                  echo "Creating database \$DB_NAME..."
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 | grep -v "Warning" || echo "Database creation completed"
                   
                   # 사용자 삭제 (이미 존재하는 경우)
-                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 || echo "Drop user warning"
+                  echo "Dropping existing user \$DB_USERNAME..."
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || true
                   
                   # 사용자 생성
-                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 || echo "Create user failed"
+                  echo "Creating user \$DB_USERNAME..."
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 | grep -v "Warning" || echo "User creation completed"
                   
                   # 권한 부여
-                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 || echo "Grant privileges failed"
+                  echo "Granting privileges..."
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || echo "Privileges granted"
                   
                   # 권한 새로고침
-                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "FLUSH PRIVILEGES;" 2>&1 || echo "Flush privileges failed"
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "FLUSH PRIVILEGES;" 2>&1 | grep -v "Warning" || echo "Privileges flushed"
                   
                   sleep 3
                   
-                  # 다시 테스트
-                  USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+                  # 다시 테스트 (데이터베이스 접근 포함)
+                  echo "Retesting user connection..."
+                  USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "USE \`\$DB_NAME\`; SELECT 1;" 2>&1) || true
                   if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                     echo "⚠️ User connection still failing after fix attempt"
                     echo "Final test result: \$USER_TEST"
@@ -376,11 +441,28 @@ jobs:
                 # MySQL이 준비되면 사용자 생성 시도 (볼륨이 이미 존재하는 경우를 대비)
                 echo "Ensuring MySQL user exists..."
                 sleep 5
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\`;" 2>&1 || true
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 || true
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 || true
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 || true
-                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "FLUSH PRIVILEGES;" 2>&1 || true
+                
+                # root 비밀번호 확인
+                MYSQL_ROOT_PASS=\$(docker exec \$MYSQL_CONTAINER printenv MYSQL_ROOT_PASSWORD 2>/dev/null) || true
+                if [ -z "\$MYSQL_ROOT_PASS" ]; then
+                  MYSQL_ROOT_PASS=\$DB_PASSWORD
+                fi
+                
+                echo "Creating database and user with root password..."
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 | grep -v "Warning" || echo "Database creation completed"
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || true
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 | grep -v "Warning" || echo "User creation completed"
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || echo "Privileges granted"
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\$MYSQL_ROOT_PASS -e "FLUSH PRIVILEGES;" 2>&1 | grep -v "Warning" || echo "Privileges flushed"
+                
+                # 사용자 연결 테스트
+                USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "USE \`\$DB_NAME\`; SELECT 1;" 2>&1) || true
+                if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                  echo "⚠️ User connection test failed after container recreation: \$USER_TEST"
+                else
+                  echo "✅ User connection test successful after container recreation"
+                fi
+                
                 echo "User creation attempt completed"
               fi
             done
