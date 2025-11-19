@@ -148,15 +148,17 @@ jobs:
             
             # MySQL, Redis 시작
             docker network create taba-network 2>/dev/null || true
-            MYSQL_RUNNING=$(docker ps -q -f name="$MYSQL_CONTAINER") || true
-            REDIS_RUNNING=$(docker ps -q -f name="$REDIS_CONTAINER") || true
             
-            if [ -z "$MYSQL_RUNNING" ] || [ -z "$REDIS_RUNNING" ]; then
-              docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
-              docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
-              $COMPOSE_CMD up -d mysql redis
-              sleep 10
-            fi
+            # 기존 컨테이너 완전 제거 (ContainerConfig 에러 방지)
+            docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
+            docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
+            
+            # docker-compose down으로 완전 정리 (볼륨은 유지)
+            $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
+            
+            # MySQL, Redis 시작
+            $COMPOSE_CMD up -d mysql redis
+            sleep 10
             
             # MySQL 사용자 생성 및 테스트
             for i in {1..12}; do
