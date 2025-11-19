@@ -272,14 +272,32 @@ jobs:
               fi
             done
             
+            # 백엔드 시작 전 환경 변수 확인
+            echo "=== 환경 변수 최종 확인 (백엔드 시작 전) ==="
+            echo "DB_HOST: \$DB_HOST"
+            echo "DB_NAME: \$DB_NAME"
+            echo "DB_USERNAME: \$DB_USERNAME"
+            echo "DB_PASSWORD: \${DB_PASSWORD:0:3}***"
+            echo "JWT_SECRET: \${JWT_SECRET:0:10}***"
+            echo "SERVER_URL: \$SERVER_URL"
+            echo "SPRING_PROFILES_ACTIVE: \$SPRING_PROFILES_ACTIVE"
+            echo ""
+            
             # 백엔드 시작
             echo "=== Starting backend ==="
             \$COMPOSE_CMD up -d backend || {
               echo "❌ Failed to start backend"
+              echo "=== Docker Compose logs ==="
               \$COMPOSE_CMD logs backend 2>&1 || true
+              echo ""
+              echo "=== Container environment variables ==="
+              docker exec "\$BACKEND_CONTAINER" printenv | grep -E "(DB_|JWT_|SERVER_|SPRING_)" || echo "Container not running"
               exit 1
             }
             sleep 5
+            echo "=== Backend container environment variables ==="
+            docker exec "\$BACKEND_CONTAINER" printenv | grep -E "(DB_|JWT_|SERVER_|SPRING_)" | sort || echo "Container not ready yet"
+            echo ""
             echo "=== Backend logs (last 50 lines) ==="
             docker logs --tail=50 "\$BACKEND_CONTAINER" 2>&1 || echo "No logs available"
           REMOTE_SCRIPT
