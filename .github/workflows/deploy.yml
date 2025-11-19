@@ -37,10 +37,6 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Create remote directory
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p ~/taba_backend"
-
       - name: Create Firebase service account key file
         run: |
           mkdir -p src/main/resources
@@ -52,25 +48,46 @@ jobs:
         run: |
           DEPLOY_ENV_VALUE="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
           
+          # 환경별 디렉토리 설정 (각 환경이 완전히 독립적으로 동작)
+          if [ "$DEPLOY_ENV_VALUE" = "prod" ]; then
+            REMOTE_DIR="~/taba_backend_prod"
+            echo "=== Copying files to production directory: $REMOTE_DIR ==="
+          else
+            REMOTE_DIR="~/taba_backend_dev"
+            echo "=== Copying files to development directory: $REMOTE_DIR ==="
+          fi
+          
+          # 원격 디렉토리 생성
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p $REMOTE_DIR"
+          
           # 환경별로 필요한 파일만 복사 (다른 환경 파일은 복사하지 않음)
           if [ "$DEPLOY_ENV_VALUE" = "prod" ]; then
             echo "=== Copying production files only ==="
-            scp -o StrictHostKeyChecking=no docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+            scp -o StrictHostKeyChecking=no docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$REMOTE_DIR/
           else
             echo "=== Copying development files only ==="
-            scp -o StrictHostKeyChecking=no docker-compose.dev.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+            scp -o StrictHostKeyChecking=no docker-compose.dev.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$REMOTE_DIR/
           fi
           
-          # 공통 파일 복사
-          scp -o StrictHostKeyChecking=no build.gradle settings.gradle gradle.properties ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
-          scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
-          scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          # 공통 파일 복사 (각 환경의 독립 디렉토리에)
+          scp -o StrictHostKeyChecking=no build.gradle settings.gradle gradle.properties ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$REMOTE_DIR/
+          scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$REMOTE_DIR/
+          scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:$REMOTE_DIR/
 
       - name: Deploy Application
         run: |
           DEPLOY_ENV_VALUE="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
           ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DEPLOY_ENV="$DEPLOY_ENV_VALUE" bash << 'REMOTE_SCRIPT'
-            cd ~/taba_backend
+            # 환경별 디렉토리 설정 (각 환경이 완전히 독립적으로 동작)
+            if [ "$DEPLOY_ENV" = "prod" ]; then
+              DEPLOY_DIR="$HOME/taba_backend_prod"
+            else
+              DEPLOY_DIR="$HOME/taba_backend_dev"
+            fi
+            
+            cd "$DEPLOY_DIR"
+            echo "=== Working directory: $DEPLOY_DIR ==="
+            echo "=== Current directory: $(pwd) ==="
             
             # 환경별 설정 (각 환경은 독립적으로 동작)
             if [ "$DEPLOY_ENV" = "prod" ]; then
@@ -315,8 +332,15 @@ jobs:
 
       - name: Check container status
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << 'REMOTE_SCRIPT'
-            cd ~/taba_backend
+          DEPLOY_ENV_VALUE="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} DEPLOY_ENV="$DEPLOY_ENV_VALUE" bash << 'REMOTE_SCRIPT'
+            # 환경별 디렉토리 설정
+            if [ "$DEPLOY_ENV" = "prod" ]; then
+              DEPLOY_DIR="$HOME/taba_backend_prod"
+            else
+              DEPLOY_DIR="$HOME/taba_backend_dev"
+            fi
+            cd "$DEPLOY_DIR"
             BACKEND_CONTAINER=$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
             echo "=== Container Status ==="
             docker ps -a --filter "name=taba" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
