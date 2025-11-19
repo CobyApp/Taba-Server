@@ -147,14 +147,16 @@ jobs:
             docker rm -f "$BACKEND_CONTAINER" 2>/dev/null || true
             $COMPOSE_CMD build --no-cache --progress=plain backend || exit 1
             
-            # MySQL, Redis 시작
+            # 공유 네트워크 생성 (prod/dev 모두 사용, 이미 존재하면 무시)
             docker network create taba-network 2>/dev/null || true
             
-            # 기존 컨테이너 완전 제거 (ContainerConfig 에러 방지)
+            # 현재 환경의 MySQL/Redis 컨테이너만 제거 (다른 환경은 건드리지 않음)
             docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             
-            # docker-compose down으로 완전 정리 (볼륨은 유지)
+            # docker-compose down으로 현재 환경의 컨테이너만 정리 (네트워크는 유지, 볼륨도 유지)
+            # --remove-orphans: 현재 compose 파일에 없는 컨테이너만 제거
+            # 네트워크는 제거하지 않음 (다른 환경과 공유)
             $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
             
             # MySQL, Redis 시작
