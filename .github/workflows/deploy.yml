@@ -50,7 +50,18 @@ jobs:
 
       - name: Copy files to server
         run: |
-          scp -o StrictHostKeyChecking=no docker-compose.dev.yml docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          DEPLOY_ENV_VALUE="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
+          
+          # 환경별로 필요한 파일만 복사 (다른 환경 파일은 복사하지 않음)
+          if [ "$DEPLOY_ENV_VALUE" = "prod" ]; then
+            echo "=== Copying production files only ==="
+            scp -o StrictHostKeyChecking=no docker-compose.prod.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          else
+            echo "=== Copying development files only ==="
+            scp -o StrictHostKeyChecking=no docker-compose.dev.yml Dockerfile ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
+          fi
+          
+          # 공통 파일 복사
           scp -o StrictHostKeyChecking=no build.gradle settings.gradle gradle.properties ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
           scp -r -o StrictHostKeyChecking=no gradle ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
           scp -r -o StrictHostKeyChecking=no src ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/
@@ -61,8 +72,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" DEPLOY_ENV="$DEPLOY_ENV_VALUE" bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             
-            # 환경별 설정
+            # 환경별 설정 (각 환경은 독립적으로 동작)
             if [ "$DEPLOY_ENV" = "prod" ]; then
+              echo "=== Production environment configuration ==="
               export DB_NAME="${{ secrets.DB_NAME_PROD }}"
               export DB_USERNAME="${{ secrets.DB_USERNAME_PROD }}"
               export DB_PASSWORD="${{ secrets.DB_PASSWORD_PROD }}"
@@ -81,7 +93,10 @@ jobs:
               BACKEND_CONTAINER="taba-backend-prod"
               MYSQL_CONTAINER="taba-mysql-prod"
               REDIS_CONTAINER="taba-redis-prod"
+              echo "✅ Using production compose file: $COMPOSE_FILE"
+              echo "✅ Production containers: $BACKEND_CONTAINER, $MYSQL_CONTAINER, $REDIS_CONTAINER"
             else
+              echo "=== Development environment configuration ==="
               export DB_NAME="${{ secrets.DB_NAME_DEV }}"
               export DB_USERNAME="${{ secrets.DB_USERNAME_DEV }}"
               export DB_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}"
@@ -100,6 +115,32 @@ jobs:
               BACKEND_CONTAINER="taba-backend-dev"
               MYSQL_CONTAINER="taba-mysql-dev"
               REDIS_CONTAINER="taba-redis-dev"
+              echo "✅ Using development compose file: $COMPOSE_FILE"
+              echo "✅ Development containers: $BACKEND_CONTAINER, $MYSQL_CONTAINER, $REDIS_CONTAINER"
+            fi
+            
+            # 다른 환경의 컨테이너는 건드리지 않음을 확인
+            echo "=== Ensuring other environment containers are not affected ==="
+            if [ "$DEPLOY_ENV" = "prod" ]; then
+              DEV_BACKEND=$(docker ps --format '{{.Names}}' | grep "^taba-backend-dev$" || echo "")
+              DEV_MYSQL=$(docker ps --format '{{.Names}}' | grep "^taba-mysql-dev$" || echo "")
+              DEV_REDIS=$(docker ps --format '{{.Names}}' | grep "^taba-redis-dev$" || echo "")
+              if [ -n "$DEV_BACKEND" ] || [ -n "$DEV_MYSQL" ] || [ -n "$DEV_REDIS" ]; then
+                echo "✅ Development environment containers are running (will not be affected):"
+                [ -n "$DEV_BACKEND" ] && echo "  - $DEV_BACKEND"
+                [ -n "$DEV_MYSQL" ] && echo "  - $DEV_MYSQL"
+                [ -n "$DEV_REDIS" ] && echo "  - $DEV_REDIS"
+              fi
+            else
+              PROD_BACKEND=$(docker ps --format '{{.Names}}' | grep "^taba-backend-prod$" || echo "")
+              PROD_MYSQL=$(docker ps --format '{{.Names}}' | grep "^taba-mysql-prod$" || echo "")
+              PROD_REDIS=$(docker ps --format '{{.Names}}' | grep "^taba-redis-prod$" || echo "")
+              if [ -n "$PROD_BACKEND" ] || [ -n "$PROD_MYSQL" ] || [ -n "$PROD_REDIS" ]; then
+                echo "✅ Production environment containers are running (will not be affected):"
+                [ -n "$PROD_BACKEND" ] && echo "  - $PROD_BACKEND"
+                [ -n "$PROD_MYSQL" ] && echo "  - $PROD_MYSQL"
+                [ -n "$PROD_REDIS" ] && echo "  - $PROD_REDIS"
+              fi
             fi
             
             # 필수 환경 변수 확인
