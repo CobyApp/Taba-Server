@@ -271,7 +271,22 @@ jobs:
                   
                   # MySQL에서 사용자 재생성 시도
                   echo "Recreating MySQL user \$DB_USERNAME..."
-                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; DROP USER IF EXISTS '\$DB_USERNAME'@'%'; CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%'; FLUSH PRIVILEGES;" 2>&1 || echo "Failed to recreate user"
+                  
+                  # SQL 명령을 여러 단계로 나누어 실행 (변수 확장 문제 방지)
+                  # 데이터베이스 생성 (CHARACTER SET과 COLLATE는 서버 기본값 사용)
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\`;" 2>&1 || echo "Database creation warning"
+                  
+                  # 사용자 삭제 (이미 존재하는 경우)
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 || echo "Drop user warning"
+                  
+                  # 사용자 생성
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 || echo "Create user failed"
+                  
+                  # 권한 부여
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 || echo "Grant privileges failed"
+                  
+                  # 권한 새로고침
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "FLUSH PRIVILEGES;" 2>&1 || echo "Flush privileges failed"
                   
                   sleep 3
                   
@@ -279,6 +294,7 @@ jobs:
                   USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
                   if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                     echo "⚠️ User connection still failing after fix attempt"
+                    echo "Final test result: \$USER_TEST"
                   else
                     echo "✅ User connection successful after fix"
                     MYSQL_CONNECTION_OK=true
@@ -297,6 +313,10 @@ jobs:
                 echo "Stopping and removing MySQL container..."
                 docker stop \$MYSQL_CONTAINER 2>/dev/null || true
                 docker rm -f \$MYSQL_CONTAINER 2>/dev/null || true
+                
+                # 볼륨이 이미 존재하는 경우, MySQL은 초기화 스크립트를 실행하지 않습니다
+                # 따라서 볼륨도 제거하거나 사용자를 수동으로 생성해야 합니다
+                # 여기서는 볼륨을 제거하지 않고, 컨테이너 재생성 후 사용자를 수동으로 생성합니다
                 
                 echo "Recreating MySQL container with correct credentials..."
                 echo "DB_NAME=\$DB_NAME"
@@ -319,6 +339,16 @@ jobs:
                   fi
                   sleep 3
                 done
+                
+                # MySQL이 준비되면 사용자 생성 시도 (볼륨이 이미 존재하는 경우를 대비)
+                echo "Ensuring MySQL user exists..."
+                sleep 5
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\`;" 2>&1 || true
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 || true
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 || true
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%';" 2>&1 || true
+                docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "FLUSH PRIVILEGES;" 2>&1 || true
+                echo "User creation attempt completed"
               fi
             done
             
