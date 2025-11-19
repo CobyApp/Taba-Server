@@ -35,20 +35,20 @@ public class LetterScheduler {
 
         for (Letter letter : scheduledLetters) {
             try {
-                letter.send();
-                letterRepository.save(letter);
+            letter.send();
+            letterRepository.save(letter);
                 log.info("Scheduled letter sent: letterId={}, scheduledAt={}, sentAt={}", 
                         letter.getId(), letter.getScheduledAt(), letter.getSentAt());
-                
-                // 알림 발송 로직 (FCM 푸시 포함)
-                if (letter.getRecipient() != null) {
-                    notificationService.createAndSendNotification(
-                            letter.getRecipient(),
-                            "새로운 편지가 도착했습니다",
-                            letter.getTitle(),
-                            com.taba.notification.entity.Notification.NotificationCategory.LETTER,
-                            letter.getId()
-                    );
+            
+            // 알림 발송 로직 (FCM 푸시 포함)
+            if (letter.getRecipient() != null) {
+                notificationService.createAndSendNotification(
+                        letter.getRecipient(),
+                        "새로운 편지가 도착했습니다",
+                        letter.getTitle(),
+                        com.taba.notification.entity.Notification.NotificationCategory.LETTER,
+                        letter.getId()
+                );
                     log.debug("Notification sent for scheduled letter: letterId={}, recipientId={}", 
                             letter.getId(), letter.getRecipient().getId());
                 }

@@ -20,7 +20,7 @@ services:
       # 개발 환경: 외부 포트 3307 -> 내부 포트 3306
       - "${DB_EXTERNAL_PORT:-3307}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data_dev:/var/lib/mysql
       - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     command: 
       - --character-set-server=utf8mb4
@@ -52,9 +52,10 @@ services:
         fi
     ports:
       # 외부 포트 노출 (개발용 Redis 접속 허용)
-      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
+      # 개발 환경: 외부 포트 6380 -> 내부 포트 6379
+      - "${REDIS_EXTERNAL_PORT:-6380}:6379"
     volumes:
-      - redis_data:/data
+      - redis_data_dev:/data
     healthcheck:
       test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping || exit 1; else redis-cli ping || exit 1; fi"]
       interval: 10s
@@ -106,7 +107,7 @@ services:
       # 개발 환경: 외부 포트 8081 -> 내부 포트 8080
       - "${SERVER_EXTERNAL_PORT:-8081}:8080"
     volumes:
-      - uploads_data:/app/uploads
+      - uploads_data_dev:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -122,11 +123,11 @@ services:
       - taba-network
 
 volumes:
-  mysql_data:
+  mysql_data_dev:
     driver: local
-  redis_data:
+  redis_data_dev:
     driver: local
-  uploads_data:
+  uploads_data_dev:
     driver: local
 
 networks:

@@ -4,58 +4,147 @@ version: '3.8'
 # 사용법: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
+  # Taba Backend 애플리케이션 (프로덕션용)
   backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: taba-backend-prod
-    ports:
-      # 프로덕션 환경: 외부 포트 8080 -> 내부 포트 8080
-      - "${EXTERNAL_PORT:-8080}:8080"
+    restart: unless-stopped
     environment:
-      # 환경 변수는 GitHub Actions Secrets에서 주입됨
+      # Spring Profile (프로덕션용)
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      
+      # MySQL 설정
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      
+      # Redis 설정
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      
+      # JWT 설정
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-604800000}
+      
+      # 서버 설정
       SERVER_PORT: ${SERVER_PORT:-8080}
       SERVER_URL: ${SERVER_URL}
+      
+      # 파일 업로드 설정
       FILE_UPLOAD_DIR: ${FILE_UPLOAD_DIR:-/app/uploads}
-    # 프로덕션에서는 리소스 제한 설정 권장
-    # 주의: deploy 섹션은 Docker Swarm 모드에서만 작동합니다.
-    # 일반 docker-compose에서는 리소스 제한을 위해 docker run --cpus, --memory 옵션을 사용하거나
-    # 컨테이너 런타임 설정에서 제한해야 합니다.
-    # 로그 설정
+      
+      # 메일 설정 (선택사항)
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    ports:
+      # 프로덕션 환경: 외부 포트 8080 -> 내부 포트 8080
+      - "${EXTERNAL_PORT:-8080}:8080"
+    volumes:
+      - uploads_data_prod:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - taba-network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
+  # MySQL 데이터베이스 (프로덕션용)
   mysql:
+    image: mysql:8.0
     container_name: taba-mysql-prod
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
     ports:
-      # 외부 포트 노출 (배포용 DB 접속 허용)
+      # 외부 포트 노출 (프로덕션용 DB 접속 허용)
       # 프로덕션 환경: 외부 포트 3306 -> 내부 포트 3306
       - "${DB_EXTERNAL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+      - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taba-network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
+  # Redis (프로덕션용)
   redis:
+    image: redis:7-alpine
     container_name: taba-redis-prod
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - sh
+      - -c
+      - |
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"
+        else
+          redis-server --appendonly yes
+        fi
     ports:
-      # 외부 포트 노출 (배포용 Redis 접속 허용)
+      # 외부 포트 노출 (프로덕션용 Redis 접속 허용)
       - "${REDIS_EXTERNAL_PORT:-6379}:6379"
+    volumes:
+      - redis_data_prod:/data
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping || exit 1; else redis-cli ping || exit 1; fi"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - taba-network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  mysql_data_prod:
+    driver: local
+  redis_data_prod:
+    driver: local
+  uploads_data_prod:
+    driver: local
+
+networks:
+  taba-network:
+    driver: bridge
 

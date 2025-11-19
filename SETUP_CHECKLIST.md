@@ -4,37 +4,43 @@ Taba Backend를 처음 설정할 때 확인해야 할 항목들을 정리한 문
 
 ## ✅ GitHub Secrets 설정 (서버 배포 시 필수)
 
+> 📖 **상세 가이드**: [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) 참조
+
 GitHub 저장소 **Settings > Secrets and variables > Actions**에서 다음 Secrets를 추가하세요:
 
-### 필수 Secrets (7개)
+### 공통 필수 Secrets (4개)
 
 - [ ] `SSH_PRIVATE_KEY` - SSH 개인 키
-  ```bash
-  ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions_deploy
-  cat ~/.ssh/github_actions_deploy
-  # 출력 전체 복사
-  ```
+- [ ] `SSH_HOST` - 서버 IP 또는 도메인
+- [ ] `SSH_USER` - SSH 사용자명 (`coby`)
+- [ ] `FCM_SERVICE_ACCOUNT_KEY_JSON` - Firebase 서비스 계정 키 JSON 전체
 
-- [ ] `SSH_USER` - `coby`
+### 프로덕션 환경 필수 Secrets (5개)
 
-- [ ] `DB_NAME` - `taba`
+- [ ] `DB_NAME_PROD` - 프로덕션 데이터베이스 이름
+- [ ] `DB_USERNAME_PROD` - 프로덕션 데이터베이스 사용자명
+- [ ] `DB_PASSWORD_PROD` - 프로덕션 데이터베이스 비밀번호
+- [ ] `JWT_SECRET_PROD` - 프로덕션 JWT 서명 키 (`openssl rand -hex 32`)
+- [ ] `SERVER_URL_PROD` - 프로덕션 서버 URL (`https://taba.asia/api/v1`)
 
-- [ ] `DB_USERNAME` - `taba_user`
+### 개발 환경 필수 Secrets (5개)
 
-- [ ] `DB_PASSWORD` - 강력한 데이터베이스 비밀번호
+- [ ] `DB_NAME_DEV` - 개발 데이터베이스 이름
+- [ ] `DB_USERNAME_DEV` - 개발 데이터베이스 사용자명
+- [ ] `DB_PASSWORD_DEV` - 개발 데이터베이스 비밀번호
+- [ ] `JWT_SECRET_DEV` - 개발 JWT 서명 키 (`openssl rand -hex 32`)
+- [ ] `SERVER_URL_DEV` - 개발 서버 URL (`https://dev.taba.asia/api/v1`)
 
-- [ ] `JWT_SECRET` - JWT 서명 키
-  ```bash
-  openssl rand -hex 32
-  # 출력 복사
-  ```
+### 선택사항 Secrets (기본값 사용 가능)
 
-- [ ] `SERVER_URL` - `https://www.taba.asia/api/v1`
-
-### 선택사항 Secrets
-
-- [ ] `JWT_EXPIRATION` - `604800000` (기본값 사용 가능)
-- [ ] `REDIS_PASSWORD` - (없으면 빈 문자열)
+- [ ] `DB_EXTERNAL_PORT_PROD` (기본값: 3306)
+- [ ] `REDIS_PASSWORD_PROD` (기본값: 빈 문자열)
+- [ ] `REDIS_EXTERNAL_PORT_PROD` (기본값: 6379)
+- [ ] `EXTERNAL_PORT_PROD` (기본값: 8080)
+- [ ] `DB_EXTERNAL_PORT_DEV` (기본값: 3307)
+- [ ] `REDIS_PASSWORD_DEV` (기본값: 빈 문자열)
+- [ ] `REDIS_EXTERNAL_PORT_DEV` (기본값: 6380)
+- [ ] `EXTERNAL_PORT_DEV` (기본값: 8081)
 
 ## ✅ SSH 키 서버 등록
 
@@ -65,6 +71,7 @@ ssh-copy-id -i ~/.ssh/github_actions_deploy.pub coby@cobyserver.iptime.org
 
 ## 📚 참고 문서
 
+- [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) - 상세한 시크릿 설정 방법
 - [환경 변수 요약](ENVIRONMENT_VARIABLES.md) - 필수 환경 변수 목록
 - [사용 가이드](USAGE.md) - 상세 사용법
 - [빠른 참조 가이드](QUICK_REFERENCE.md) - 자주 사용하는 명령어

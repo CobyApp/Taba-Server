@@ -78,6 +78,7 @@ export SERVER_URL=http://localhost:8080/api/v1
 
 ## 🔗 관련 문서
 
+- [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) - 상세한 시크릿 설정 방법 (환경별 분리)
 - [사용 가이드](USAGE.md) - 환경 변수 설정 방법 포함
 - [설정 체크리스트](SETUP_CHECKLIST.md) - GitHub Secrets 설정 포함
 

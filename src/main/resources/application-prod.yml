@@ -42,7 +42,7 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
-  
+
   lifecycle:
     timeout-per-shutdown-phase: 30s # 종료 타임아웃 (진행 중인 요청 완료 대기 시간)
 
