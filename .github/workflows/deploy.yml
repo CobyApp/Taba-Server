@@ -232,9 +232,11 @@ jobs:
               fi
             done
             
-            # 백엔드 시작
-            $COMPOSE_CMD up -d backend || exit 1
+            # 백엔드 시작 (MySQL/Redis는 이미 실행 중이므로 --no-deps 사용)
+            echo "=== Starting backend ==="
+            $COMPOSE_CMD up -d --no-deps backend || exit 1
             sleep 5
+            echo "=== Backend logs ==="
             docker logs --tail=30 "$BACKEND_CONTAINER" 2>&1
           REMOTE_SCRIPT
         env:
