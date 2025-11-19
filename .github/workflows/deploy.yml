@@ -148,53 +148,85 @@ jobs:
             }
             
             # 백엔드 중지 및 빌드
+            echo "=== Stopping and removing backend container ==="
             docker stop "$BACKEND_CONTAINER" 2>/dev/null || true
             docker rm -f "$BACKEND_CONTAINER" 2>/dev/null || true
-            $COMPOSE_CMD build --no-cache --progress=plain backend || exit 1
+            
+            echo "=== Building backend image ==="
+            $COMPOSE_CMD build --no-cache --progress=plain backend || {
+              echo "❌ Backend build failed"
+              exit 1
+            }
             
             # MySQL, Redis 시작
+            echo "=== Creating network ==="
             docker network create taba-network 2>/dev/null || true
             
-            # 기존 컨테이너 완전 제거 (ContainerConfig 에러 방지)
+            echo "=== Stopping existing MySQL/Redis containers ==="
             docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             
-            # docker-compose down으로 완전 정리 (볼륨은 유지)
+            echo "=== Cleaning up with docker-compose down ==="
             $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
             
-            # MySQL, Redis 시작
-            $COMPOSE_CMD up -d mysql redis
+            echo "=== Starting MySQL and Redis ==="
+            $COMPOSE_CMD up -d mysql redis || {
+              echo "❌ Failed to start MySQL/Redis"
+              $COMPOSE_CMD logs mysql redis
+              exit 1
+            }
             sleep 10
             
             # MySQL 사용자 생성 및 테스트
+            echo "=== Waiting for MySQL to be healthy ==="
             for i in {1..12}; do
-              docker inspect --format='{{.State.Health.Status}}' "$MYSQL_CONTAINER" 2>/dev/null | grep -q "healthy" && break
+              HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$MYSQL_CONTAINER" 2>/dev/null || echo "unknown")
+              echo "MySQL health check attempt $i/12: $HEALTH_STATUS"
+              if [ "$HEALTH_STATUS" = "healthy" ]; then
+                echo "✅ MySQL is healthy"
+                break
+              fi
+              if [ $i -eq 12 ]; then
+                echo "❌ MySQL failed to become healthy after 60 seconds"
+                docker logs --tail=50 "$MYSQL_CONTAINER" 2>&1
+                exit 1
+              fi
               sleep 5
             done
             
+            echo "=== Ensuring MySQL user and database ==="
             ensure_mysql_user
             
             # 사용자 연결 테스트
+            echo "=== Testing MySQL connection ==="
             for retry in {1..3}; do
               USER_TEST=$(docker exec "$MYSQL_CONTAINER" mysql -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "USE \`$DB_NAME\`; SELECT 1;" 2>&1) || true
               if ! echo "$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                 echo "✅ MySQL connection successful"
                 break
               fi
+              echo "MySQL connection attempt $retry/3 failed, retrying..."
               if [ $retry -lt 3 ]; then
                 ensure_mysql_user
                 sleep 3
               else
-                echo "❌ MySQL connection failed"
-                docker logs --tail=30 "$MYSQL_CONTAINER" 2>&1
+                echo "❌ MySQL connection failed after 3 attempts"
+                echo "Connection test output: $USER_TEST"
+                docker logs --tail=50 "$MYSQL_CONTAINER" 2>&1
                 exit 1
               fi
             done
             
             # 백엔드 시작
-            $COMPOSE_CMD up -d backend || exit 1
+            echo "=== Starting backend ==="
+            $COMPOSE_CMD up -d backend || {
+              echo "❌ Failed to start backend"
+              $COMPOSE_CMD logs backend 2>&1 || true
+              exit 1
+            }
             sleep 5
-            docker logs --tail=30 "$BACKEND_CONTAINER" 2>&1
+            echo "=== Backend logs (last 50 lines) ==="
+            docker logs --tail=50 "$BACKEND_CONTAINER" 2>&1 || echo "No logs available"
           REMOTE_SCRIPT
         env:
           DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}

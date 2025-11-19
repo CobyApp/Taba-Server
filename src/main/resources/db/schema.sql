@@ -1,9 +1,18 @@
 -- Taba 데이터베이스 스키마 초기화 스크립트
 -- MySQL 8.0 이상 버전 사용
-
--- 데이터베이스 생성 (필요시)
--- CREATE DATABASE IF NOT EXISTS taba CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
--- USE taba;
+--
+-- ⚠️ 사용 방법:
+-- 1. 개발 환경: JPA의 ddl-auto: update를 사용 (자동 스키마 생성)
+-- 2. 프로덕션 환경: ddl-auto: validate (스키마 검증만)
+-- 3. 수동 실행: mysql -u [사용자명] -p [데이터베이스명] < schema.sql
+--
+-- 환경별 데이터베이스 이름:
+-- - 개발 환경: ${DB_NAME_DEV} (예: taba_dev)
+-- - 프로덕션 환경: ${DB_NAME_PROD} (예: taba_prod)
+--
+-- 데이터베이스 생성 (필요시 - 환경 변수로 대체 가능)
+-- CREATE DATABASE IF NOT EXISTS [데이터베이스명] CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE [데이터베이스명];
 
 -- 주의: 이 스키마는 JPA 엔티티를 기반으로 작성되었습니다.
 -- 개발 환경에서는 application-dev.yml의 ddl-auto: update를 사용하세요.

@@ -1,8 +1,24 @@
 -- 목업 데이터 생성 스크립트
 -- 로컬 개발 및 테스트용
--- 사용법: mysql -u root -p taba < src/main/resources/db/mock-data.sql
-
-USE taba;
+--
+-- ⚠️ 사용 방법:
+-- 개발 환경: mysql -h 서버IP -P 3307 -u [DB_USERNAME_DEV] -p [DB_NAME_DEV] < mock-data.sql
+-- 프로덕션 환경: mysql -h 서버IP -P 3306 -u [DB_USERNAME_PROD] -p [DB_NAME_PROD] < mock-data.sql
+-- 로컬: mysql -u root -p [데이터베이스명] < src/main/resources/db/mock-data.sql
+--
+-- 환경별 데이터베이스 이름:
+-- - 개발 환경: ${DB_NAME_DEV} (예: taba_dev)
+-- - 프로덕션 환경: ${DB_NAME_PROD} (예: taba_prod)
+--
+-- ⚠️ 주의: 프로덕션 환경에서는 이 스크립트를 실행하지 마세요!
+-- 개발/테스트 환경에서만 사용하세요.
+--
+-- 실행 예시:
+--   개발: mysql -h 서버IP -P 3307 -u taba_user_dev -p taba_dev < mock-data.sql
+--   로컬: mysql -u root -p taba < mock-data.sql
+--
+-- 아래 USE 문을 실제 데이터베이스 이름으로 변경하거나, 명령줄에서 데이터베이스를 지정하세요.
+-- USE taba;  -- 개발 환경: taba_dev, 프로덕션: taba_prod (사용하지 않음)
 
 -- 기존 데이터 삭제 (선택사항, 주의해서 사용)
 -- SET FOREIGN_KEY_CHECKS = 0;
