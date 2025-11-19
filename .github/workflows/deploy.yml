@@ -162,12 +162,38 @@ jobs:
             # MySQL, Redis 시작 (다른 환경의 컨테이너는 그대로 유지)
             echo "=== Starting MySQL and Redis for current environment ==="
             $COMPOSE_CMD up -d mysql redis
-            sleep 10
             
-            # MySQL 사용자 생성 및 테스트
-            for i in {1..12}; do
-              docker inspect --format='{{.State.Health.Status}}' "$MYSQL_CONTAINER" 2>/dev/null | grep -q "healthy" && break
-              sleep 5
+            # 컨테이너가 실제로 시작될 때까지 대기
+            echo "=== Waiting for containers to start ==="
+            for i in {1..30}; do
+              if docker ps --format '{{.Names}}' | grep -q "^${MYSQL_CONTAINER}$" && \
+                 docker ps --format '{{.Names}}' | grep -q "^${REDIS_CONTAINER}$"; then
+                echo "✅ Containers are running"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "❌ Containers failed to start after 30 seconds"
+                docker ps -a | grep -E "${MYSQL_CONTAINER}|${REDIS_CONTAINER}" || true
+                exit 1
+              fi
+              sleep 1
+            done
+            
+            # MySQL health check 대기
+            echo "=== Waiting for MySQL to be healthy ==="
+            for i in {1..60}; do
+              HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$MYSQL_CONTAINER" 2>/dev/null || echo "unknown")
+              echo "MySQL health check attempt $i/60: $HEALTH_STATUS"
+              if [ "$HEALTH_STATUS" = "healthy" ]; then
+                echo "✅ MySQL is healthy"
+                break
+              fi
+              if [ $i -eq 60 ]; then
+                echo "❌ MySQL failed to become healthy after 60 attempts"
+                docker logs --tail=50 "$MYSQL_CONTAINER" 2>&1 || true
+                exit 1
+              fi
+              sleep 2
             done
             
             ensure_mysql_user
