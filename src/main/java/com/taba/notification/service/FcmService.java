@@ -52,8 +52,12 @@ public class FcmService {
         } catch (FirebaseMessagingException e) {
             log.error("Failed to send FCM message: {}", e.getMessage(), e);
             // 토큰이 유효하지 않은 경우 (예: 앱 삭제, 토큰 만료)
-            if (e.getErrorCode().equals("invalid-argument") || 
-                e.getErrorCode().equals("registration-token-not-registered")) {
+            // 에러 코드를 문자열로 변환하여 비교
+            String errorCodeStr = e.getErrorCode() != null ? e.getErrorCode().toString() : "";
+            if (errorCodeStr.contains("INVALID_ARGUMENT") || 
+                errorCodeStr.contains("UNREGISTERED") ||
+                errorCodeStr.contains("invalid-argument") ||
+                errorCodeStr.contains("registration-token-not-registered")) {
                 log.warn("Invalid FCM token, should be removed: {}", fcmToken);
             }
             return false;

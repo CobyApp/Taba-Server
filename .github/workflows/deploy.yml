@@ -223,26 +223,123 @@ jobs:
               docker ps --filter "name=\$MYSQL_CONTAINER" --format "table {{.Names}}\t{{.Status}}" || true
             fi
             
-            # MySQL 연결 테스트 (백엔드가 접근할 수 있는지 확인)
-            echo "Testing MySQL connection..."
-            MYSQL_TEST_RESULT=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
-            if echo "\$MYSQL_TEST_RESULT" | grep -qiE "(ERROR|Access denied|denied)"; then
-              echo "⚠️ MySQL connection test failed! Recreating MySQL container..."
-              echo "Test result: \$MYSQL_TEST_RESULT"
-              docker stop \$MYSQL_CONTAINER 2>/dev/null || true
-              docker rm -f \$MYSQL_CONTAINER 2>/dev/null || true
-              echo "Recreating MySQL container with correct credentials..."
-              \$COMPOSE_CMD up -d mysql
-              sleep 10
-              echo "Retesting MySQL connection..."
-              docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1 || echo "MySQL connection still failing"
-            else
-              echo "✅ MySQL connection test passed"
+            # MySQL 연결 테스트 및 재생성 로직 강화
+            echo "=== Testing MySQL connection ==="
+            MAX_MYSQL_RETRIES=3
+            MYSQL_CONNECTION_OK=false
+            
+            for retry in \$(seq 1 \$MAX_MYSQL_RETRIES); do
+              echo "MySQL connection test attempt \$retry/\$MAX_MYSQL_RETRIES..."
+              
+              # MySQL 컨테이너가 실행 중인지 확인
+              if ! docker ps | grep -q "\$MYSQL_CONTAINER"; then
+                echo "⚠️ MySQL container is not running. Starting it..."
+                \$COMPOSE_CMD up -d mysql
+                echo "Waiting for MySQL to be ready..."
+                sleep 15
+              fi
+              
+              # MySQL 헬스체크 대기 (최대 60초)
+              echo "Waiting for MySQL health check..."
+              for i in {1..12}; do
+                if docker inspect --format='{{.State.Health.Status}}' \$MYSQL_CONTAINER 2>/dev/null | grep -q "healthy"; then
+                  echo "✅ MySQL is healthy"
+                  break
+                fi
+                if [ \$i -eq 12 ]; then
+                  echo "⚠️ MySQL health check timeout, but continuing..."
+                fi
+                sleep 5
+              done
+              
+              # 연결 테스트 (root로 먼저 시도, 그 다음 사용자 계정)
+              echo "Testing MySQL connection as root..."
+              ROOT_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "SELECT 1" 2>&1) || true
+              
+              if echo "\$ROOT_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                echo "⚠️ Root connection failed. Test result: \$ROOT_TEST"
+              else
+                echo "✅ Root connection successful"
+                
+                # 사용자 계정으로 연결 테스트
+                echo "Testing MySQL connection as \$DB_USERNAME..."
+                USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+                
+                if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                  echo "⚠️ User connection failed. Attempting to fix user permissions..."
+                  echo "Test result: \$USER_TEST"
+                  
+                  # MySQL에서 사용자 재생성 시도
+                  echo "Recreating MySQL user \$DB_USERNAME..."
+                  docker exec \$MYSQL_CONTAINER mysql -u root -p\${DB_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; DROP USER IF EXISTS '\$DB_USERNAME'@'%'; CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD'; GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%'; FLUSH PRIVILEGES;" 2>&1 || echo "Failed to recreate user"
+                  
+                  sleep 3
+                  
+                  # 다시 테스트
+                  USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+                  if echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
+                    echo "⚠️ User connection still failing after fix attempt"
+                  else
+                    echo "✅ User connection successful after fix"
+                    MYSQL_CONNECTION_OK=true
+                    break
+                  fi
+                else
+                  echo "✅ User connection successful"
+                  MYSQL_CONNECTION_OK=true
+                  break
+                fi
+              fi
+              
+              # 연결 실패 시 MySQL 컨테이너 재생성
+              if [ \$retry -lt \$MAX_MYSQL_RETRIES ]; then
+                echo "⚠️ MySQL connection test failed (attempt \$retry). Recreating MySQL container..."
+                echo "Stopping and removing MySQL container..."
+                docker stop \$MYSQL_CONTAINER 2>/dev/null || true
+                docker rm -f \$MYSQL_CONTAINER 2>/dev/null || true
+                
+                echo "Recreating MySQL container with correct credentials..."
+                echo "DB_NAME=\$DB_NAME"
+                echo "DB_USERNAME=\$DB_USERNAME"
+                echo "DB_PASSWORD=\${DB_PASSWORD:0:3}***"
+                
+                \$COMPOSE_CMD up -d mysql
+                
+                echo "Waiting for MySQL to initialize..."
+                sleep 20
+                
+                # MySQL 초기화 대기
+                for i in {1..20}; do
+                  if docker logs \$MYSQL_CONTAINER 2>&1 | grep -q "ready for connections"; then
+                    echo "✅ MySQL is ready for connections"
+                    break
+                  fi
+                  if [ \$i -eq 20 ]; then
+                    echo "⚠️ MySQL initialization timeout, but continuing..."
+                  fi
+                  sleep 3
+                done
+              fi
+            done
+            
+            if [ "\$MYSQL_CONNECTION_OK" != "true" ]; then
+              echo "❌ MySQL connection test failed after \$MAX_MYSQL_RETRIES attempts!"
+              echo "=== MySQL Container Logs ==="
+              docker logs --tail=50 \$MYSQL_CONTAINER 2>&1 || echo "No logs available"
+              echo "=== MySQL Container Status ==="
+              docker ps -a | grep \$MYSQL_CONTAINER || echo "Container not found"
+              echo "=== Environment Variables ==="
+              echo "DB_NAME=\$DB_NAME"
+              echo "DB_USERNAME=\$DB_USERNAME"
+              echo "DB_PASSWORD=\${DB_PASSWORD:0:3}***"
+              exit 1
             fi
             
-            # 4. MySQL, Redis 헬스체크 대기
-            echo "Waiting for MySQL and Redis to be healthy..."
-            sleep 10
+            echo "✅ MySQL connection test passed successfully"
+            
+            # 4. MySQL, Redis 헬스체크 최종 확인
+            echo "=== Final health check for MySQL and Redis ==="
+            sleep 5
             
             # 5. 해당 환경의 백엔드 서비스 시작 (다른 환경은 건드리지 않음)
             echo "Starting backend service (\$BACKEND_CONTAINER)..."
