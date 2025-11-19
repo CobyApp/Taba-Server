@@ -175,24 +175,34 @@ jobs:
             # 3. 해당 환경의 MySQL, Redis 시작 (다른 환경은 건드리지 않음)
             echo "Ensuring MySQL and Redis are running for $DEPLOY_ENV..."
             
+            # 네트워크 생성 (없으면)
+            docker network create taba-network 2>/dev/null || true
+            
             # 해당 환경의 MySQL, Redis 컨테이너 확인
             MYSQL_RUNNING=\$(docker ps -q -f name=\$MYSQL_CONTAINER) || true
             REDIS_RUNNING=\$(docker ps -q -f name=\$REDIS_CONTAINER) || true
             
-            # 실행 중이 아니면 시작
+            # MySQL, Redis가 없거나 중지된 경우 재생성
             if [ -z "\$MYSQL_RUNNING" ] || [ -z "\$REDIS_RUNNING" ]; then
               echo "Starting MySQL and Redis for $DEPLOY_ENV..."
               
-              # 네트워크 생성 (없으면)
-              docker network create taba-network 2>/dev/null || true
+              # 기존 컨테이너 완전히 제거 (있으면)
+              docker stop \$MYSQL_CONTAINER \$REDIS_CONTAINER 2>/dev/null || true
+              docker rm -f \$MYSQL_CONTAINER \$REDIS_CONTAINER 2>/dev/null || true
               
-              # MySQL, Redis 시작
-              if ! \$COMPOSE_CMD up -d mysql redis; then
-                echo "⚠️ Failed to start MySQL/Redis, but continuing..."
+              # MySQL, Redis 시작 (환경 변수와 함께)
+              echo "Starting MySQL and Redis with environment variables..."
+              echo "DB_NAME=\$DB_NAME"
+              echo "DB_USERNAME=\$DB_USERNAME"
+              echo "DB_PASSWORD=\${DB_PASSWORD:0:3}***"
+              
+              # docker-compose로 시작 시도
+              if ! \$COMPOSE_CMD up -d mysql redis 2>&1; then
+                echo "⚠️ docker-compose up failed, checking if containers were created..."
               fi
               
               # 컨테이너가 실제로 실행 중인지 확인
-              sleep 3
+              sleep 5
               MYSQL_CHECK=\$(docker ps -q -f name=\$MYSQL_CONTAINER) || true
               REDIS_CHECK=\$(docker ps -q -f name=\$REDIS_CONTAINER) || true
               
@@ -200,11 +210,34 @@ jobs:
                 echo "⚠️ Warning: MySQL or Redis containers may not be running properly"
                 echo "MySQL (\$MYSQL_CONTAINER) running: \$([ -n "\$MYSQL_CHECK" ] && echo 'yes' || echo 'no')"
                 echo "Redis (\$REDIS_CONTAINER) running: \$([ -n "\$REDIS_CHECK" ] && echo 'yes' || echo 'no')"
+                echo "MySQL logs:"
+                docker logs --tail=30 \$MYSQL_CONTAINER 2>&1 || echo "No MySQL logs"
+                echo "Redis logs:"
+                docker logs --tail=30 \$REDIS_CONTAINER 2>&1 || echo "No Redis logs"
               else
                 echo "✅ MySQL and Redis are running for $DEPLOY_ENV"
               fi
             else
               echo "✅ MySQL and Redis are already running for $DEPLOY_ENV"
+              echo "Checking MySQL container status..."
+              docker ps --filter "name=\$MYSQL_CONTAINER" --format "table {{.Names}}\t{{.Status}}" || true
+            fi
+            
+            # MySQL 연결 테스트 (백엔드가 접근할 수 있는지 확인)
+            echo "Testing MySQL connection..."
+            MYSQL_TEST_RESULT=\$(docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1) || true
+            if echo "\$MYSQL_TEST_RESULT" | grep -qiE "(ERROR|Access denied|denied)"; then
+              echo "⚠️ MySQL connection test failed! Recreating MySQL container..."
+              echo "Test result: \$MYSQL_TEST_RESULT"
+              docker stop \$MYSQL_CONTAINER 2>/dev/null || true
+              docker rm -f \$MYSQL_CONTAINER 2>/dev/null || true
+              echo "Recreating MySQL container with correct credentials..."
+              \$COMPOSE_CMD up -d mysql
+              sleep 10
+              echo "Retesting MySQL connection..."
+              docker exec \$MYSQL_CONTAINER mysql -u \$DB_USERNAME -p\$DB_PASSWORD -e "SELECT 1" 2>&1 || echo "MySQL connection still failing"
+            else
+              echo "✅ MySQL connection test passed"
             fi
             
             # 4. MySQL, Redis 헬스체크 대기
