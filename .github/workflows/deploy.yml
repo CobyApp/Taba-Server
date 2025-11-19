@@ -208,6 +208,25 @@ jobs:
             docker stop "$BACKEND_CONTAINER" 2>/dev/null || true
             docker rm -f "$BACKEND_CONTAINER" 2>/dev/null || true
             
+            # 손상된 이미지 제거 (ContainerConfig 에러 방지)
+            echo "=== Removing old backend image to prevent ContainerConfig errors ==="
+            # docker-compose가 사용하는 이미지 이름 찾기 (프로젝트명-서비스명 형식)
+            COMPOSE_PROJECT_NAME=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+            OLD_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "${COMPOSE_PROJECT_NAME}.*backend|.*backend.*${COMPOSE_PROJECT_NAME}" | head -1 || echo "")
+            if [ -z "$OLD_IMAGE" ]; then
+              # 대체 방법: <none> 태그가 있는 이미지 찾기
+              OLD_IMAGE=$(docker images --format "{{.ID}}" --filter "dangling=true" | head -1 || echo "")
+              if [ -n "$OLD_IMAGE" ]; then
+                echo "Removing dangling image: $OLD_IMAGE"
+                docker rmi -f "$OLD_IMAGE" 2>/dev/null || true
+              fi
+            else
+              echo "Removing old backend image: $OLD_IMAGE"
+              docker rmi -f "$OLD_IMAGE" 2>/dev/null || true
+            fi
+            # 손상된 컨테이너 이미지 참조 정리
+            docker container prune -f 2>/dev/null || true
+            
             # 백엔드 이미지 빌드
             echo "=== Building backend image ==="
             $COMPOSE_CMD build --no-cache --progress=plain backend || exit 1
@@ -232,7 +251,8 @@ jobs:
             
             # MySQL, Redis 시작 (다른 환경의 컨테이너는 그대로 유지)
             echo "=== Starting MySQL and Redis for current environment ==="
-            $COMPOSE_CMD up -d --no-deps mysql redis
+            # --force-recreate 옵션으로 ContainerConfig 에러 방지
+            $COMPOSE_CMD up -d --force-recreate mysql redis
             
             # 컨테이너가 실제로 시작될 때까지 대기 (재시작 포함)
             echo "=== Waiting for containers to start ==="
@@ -322,7 +342,8 @@ jobs:
               exit 1
             fi
             echo "✅ MySQL and Redis are running, starting backend..."
-            $COMPOSE_CMD up -d --no-deps backend || exit 1
+            # --force-recreate 옵션으로 ContainerConfig 에러 방지
+            $COMPOSE_CMD up -d --no-deps --force-recreate backend || exit 1
             sleep 5
             echo "=== Backend logs ==="
             docker logs --tail=30 "$BACKEND_CONTAINER" 2>&1
