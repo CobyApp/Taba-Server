@@ -57,92 +57,43 @@ jobs:
 
       - name: Deploy Application
         run: |
-          DEPLOY_ENV_VALUE="${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}"
-          
-          # GitHub Secrets 값을 환경 변수 파일로 생성하여 전달
-          if [ "$DEPLOY_ENV_VALUE" = "prod" ]; then
-            echo "DB_NAME=${{ secrets.DB_NAME_PROD }}" > /tmp/env_vars.txt
-            echo "DB_USERNAME=${{ secrets.DB_USERNAME_PROD }}" >> /tmp/env_vars.txt
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_PROD }}" >> /tmp/env_vars.txt
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}" >> /tmp/env_vars.txt
-            echo "SERVER_URL=${{ secrets.SERVER_URL_PROD }}" >> /tmp/env_vars.txt
-            echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD_PROD }}" >> /tmp/env_vars.txt
-            echo "EXTERNAL_PORT=${{ secrets.EXTERNAL_PORT_PROD }}" >> /tmp/env_vars.txt
-            echo "DB_EXTERNAL_PORT=${{ secrets.DB_EXTERNAL_PORT_PROD }}" >> /tmp/env_vars.txt
-            echo "REDIS_EXTERNAL_PORT=${{ secrets.REDIS_EXTERNAL_PORT_PROD }}" >> /tmp/env_vars.txt
-          else
-            echo "DB_NAME=${{ secrets.DB_NAME_DEV }}" > /tmp/env_vars.txt
-            echo "DB_USERNAME=${{ secrets.DB_USERNAME_DEV }}" >> /tmp/env_vars.txt
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}" >> /tmp/env_vars.txt
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET_DEV }}" >> /tmp/env_vars.txt
-            echo "SERVER_URL=${{ secrets.SERVER_URL_DEV }}" >> /tmp/env_vars.txt
-            echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD_DEV }}" >> /tmp/env_vars.txt
-            echo "EXTERNAL_PORT=${{ secrets.EXTERNAL_PORT_DEV }}" >> /tmp/env_vars.txt
-            echo "DB_EXTERNAL_PORT=${{ secrets.DB_EXTERNAL_PORT_DEV }}" >> /tmp/env_vars.txt
-            echo "REDIS_EXTERNAL_PORT=${{ secrets.REDIS_EXTERNAL_PORT_DEV }}" >> /tmp/env_vars.txt
-          fi
-          JWT_EXPIRATION_VAL="${{ secrets.JWT_EXPIRATION }}"
-          
-          # 환경 변수 파일을 서버로 전송
-          scp -o StrictHostKeyChecking=no /tmp/env_vars.txt "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/taba_backend/.env_vars"
-          
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" JWT_EXPIRATION_VAL="$JWT_EXPIRATION_VAL" DEPLOY_ENV_VALUE="$DEPLOY_ENV_VALUE" bash << 'REMOTE_SCRIPT'
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             
-            # 환경 변수 파일에서 읽어서 export
-            if [ -f .env_vars ]; then
-              while IFS='=' read -r key value; do
-                if [ -n "$key" ] && [ -n "$value" ]; then
-                  export "$key=$value"
-                fi
-              done < .env_vars
-              rm -f .env_vars
-            fi
-            
-            # JWT_EXPIRATION 설정
-            export JWT_EXPIRATION="$JWT_EXPIRATION_VAL"
-            [ -z "$JWT_EXPIRATION" ] && export JWT_EXPIRATION=604800000
-            
-            # 환경 변수 확인
-            echo "=== 환경 변수 확인 ==="
-            echo "DB_NAME: \${DB_NAME:+설정됨}\${DB_NAME:-미설정}"
-            echo "DB_USERNAME: \${DB_USERNAME:+설정됨}\${DB_USERNAME:-미설정}"
-            echo "DB_PASSWORD: \${DB_PASSWORD:+설정됨}\${DB_PASSWORD:-미설정}"
-            echo "JWT_SECRET: \${JWT_SECRET:+설정됨}\${JWT_SECRET:-미설정}"
-            echo "SERVER_URL: \${SERVER_URL:+설정됨}\${SERVER_URL:-미설정}"
-            
-            # 환경 변수 설정
-            export DEPLOY_ENV="$DEPLOY_ENV_VALUE"
-            echo "=== 배포 환경: \$DEPLOY_ENV ==="
-            
             # 환경별 설정
-            if [ "\$DEPLOY_ENV" = "prod" ]; then
-              # 프로덕션 환경 설정
-              echo "=== 프로덕션 환경 설정 ==="
-              
-              # 포트 기본값 설정 (외부 접속 포트 - 개발 환경과 다름)
-              # ⚠️ 프로덕션: Backend(8080), MySQL(3306), Redis(6379)
-              [ -z "\$EXTERNAL_PORT" ] && export EXTERNAL_PORT=8080
-              [ -z "\$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3306
-              [ -z "\$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6379
-              [ -z "\$REDIS_PASSWORD" ] && export REDIS_PASSWORD=
-              
+            if [ "$DEPLOY_ENV" = "prod" ]; then
+              export DB_NAME="${{ secrets.DB_NAME_PROD }}"
+              export DB_USERNAME="${{ secrets.DB_USERNAME_PROD }}"
+              export DB_PASSWORD="${{ secrets.DB_PASSWORD_PROD }}"
+              export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD_PROD }}"
+              export JWT_SECRET="${{ secrets.JWT_SECRET_PROD }}"
+              export SERVER_URL="${{ secrets.SERVER_URL_PROD }}"
+              export EXTERNAL_PORT="${{ secrets.EXTERNAL_PORT_PROD }}"
+              export DB_EXTERNAL_PORT="${{ secrets.DB_EXTERNAL_PORT_PROD }}"
+              export REDIS_EXTERNAL_PORT="${{ secrets.REDIS_EXTERNAL_PORT_PROD }}"
+              # 포트 기본값 설정 (프로덕션: Backend(8080), MySQL(3306), Redis(6379))
+              [ -z "$EXTERNAL_PORT" ] && export EXTERNAL_PORT=8080
+              [ -z "$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3306
+              [ -z "$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6379
               export SPRING_PROFILES_ACTIVE=prod
               COMPOSE_FILE="docker-compose.prod.yml"
               BACKEND_CONTAINER="taba-backend-prod"
               MYSQL_CONTAINER="taba-mysql-prod"
               REDIS_CONTAINER="taba-redis-prod"
             else
-              # 개발 환경 설정
-              echo "=== 개발 환경 설정 ==="
-              
-              # 포트 기본값 설정 (외부 접속 포트 - 프로덕션과 다름)
-              # ⚠️ 개발: Backend(8081), MySQL(3307), Redis(6380) - 동시 실행 가능
-              [ -z "\$EXTERNAL_PORT" ] && export EXTERNAL_PORT=8081
-              [ -z "\$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3307
-              [ -z "\$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6380
-              [ -z "\$REDIS_PASSWORD" ] && export REDIS_PASSWORD=
-              
+              export DB_NAME="${{ secrets.DB_NAME_DEV }}"
+              export DB_USERNAME="${{ secrets.DB_USERNAME_DEV }}"
+              export DB_PASSWORD="${{ secrets.DB_PASSWORD_DEV }}"
+              export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD_DEV }}"
+              export JWT_SECRET="${{ secrets.JWT_SECRET_DEV }}"
+              export SERVER_URL="${{ secrets.SERVER_URL_DEV }}"
+              export EXTERNAL_PORT="${{ secrets.EXTERNAL_PORT_DEV }}"
+              export DB_EXTERNAL_PORT="${{ secrets.DB_EXTERNAL_PORT_DEV }}"
+              export REDIS_EXTERNAL_PORT="${{ secrets.REDIS_EXTERNAL_PORT_DEV }}"
+              # 포트 기본값 설정 (개발: Backend(8081), MySQL(3307), Redis(6380) - 동시 실행 가능)
+              [ -z "$EXTERNAL_PORT" ] && export EXTERNAL_PORT=8081
+              [ -z "$DB_EXTERNAL_PORT" ] && export DB_EXTERNAL_PORT=3307
+              [ -z "$REDIS_EXTERNAL_PORT" ] && export REDIS_EXTERNAL_PORT=6380
               export SPRING_PROFILES_ACTIVE=dev
               COMPOSE_FILE="docker-compose.dev.yml"
               BACKEND_CONTAINER="taba-backend-dev"
@@ -151,229 +102,100 @@ jobs:
             fi
             
             # 필수 환경 변수 확인
-            echo "=== 환경 변수 확인 ==="
-            echo "DEPLOY_ENV: \$DEPLOY_ENV"
-            echo "DB_NAME: \${DB_NAME:+설정됨}\${DB_NAME:-미설정}"
-            echo "DB_USERNAME: \${DB_USERNAME:+설정됨}\${DB_USERNAME:-미설정}"
-            echo "DB_PASSWORD: \${DB_PASSWORD:+설정됨}\${DB_PASSWORD:-미설정}"
-            echo "JWT_SECRET: \${JWT_SECRET:+설정됨}\${JWT_SECRET:-미설정}"
-            echo "SERVER_URL: \${SERVER_URL:+설정됨}\${SERVER_URL:-미설정}"
-            
-            if [ -z "\$DB_NAME" ] || [ -z "\$DB_USERNAME" ] || [ -z "\$DB_PASSWORD" ] || [ -z "\$JWT_SECRET" ] || [ -z "\$SERVER_URL" ]; then
+            if [ -z "$DB_NAME" ] || [ -z "$DB_USERNAME" ] || [ -z "$DB_PASSWORD" ] || [ -z "$JWT_SECRET" ] || [ -z "$SERVER_URL" ]; then
               echo "❌ 필수 환경 변수가 설정되지 않았습니다."
+              echo "DB_NAME: ${DB_NAME:+설정됨}${DB_NAME:-미설정}"
+              echo "DB_USERNAME: ${DB_USERNAME:+설정됨}${DB_USERNAME:-미설정}"
+              echo "DB_PASSWORD: ${DB_PASSWORD:+설정됨}${DB_PASSWORD:-미설정}"
+              echo "JWT_SECRET: ${JWT_SECRET:+설정됨}${JWT_SECRET:-미설정}"
+              echo "SERVER_URL: ${SERVER_URL:+설정됨}${SERVER_URL:-미설정}"
               exit 1
             fi
             
-            # 공통 환경 변수 설정
             export DB_HOST=mysql DB_PORT=3306 REDIS_HOST=redis REDIS_PORT=6379 SERVER_PORT=8080 FILE_UPLOAD_DIR=/app/uploads
-            export JWT_EXPIRATION="\$JWT_EXPIRATION_VAL"
-            [ -z "\$JWT_EXPIRATION" ] && export JWT_EXPIRATION=604800000
+            export JWT_EXPIRATION=${JWT_EXPIRATION:-604800000}
+            [ -z "$REDIS_PASSWORD" ] && export REDIS_PASSWORD=
             
-            # docker-compose 명령어 설정
-            echo "=== Docker Compose 파일: \$COMPOSE_FILE ==="
-            echo "=== 백엔드 컨테이너: \$BACKEND_CONTAINER ==="
-            echo "=== MySQL 컨테이너: \$MYSQL_CONTAINER ==="
-            echo "=== Redis 컨테이너: \$REDIS_CONTAINER ==="
-            COMPOSE_CMD="docker-compose -f \$COMPOSE_FILE"
+            COMPOSE_CMD="docker-compose -f $COMPOSE_FILE"
             
-            # MySQL 사용자 생성 함수 (환경 변수 직접 참조)
+            # MySQL 사용자 생성 함수
             ensure_mysql_user() {
-              # 환경 변수 직접 참조 (함수 내부에서도 접근 가능하도록)
-              local mysql_container=\$MYSQL_CONTAINER
+              local mysql_container="$MYSQL_CONTAINER"
+              local db_name="$DB_NAME"
+              local db_username="$DB_USERNAME"
+              local db_password="$DB_PASSWORD"
               
-              # 환경 변수 확인
-              if [ -z "\$DB_NAME" ] || [ -z "\$DB_USERNAME" ] || [ -z "\$DB_PASSWORD" ]; then
-                echo "❌ 환경 변수가 설정되지 않았습니다: DB_NAME=\${DB_NAME:-비어있음}, DB_USERNAME=\${DB_USERNAME:-비어있음}, DB_PASSWORD=\${DB_PASSWORD:+설정됨}\${DB_PASSWORD:-비어있음}"
-                return 1
+              local root_pass=$(docker exec "$mysql_container" printenv MYSQL_ROOT_PASSWORD 2>/dev/null || echo "$db_password")
+              local root_test=$(docker exec "$mysql_container" mysql -u root -p"$root_pass" -e "SELECT 1" 2>&1) || true
+              
+              if echo "$root_test" | grep -qiE "(ERROR|Access denied|denied)"; then
+                root_pass="$db_password"
+                root_test=$(docker exec "$mysql_container" mysql -u root -p"$root_pass" -e "SELECT 1" 2>&1) || true
               fi
               
-              echo "Creating MySQL user: \$DB_USERNAME for database: \$DB_NAME"
-              
-              local root_pass=\$(docker exec \$mysql_container printenv MYSQL_ROOT_PASSWORD 2>/dev/null || echo "\$DB_PASSWORD")
-              local root_test=\$(docker exec \$mysql_container mysql -u root -p"\$root_pass" -e "SELECT 1" 2>&1) || true
-              
-              if echo "\$root_test" | grep -qiE "(ERROR|Access denied|denied)"; then
-                root_pass="\$DB_PASSWORD"
-                root_test=\$(docker exec \$mysql_container mysql -u root -p"\$root_pass" -e "SELECT 1" 2>&1) || true
-              fi
-              
-              if ! echo "\$root_test" | grep -qiE "(ERROR|Access denied|denied)"; then
-                echo "Executing: CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\`"
-                docker exec \$mysql_container mysql -u root -p"\$root_pass" -e "CREATE DATABASE IF NOT EXISTS \`\$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 | grep -v "Warning" || true
-                
-                echo "Executing: DROP USER IF EXISTS '\$DB_USERNAME'@'%'"
-                docker exec \$mysql_container mysql -u root -p"\$root_pass" -e "DROP USER IF EXISTS '\$DB_USERNAME'@'%';" 2>&1 | grep -v "Warning" || true
-                
-                echo "Executing: CREATE USER '\$DB_USERNAME'@'%'"
-                docker exec \$mysql_container mysql -u root -p"\$root_pass" -e "CREATE USER '\$DB_USERNAME'@'%' IDENTIFIED BY '\$DB_PASSWORD';" 2>&1 | grep -v "Warning" || true
-                
-                echo "Executing: GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%'"
-                docker exec \$mysql_container mysql -u root -p"\$root_pass" -e "GRANT ALL PRIVILEGES ON \`\$DB_NAME\`.* TO '\$DB_USERNAME'@'%'; FLUSH PRIVILEGES;" 2>&1 | grep -v "Warning" || true
-                
-                echo "✅ MySQL user and database created successfully"
-              else
-                echo "❌ Cannot connect to MySQL as root: \$root_test"
-                return 1
+              if ! echo "$root_test" | grep -qiE "(ERROR|Access denied|denied)"; then
+                docker exec "$mysql_container" mysql -u root -p"$root_pass" -e "CREATE DATABASE IF NOT EXISTS \`$db_name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1 | grep -v "Warning" >/dev/null || true
+                docker exec "$mysql_container" mysql -u root -p"$root_pass" -e "DROP USER IF EXISTS '$db_username'@'%';" 2>&1 | grep -v "Warning" >/dev/null || true
+                docker exec "$mysql_container" mysql -u root -p"$root_pass" -e "CREATE USER '$db_username'@'%' IDENTIFIED BY '$db_password';" 2>&1 | grep -v "Warning" >/dev/null || true
+                docker exec "$mysql_container" mysql -u root -p"$root_pass" -e "GRANT ALL PRIVILEGES ON \`$db_name\`.* TO '$db_username'@'%'; FLUSH PRIVILEGES;" 2>&1 | grep -v "Warning" >/dev/null || true
               fi
             }
             
             # 백엔드 중지 및 빌드
-            echo "=== Stopping and removing backend container ==="
-            docker stop "\$BACKEND_CONTAINER" 2>/dev/null || true
-            docker rm -f "\$BACKEND_CONTAINER" 2>/dev/null || true
-            
-            echo "=== Pre-build checks ==="
-            echo "Current directory: \$(pwd)"
-            echo "Files in directory:"
-            ls -la | head -20
-            echo ""
-            echo "Docker Compose command: \$COMPOSE_CMD"
-            echo "Compose file: \$COMPOSE_FILE"
-            echo ""
-            echo "Checking required files:"
-            [ -f "\$COMPOSE_FILE" ] && echo "✅ \$COMPOSE_FILE exists" || echo "❌ \$COMPOSE_FILE NOT FOUND"
-            [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile NOT FOUND"
-            [ -f "build.gradle" ] && echo "✅ build.gradle exists" || echo "❌ build.gradle NOT FOUND"
-            [ -d "src" ] && echo "✅ src directory exists" || echo "❌ src directory NOT FOUND"
-            [ -d "gradle" ] && echo "✅ gradle directory exists" || echo "❌ gradle directory NOT FOUND"
-            echo ""
-            
-            echo "=== Building backend image ==="
-            # 빌드 실행 및 상세 로그 출력
-            if ! \$COMPOSE_CMD build --no-cache --progress=plain backend 2>&1 | tee /tmp/build.log; then
-              echo ""
-              echo "❌ Backend build failed"
-              echo "=== Build log (last 200 lines) ==="
-              tail -200 /tmp/build.log || true
-              echo ""
-              echo "=== Error summary ==="
-              grep -i "error\|failed\|exception" /tmp/build.log | tail -50 || echo "No error patterns found"
-              echo ""
-              echo "=== Docker Compose file check ==="
-              ls -la \$COMPOSE_FILE || echo "Compose file not found: \$COMPOSE_FILE"
-              echo "=== Dockerfile check ==="
-              ls -la Dockerfile || echo "Dockerfile not found"
-              exit 1
-            fi
-            echo "✅ Backend build completed successfully"
+            docker stop "$BACKEND_CONTAINER" 2>/dev/null || true
+            docker rm -f "$BACKEND_CONTAINER" 2>/dev/null || true
+            $COMPOSE_CMD build --no-cache --progress=plain backend || exit 1
             
             # MySQL, Redis 시작
-            echo "=== Creating network ==="
             docker network create taba-network 2>/dev/null || true
             
-            echo "=== Stopping existing MySQL/Redis containers ==="
-            docker stop "\$MYSQL_CONTAINER" "\$REDIS_CONTAINER" 2>/dev/null || true
-            docker rm -f "\$MYSQL_CONTAINER" "\$REDIS_CONTAINER" 2>/dev/null || true
+            # 기존 컨테이너 완전 제거 (ContainerConfig 에러 방지)
+            docker stop "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
+            docker rm -f "$MYSQL_CONTAINER" "$REDIS_CONTAINER" 2>/dev/null || true
             
-            echo "=== Cleaning up with docker-compose down ==="
-            \$COMPOSE_CMD down --remove-orphans 2>/dev/null || true
+            # docker-compose down으로 완전 정리 (볼륨은 유지)
+            $COMPOSE_CMD down --remove-orphans 2>/dev/null || true
             
-            echo "=== Starting MySQL and Redis ==="
-            \$COMPOSE_CMD up -d mysql redis || {
-              echo "❌ Failed to start MySQL/Redis"
-              \$COMPOSE_CMD logs mysql redis
-              exit 1
-            }
+            # MySQL, Redis 시작
+            $COMPOSE_CMD up -d mysql redis
             sleep 10
             
             # MySQL 사용자 생성 및 테스트
-            echo "=== Waiting for MySQL to be healthy ==="
             for i in {1..12}; do
-              HEALTH_STATUS=\$(docker inspect --format='{{.State.Health.Status}}' "\$MYSQL_CONTAINER" 2>/dev/null || echo "unknown")
-              echo "MySQL health check attempt \$i/12: \$HEALTH_STATUS"
-              if [ "\$HEALTH_STATUS" = "healthy" ]; then
-                echo "✅ MySQL is healthy"
-                break
-              fi
-              if [ \$i -eq 12 ]; then
-                echo "❌ MySQL failed to become healthy after 60 seconds"
-                docker logs --tail=50 "\$MYSQL_CONTAINER" 2>&1
-                exit 1
-              fi
+              docker inspect --format='{{.State.Health.Status}}' "$MYSQL_CONTAINER" 2>/dev/null | grep -q "healthy" && break
               sleep 5
             done
             
-            echo "=== Ensuring MySQL user and database ==="
             ensure_mysql_user
             
             # 사용자 연결 테스트
-            echo "=== Testing MySQL connection ==="
-            echo "Testing connection with: DB_NAME=\$DB_NAME, DB_USERNAME=\$DB_USERNAME"
-            
-            # 환경 변수 재확인
-            if [ -z "\$DB_NAME" ] || [ -z "\$DB_USERNAME" ] || [ -z "\$DB_PASSWORD" ]; then
-              echo "❌ 환경 변수가 비어있습니다!"
-              echo "DB_NAME: '\$DB_NAME'"
-              echo "DB_USERNAME: '\$DB_USERNAME'"
-              echo "DB_PASSWORD: '\${DB_PASSWORD:+설정됨}'\${DB_PASSWORD:-비어있음}"
-              exit 1
-            fi
-            
             for retry in {1..3}; do
-              echo "Connection attempt \$retry/3: mysql -u \$DB_USERNAME -p*** -e \"USE \`\$DB_NAME\`; SELECT 1;\""
-              USER_TEST=\$(docker exec \$MYSQL_CONTAINER mysql -u "\$DB_USERNAME" -p"\$DB_PASSWORD" -e "USE \`\$DB_NAME\`; SELECT 1;" 2>&1) || true
-              
-              if ! echo "\$USER_TEST" | grep -qiE "(ERROR|Access denied|denied|must be followed)"; then
+              USER_TEST=$(docker exec "$MYSQL_CONTAINER" mysql -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "USE \`$DB_NAME\`; SELECT 1;" 2>&1) || true
+              if ! echo "$USER_TEST" | grep -qiE "(ERROR|Access denied|denied)"; then
                 echo "✅ MySQL connection successful"
                 break
               fi
-              
-              echo "MySQL connection attempt \$retry/3 failed"
-              echo "Test output: \$USER_TEST"
-              
-              if [ \$retry -lt 3 ]; then
-                echo "Retrying user creation..."
+              if [ $retry -lt 3 ]; then
                 ensure_mysql_user
                 sleep 3
               else
-                echo "❌ MySQL connection failed after 3 attempts"
-                echo "Final connection test output: \$USER_TEST"
-                echo "=== Current environment variables ==="
-                echo "DB_NAME: '\$DB_NAME'"
-                echo "DB_USERNAME: '\$DB_USERNAME'"
-                echo "DB_PASSWORD: '\${DB_PASSWORD:+설정됨}'\${DB_PASSWORD:-비어있음}"
-                echo "MYSQL_CONTAINER: '\$MYSQL_CONTAINER'"
-                echo "=== MySQL container environment ==="
-                docker exec \$MYSQL_CONTAINER printenv | grep MYSQL || true
-                echo "=== MySQL logs (last 50 lines) ==="
-                docker logs --tail=50 \$MYSQL_CONTAINER 2>&1
+                echo "❌ MySQL connection failed"
+                docker logs --tail=30 "$MYSQL_CONTAINER" 2>&1
                 exit 1
               fi
             done
             
-            # 백엔드 시작 전 환경 변수 확인
-            echo "=== 환경 변수 최종 확인 (백엔드 시작 전) ==="
-            echo "DB_HOST: \$DB_HOST"
-            echo "DB_NAME: \$DB_NAME"
-            echo "DB_USERNAME: \$DB_USERNAME"
-            echo "DB_PASSWORD: \${DB_PASSWORD:0:3}***"
-            echo "JWT_SECRET: \${JWT_SECRET:0:10}***"
-            echo "SERVER_URL: \$SERVER_URL"
-            echo "SPRING_PROFILES_ACTIVE: \$SPRING_PROFILES_ACTIVE"
-            echo ""
-            
             # 백엔드 시작
-            echo "=== Starting backend ==="
-            \$COMPOSE_CMD up -d backend || {
-              echo "❌ Failed to start backend"
-              echo "=== Docker Compose logs ==="
-              \$COMPOSE_CMD logs backend 2>&1 || true
-              echo ""
-              echo "=== Container environment variables ==="
-              docker exec "\$BACKEND_CONTAINER" printenv | grep -E "(DB_|JWT_|SERVER_|SPRING_)" || echo "Container not running"
-              exit 1
-            }
+            $COMPOSE_CMD up -d backend || exit 1
             sleep 5
-            echo "=== Backend container environment variables ==="
-            docker exec "\$BACKEND_CONTAINER" printenv | grep -E "(DB_|JWT_|SERVER_|SPRING_)" | sort || echo "Container not ready yet"
-            echo ""
-            echo "=== Backend logs (last 50 lines) ==="
-            docker logs --tail=50 "\$BACKEND_CONTAINER" 2>&1 || echo "No logs available"
+            docker logs --tail=30 "$BACKEND_CONTAINER" 2>&1
           REMOTE_SCRIPT
+        env:
+          DEPLOY_ENV: ${{ (github.ref == 'refs/heads/release' || github.ref == 'refs/heads/main') && 'prod' || github.ref == 'refs/heads/develop' && 'dev' || github.event.inputs.environment == 'prod' && 'prod' || github.event.inputs.environment == 'dev' && 'dev' || 'dev' }}
 
       - name: Check container status
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash << 'REMOTE_SCRIPT'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << 'REMOTE_SCRIPT'
             cd ~/taba_backend
             BACKEND_CONTAINER=$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
             echo "=== Container Status ==="
@@ -388,7 +210,7 @@ jobs:
       - name: Health Check (Internal)
         continue-on-error: true
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash << 'REMOTE_SCRIPT'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash << 'REMOTE_SCRIPT'
             BACKEND_CONTAINER=$([ "$DEPLOY_ENV" = "prod" ] && echo "taba-backend-prod" || echo "taba-backend-dev")
             sleep 60
             for i in {1..10}; do
@@ -412,30 +234,16 @@ jobs:
           fi
           echo "Checking external health endpoint..."
           echo "DEPLOY_ENV: $DEPLOY_ENV"
-          echo "SERVER_URL: ${SERVER_URL:0:30}..." # 처음 30자만 표시
-          
+          echo "SERVER_URL: ${SERVER_URL:0:20}..." # 처음 20자만 표시
           # SERVER_URL이 비어있거나 잘못된 형식인지 확인
           if [ -z "$SERVER_URL" ] || [ "$SERVER_URL" = "null" ] || [[ "$SERVER_URL" == *"***"* ]]; then
-            echo "⚠️ SERVER_URL not properly set, skipping external health check"
+            echo "SERVER_URL not properly set, skipping external health check"
             exit 0
           fi
-          
-          # SERVER_URL에서 도메인 추출 (https://www.taba.asia/api/v1 -> https://www.taba.asia)
+          # SERVER_URL에서 도메인 추출 (https://api.example.com/api/v1 -> https://api.example.com)
           SERVER_DOMAIN=$(echo "$SERVER_URL" | sed 's|https\?://||' | sed 's|/.*||')
-          
           if [ -n "$SERVER_DOMAIN" ] && [ "$SERVER_DOMAIN" != "null" ]; then
-            echo "Testing: https://${SERVER_DOMAIN}/api/v1/actuator/health"
-            # 타임아웃 설정 및 재시도
-            for i in {1..3}; do
-              if curl -f --max-time 10 --connect-timeout 5 "https://${SERVER_DOMAIN}/api/v1/actuator/health" 2>&1; then
-                echo "✅ External health check passed"
-                exit 0
-              fi
-              echo "Attempt $i/3 failed, retrying in 5 seconds..."
-              sleep 5
-            done
-            echo "❌ External health check failed after 3 attempts"
-            echo "⚠️ This might be normal if Nginx is not configured yet or SSL certificate is pending"
+            curl -f https://${SERVER_DOMAIN}/api/v1/actuator/health || echo "External health check failed"
           else
             echo "SERVER_URL not set, skipping external health check"
           fi
@@ -464,4 +272,3 @@ jobs:
             echo "- **서버**: GitHub Secrets에서 SERVER_URL_${DEPLOY_ENV_UPPER} 설정 필요" >> $GITHUB_STEP_SUMMARY
             echo "- **API URL**: 설정되지 않음" >> $GITHUB_STEP_SUMMARY
           fi
-
