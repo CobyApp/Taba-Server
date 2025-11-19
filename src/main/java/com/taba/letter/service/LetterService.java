@@ -56,6 +56,7 @@ public class LetterService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         }
 
+        // 익명 기능 제거: 항상 false로 설정
         Letter letter = Letter.builder()
                 .sender(sender)
                 .recipient(recipient)
@@ -63,7 +64,7 @@ public class LetterService {
                 .content(request.getContent())
                 .preview(request.getPreview())
                 .visibility(request.getVisibility())
-                .isAnonymous(request.getIsAnonymous())
+                .isAnonymous(false)
                 .templateBackground(request.getTemplate() != null ? request.getTemplate().getBackground() : null)
                 .templateTextColor(request.getTemplate() != null ? request.getTemplate().getTextColor() : null)
                 .templateFontFamily(request.getTemplate() != null ? request.getTemplate().getFontFamily() : null)
@@ -132,7 +133,7 @@ public class LetterService {
                 .content(request.getContent())
                 .preview(request.getPreview())
                 .visibility(Letter.Visibility.DIRECT) // 답장은 항상 DIRECT
-                .isAnonymous(request.getIsAnonymous() != null ? request.getIsAnonymous() : false)
+                .isAnonymous(false) // 익명 기능 제거: 항상 false
                 .templateBackground(request.getTemplate() != null ? request.getTemplate().getBackground() : null)
                 .templateTextColor(request.getTemplate() != null ? request.getTemplate().getTextColor() : null)
                 .templateFontFamily(request.getTemplate() != null ? request.getTemplate().getFontFamily() : null)
@@ -317,7 +318,6 @@ public class LetterService {
                 .preview(letter.getPreview())
                 .sender(com.taba.user.dto.UserMapper.INSTANCE.toDto(letter.getSender()))
                 .visibility(letter.getVisibility())
-                .isAnonymous(letter.getIsAnonymous())
                 .sentAt(letter.getSentAt())
                 .views(letter.getViews())
                 .attachedImages(images)

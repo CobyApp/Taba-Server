@@ -26,8 +26,6 @@ public class LetterCreateRequest {
     // 일반 편지 작성 시에는 서비스 레이어에서 null 체크
     private Letter.Visibility visibility;
 
-    private Boolean isAnonymous = false;
-
     private com.taba.letter.dto.LetterTemplateRequest template;
 
     private List<String> attachedImages;

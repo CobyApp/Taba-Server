@@ -270,13 +270,31 @@ profileImage: [파일]
 
 **인증**: 필요
 
-**Content-Type**: `multipart/form-data`
+**Content-Type**: `application/json`
 
-**Request**:
-- `recipientId`: 수신자 ID (필수)
-- `content`: 편지 내용 (필수)
-- `image`: 이미지 파일 (선택사항)
-- `scheduledAt`: 예약 발송 시간 (선택사항, ISO 8601 형식)
+**Request Body**:
+```json
+{
+  "title": "편지 제목",
+  "content": "편지 내용",
+  "preview": "편지 미리보기",
+  "visibility": "PUBLIC",
+  "template": {
+    "background": "#1D1433",
+    "textColor": "#FFFFFF",
+    "fontFamily": "Jua",
+    "fontSize": 16.0
+  },
+  "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
+  "scheduledAt": "2024-01-01T12:00:00",
+  "recipientId": "uuid"
+}
+```
+
+**참고사항**:
+- `visibility`: `PUBLIC`, `FRIENDS`, `DIRECT`, `PRIVATE` 중 하나 (필수)
+- **익명 기능은 제거되었습니다.** 모든 편지는 작성자 정보가 표시됩니다.
+- `recipientId`: 직접 전송(`DIRECT`) 편지인 경우 필수, 공개 편지인 경우 선택사항
 
 **Response** (201 Created):
 ```json
@@ -322,6 +340,10 @@ profileImage: [파일]
 
 **인증**: 선택사항
 
+**참고사항**:
+- 모든 편지는 작성자 정보가 표시됩니다 (익명 기능 제거)
+- 로그인한 사용자의 경우 자신이 작성한 편지는 목록에서 제외됩니다
+
 **Response** (200 OK):
 ```json
 {
@@ -330,12 +352,22 @@ profileImage: [파일]
     "letters": [
       {
         "id": "uuid",
+        "title": "편지 제목",
         "content": "편지 내용",
-        "imageUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+        "preview": "편지 미리보기",
         "sentAt": "2024-01-01T00:00:00",
-        "author": {
+        "views": 10,
+        "sender": {
           "id": "uuid",
-          "nickname": "작성자"
+          "nickname": "작성자",
+          "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
+        },
+        "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
+        "template": {
+          "background": "#1D1433",
+          "textColor": "#FFFFFF",
+          "fontFamily": "Jua",
+          "fontSize": 16.0
         }
       }
     ]
@@ -355,8 +387,6 @@ profileImage: [파일]
   "title": "답장 제목",
   "content": "답장 내용",
   "preview": "답장 미리보기",
-  "visibility": "DIRECT",
-  "isAnonymous": false,
   "template": {
     "background": "#1D1433",
     "textColor": "#FFFFFF",

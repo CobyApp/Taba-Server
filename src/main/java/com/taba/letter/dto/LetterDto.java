@@ -21,7 +21,6 @@ public class LetterDto {
     private String preview;
     private UserDto sender;
     private Letter.Visibility visibility;
-    private Boolean isAnonymous;
     private LocalDateTime sentAt;
     private Integer views;
     private List<String> attachedImages;
