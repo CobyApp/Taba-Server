@@ -50,17 +50,23 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
 
     /**
      * 친구 간 주고받은 편지 조회 (양방향)
-     * sender가 currentUserId이고 recipient가 friendId이거나,
-     * sender가 friendId이고 recipient가 currentUserId인 편지
+     * - DIRECT 타입: sender가 currentUserId이고 recipient가 friendId이거나, 그 반대인 편지
+     * - PUBLIC 타입: 친구(friendId)가 작성한 공개편지
      * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,asc - 시간순)
+     * 공개편지가 답장보다 시간상 앞서면 공개편지가 우선적으로 표시됩니다.
      * 
      * EntityGraph를 사용하여 sender, recipient, images를 eagerly fetch합니다.
      */
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l " +
-           "WHERE ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
-           "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
-           "AND l.visibility = 'DIRECT' " +
+           "WHERE (" +
+           "  ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
+           "   (l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
+           "  AND l.visibility = 'DIRECT' " +
+           ") OR (" +
+           "  l.sender.id = :friendId " +
+           "  AND l.visibility = 'PUBLIC' " +
+           ") " +
            "AND l.sentAt IS NOT NULL " +
            "AND l.deletedAt IS NULL")
     Page<Letter> findLettersBetweenFriends(

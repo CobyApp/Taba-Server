@@ -6,7 +6,9 @@ import com.taba.common.util.SecurityUtil;
 import com.taba.friendship.entity.Friendship;
 import com.taba.friendship.repository.FriendshipRepository;
 import com.taba.letter.entity.Letter;
+import com.taba.letter.entity.LetterRecipient;
 import com.taba.letter.repository.LetterRepository;
+import com.taba.letter.repository.LetterRecipientRepository;
 import com.taba.invite.entity.InviteCode;
 import com.taba.invite.repository.InviteCodeRepository;
 import com.taba.user.entity.User;
@@ -26,6 +28,7 @@ public class FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
     private final LetterRepository letterRepository;
+    private final LetterRecipientRepository letterRecipientRepository;
     private final UserRepository userRepository;
     private final InviteCodeRepository inviteCodeRepository;
 
@@ -161,19 +164,33 @@ public class FriendshipService {
                             letter.getId(), e.getMessage());
                 }
 
-                // recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
+                // 읽음 상태 확인
                 Boolean isRead = null;
                 try {
-                    User recipient = letter.getRecipient();
-                    if (recipient != null && recipient.getId() != null && recipient.getId().equals(currentUser.getId())) {
-                        // 내가 받은 편지인 경우 읽음 상태 반환
-                        isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
+                    // 공개편지인 경우 LetterRecipient로 읽음 상태 확인
+                    if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
+                        LetterRecipient letterRecipient = letterRecipientRepository
+                                .findByLetterIdAndUserId(letter.getId(), currentUser.getId())
+                                .orElse(null);
+                        if (letterRecipient != null) {
+                            isRead = letterRecipient.getIsRead() != null ? letterRecipient.getIsRead() : false;
+                        } else {
+                            // LetterRecipient가 없으면 아직 읽지 않은 것으로 간주
+                            isRead = false;
+                        }
+                    } else {
+                        // DIRECT 편지인 경우 recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
+                        User recipient = letter.getRecipient();
+                        if (recipient != null && recipient.getId() != null && recipient.getId().equals(currentUser.getId())) {
+                            // 내가 받은 편지인 경우 읽음 상태 반환
+                            isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
+                        }
+                        // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
                     }
                 } catch (Exception e) {
-                    log.warn("Error accessing recipient for letter: letterId={}, error={}", 
+                    log.warn("Error accessing read status for letter: letterId={}, error={}", 
                             letter.getId(), e.getMessage());
                 }
-                // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
 
                 return com.taba.friendship.dto.SharedFlowerDto.builder()
                         .id(letter.getId())
