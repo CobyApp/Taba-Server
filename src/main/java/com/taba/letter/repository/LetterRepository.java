@@ -97,5 +97,28 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     long countUnreadLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
             @Param("friendId") String friendId);
+
+    /**
+     * 공개편지에 대한 가장 빠른 답장 조회
+     * 공개편지의 sender가 friendId이고, 내가 보낸 답장 중 가장 빠른 것을 찾습니다.
+     */
+    @Query("SELECT reply FROM Letter reply " +
+           "WHERE reply.sender.id = :currentUserId " +
+           "AND reply.recipient.id = :friendId " +
+           "AND reply.visibility = 'DIRECT' " +
+           "AND reply.sentAt IS NOT NULL " +
+           "AND reply.deletedAt IS NULL " +
+           "AND EXISTS (" +
+           "  SELECT 1 FROM Letter publicLetter " +
+           "  WHERE publicLetter.id = :publicLetterId " +
+           "  AND publicLetter.sender.id = :friendId " +
+           "  AND publicLetter.visibility = 'PUBLIC' " +
+           "  AND reply.sentAt >= publicLetter.sentAt" +
+           ") " +
+           "ORDER BY reply.sentAt ASC")
+    List<Letter> findEarliestReplyToPublicLetter(
+            @Param("publicLetterId") String publicLetterId,
+            @Param("currentUserId") String currentUserId,
+            @Param("friendId") String friendId);
 }
 

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -164,10 +165,12 @@ public class FriendshipService {
                             letter.getId(), e.getMessage());
                 }
 
-                // 읽음 상태 확인
+                // 읽음 상태 확인 및 공개편지의 sentAt 조정
                 Boolean isRead = null;
+                LocalDateTime adjustedSentAt = letter.getSentAt();
+                
                 try {
-                    // 공개편지인 경우 LetterRecipient로 읽음 상태 확인
+                    // 공개편지인 경우 LetterRecipient로 읽음 상태 확인 및 sentAt 조정
                     if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
                         LetterRecipient letterRecipient = letterRecipientRepository
                                 .findByLetterIdAndUserId(letter.getId(), currentUser.getId())
@@ -177,6 +180,14 @@ public class FriendshipService {
                         } else {
                             // LetterRecipient가 없으면 아직 읽지 않은 것으로 간주
                             isRead = false;
+                        }
+                        
+                        // 공개편지에 대한 가장 빠른 답장을 찾아서 답장 시간 바로 전으로 sentAt 조정
+                        List<Letter> replies = letterRepository.findEarliestReplyToPublicLetter(
+                                letter.getId(), currentUser.getId(), friendId);
+                        if (!replies.isEmpty() && replies.get(0).getSentAt() != null) {
+                            // 가장 빠른 답장 시간 바로 전 (1초 전)으로 조정
+                            adjustedSentAt = replies.get(0).getSentAt().minusSeconds(1);
                         }
                     } else {
                         // DIRECT 편지인 경우 recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
@@ -195,7 +206,7 @@ public class FriendshipService {
                 return com.taba.friendship.dto.SharedFlowerDto.builder()
                         .id(letter.getId())
                         .letter(letterSummary)
-                        .sentAt(letter.getSentAt())
+                        .sentAt(adjustedSentAt)
                         .sentByMe(sentByMe)
                         .isRead(isRead)
                         .fontFamily(letter.getTemplateFontFamily() != null ? letter.getTemplateFontFamily() : null) // 폰트 이름 추가
