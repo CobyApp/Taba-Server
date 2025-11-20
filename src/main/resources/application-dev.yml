@@ -7,6 +7,12 @@ spring:
     # 1. 환경 변수: export DB_PASSWORD=your_actual_password
     # 2. 또는 위의 password 값을 직접 수정: password: your_actual_password
     driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
   jpa:
     show-sql: true
     hibernate:

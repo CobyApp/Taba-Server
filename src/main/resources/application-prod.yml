@@ -62,6 +62,14 @@ file:
     max-size: 10485760
     allowed-types: image/jpeg,image/png,image/gif,image/webp
 
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
+
 logging:
   level:
     root: INFO
