@@ -2,6 +2,8 @@
 
 Taba Backend를 처음 설정할 때 확인해야 할 항목들을 정리한 문서입니다.
 
+> **상세 가이드**: [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) - 환경별 시크릿 설정 방법
+
 ## ✅ GitHub Secrets 설정 (서버 배포 시 필수)
 
 > 📖 **상세 가이드**: [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) 참조
@@ -71,8 +73,7 @@ ssh-copy-id -i ~/.ssh/github_actions_deploy.pub coby@cobyserver.iptime.org
 
 ## 📚 참고 문서
 
+- [사용 가이드](USAGE.md) - 로컬 개발, 배포, 환경 변수 등 핵심 사용법
 - [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) - 상세한 시크릿 설정 방법
 - [환경 변수 요약](ENVIRONMENT_VARIABLES.md) - 필수 환경 변수 목록
-- [사용 가이드](USAGE.md) - 상세 사용법
-- [빠른 참조 가이드](QUICK_REFERENCE.md) - 자주 사용하는 명령어
 

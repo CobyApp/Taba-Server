@@ -70,8 +70,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - **프로덕션**: https://www.taba.asia/api/v1/swagger-ui/index.html
 
 **상세 API 명세서**:
-- [개발 환경 API 명세서](docs/API_SPECIFICATION_DEV.md)
-- [프로덕션 API 명세서](docs/API_SPECIFICATION_PROD.md)
+- [API 명세서](docs/API_SPECIFICATION.md) - 개발/프로덕션 환경 공통 API 명세
 
 ## 주요 기능
 
@@ -184,27 +183,40 @@ docker-compose -f docker-compose.prod.yml up -d --build
 
 ## 데이터베이스
 
-### 스키마 초기화
+### 스키마 관리
 
-개발 환경에서는 JPA의 `ddl-auto: update`를 사용하여 자동으로 스키마가 생성됩니다.
+- **개발 환경**: JPA의 `ddl-auto: update`를 사용하여 자동으로 스키마가 생성/업데이트됩니다.
+- **프로덕션 환경**: `ddl-auto: validate`를 사용하여 스키마 검증만 수행합니다.
 
-프로덕션 환경에서는 `ddl-auto: validate`를 사용하여 스키마 검증만 수행합니다.
+**스키마 문서**: [src/main/resources/db/schema.sql](src/main/resources/db/schema.sql)
 
 ### 목업 데이터
 
 개발/테스트용 목업 데이터를 사용할 수 있습니다:
 
 ```bash
+# 로컬 환경
 mysql -u root -p taba < src/main/resources/db/mock-data.sql
+
+# 개발 환경
+mysql -h 서버IP -P 3307 -u taba_user_dev -p taba_dev < src/main/resources/db/mock-data.sql
 ```
 
-**주의**: 프로덕션 환경에서는 실행하지 마세요!
+**⚠️ 주의**: 프로덕션 환경에서는 절대 실행하지 마세요!
+
+**관련 파일**:
+- [schema.sql](src/main/resources/db/schema.sql) - 데이터베이스 스키마 문서
+- [init.sql](src/main/resources/db/init.sql) - 데이터베이스 초기화 스크립트
+- [mock-data.sql](src/main/resources/db/mock-data.sql) - 목업 데이터 생성 스크립트
 
 ## 📚 문서
 
+### 사용 가이드
+- **[사용 가이드](USAGE.md)** - 로컬 개발, 배포, 환경 변수 등 핵심 사용법
+- **[설정 체크리스트](SETUP_CHECKLIST.md)** - 초기 설정 시 확인할 항목들
+
 ### API 문서
-- **[개발 환경 API 명세서](docs/API_SPECIFICATION_DEV.md)** - 개발 환경 API 엔드포인트 상세 명세
-- **[프로덕션 API 명세서](docs/API_SPECIFICATION_PROD.md)** - 프로덕션 환경 API 엔드포인트 상세 명세
+- **[API 명세서](docs/API_SPECIFICATION.md)** - 개발/프로덕션 환경 공통 API 엔드포인트 상세 명세
 
 ### 배포 및 설정
 - **[GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md)** - GitHub Actions 자동 배포를 위한 시크릿 설정

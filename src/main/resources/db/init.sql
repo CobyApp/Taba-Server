@@ -1,26 +1,56 @@
--- 데이터베이스 초기화 스크립트
+-- ============================================
+-- Taba 데이터베이스 초기화 스크립트
+-- ============================================
 -- MySQL 컨테이너 시작 시 자동 실행 (/docker-entrypoint-initdb.d/)
 -- 또는 MySQL에서 직접 실행 가능
 --
--- ⚠️ 주의사항:
--- - 이 스크립트는 MySQL 컨테이너가 처음 생성될 때만 실행됩니다 (볼륨이 없을 때)
--- - docker-compose의 MYSQL_DATABASE 환경 변수로 데이터베이스가 자동 생성됩니다
--- - 실제 배포에서는 deploy.yml의 ensure_mysql_user 함수가 데이터베이스와 사용자를 생성합니다
+-- ⚠️ 중요: 이 스크립트는 MySQL 컨테이너가 처음 생성될 때만 실행됩니다.
+--          (볼륨이 없을 때만 실행되며, 기존 볼륨이 있으면 실행되지 않습니다)
 --
--- 환경별 데이터베이스 이름:
--- - 개발 환경: ${DB_NAME_DEV} (예: taba_dev)
--- - 프로덕션 환경: ${DB_NAME_PROD} (예: taba_prod)
+-- ============================================
+-- 자동 처리되는 항목
+-- ============================================
 --
--- 데이터베이스 생성 (MYSQL_DATABASE 환경 변수가 이미 설정되어 있으면 자동 생성됨)
--- 이 부분은 docker-compose의 MYSQL_DATABASE 환경 변수로 처리되므로 주석 처리
--- CREATE DATABASE IF NOT EXISTS taba CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- 사용자 생성 및 권한 부여는 deploy.yml의 ensure_mysql_user 함수에서 처리됩니다
--- CREATE USER IF NOT EXISTS 'taba_user'@'%' IDENTIFIED BY 'taba_password';
--- GRANT ALL PRIVILEGES ON taba.* TO 'taba_user'@'%';
--- FLUSH PRIVILEGES;
-
--- 테이블은 JPA 엔티티를 기반으로 자동 생성됩니다.
--- 개발 환경: ddl-auto: update (자동 스키마 생성/업데이트)
--- 프로덕션 환경: ddl-auto: validate (스키마 검증만)
+-- 1. 데이터베이스 생성
+--    - docker-compose의 MYSQL_DATABASE 환경 변수로 자동 생성됩니다.
+--    - 환경별 데이터베이스 이름:
+--      * 개발 환경: ${DB_NAME_DEV} (예: taba_dev)
+--      * 프로덕션 환경: ${DB_NAME_PROD} (예: taba_prod)
+--
+-- 2. 사용자 생성 및 권한 부여
+--    - GitHub Actions 배포 워크플로우(deploy.yml)의 ensure_mysql_user 함수에서 처리됩니다.
+--    - 환경별 사용자:
+--      * 개발 환경: ${DB_USERNAME_DEV} (예: taba_user_dev)
+--      * 프로덕션 환경: ${DB_USERNAME_PROD} (예: taba_user_prod)
+--
+-- 3. 테이블 생성
+--    - JPA 엔티티를 기반으로 자동 생성됩니다.
+--    - 개발 환경: application-dev.yml의 ddl-auto: update 사용
+--      * 자동 스키마 생성/업데이트
+--    - 프로덕션 환경: application-prod.yml의 ddl-auto: validate 사용
+--      * 스키마 검증만 수행 (테이블은 수동 생성 또는 마이그레이션 도구 사용)
+--
+-- ============================================
+-- 수동 실행 방법 (필요시)
+-- ============================================
+--
+-- 데이터베이스 생성:
+--   CREATE DATABASE IF NOT EXISTS [데이터베이스명] 
+--   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--
+-- 사용자 생성 및 권한 부여:
+--   CREATE USER IF NOT EXISTS '[사용자명]'@'%' IDENTIFIED BY '[비밀번호]';
+--   GRANT ALL PRIVILEGES ON [데이터베이스명].* TO '[사용자명]'@'%';
+--   FLUSH PRIVILEGES;
+--
+-- 실행 예시:
+--   mysql -u root -p < init.sql
+--   또는
+--   mysql -u root -p -e "source init.sql"
+--
+-- ============================================
+-- 관련 파일
+-- ============================================
+-- - schema.sql: 데이터베이스 스키마 문서
+-- - mock-data.sql: 테스트용 목업 데이터 생성 스크립트
 

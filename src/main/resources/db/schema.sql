@@ -1,123 +1,230 @@
--- Taba 데이터베이스 스키마 초기화 스크립트
+-- ============================================
+-- Taba 데이터베이스 스키마 문서
+-- ============================================
 -- MySQL 8.0 이상 버전 사용
+-- 
+-- ⚠️ 중요: 이 파일은 스키마 문서입니다. 실제 테이블은 JPA 엔티티를 기반으로 자동 생성됩니다.
 --
--- ⚠️ 사용 방법:
--- 1. 개발 환경: JPA의 ddl-auto: update를 사용 (자동 스키마 생성)
--- 2. 프로덕션 환경: ddl-auto: validate (스키마 검증만)
--- 3. 수동 실행: mysql -u [사용자명] -p [데이터베이스명] < schema.sql
+-- 사용 방법:
+-- 1. 개발 환경: application-dev.yml의 ddl-auto: update 사용 (자동 스키마 생성/업데이트)
+-- 2. 프로덕션 환경: ddl-auto: validate 사용 (스키마 검증만)
+-- 3. 수동 실행: 필요시 Flyway나 Liquibase 같은 마이그레이션 도구 사용 권장
 --
--- 환경별 데이터베이스 이름:
+-- 환경별 데이터베이스:
 -- - 개발 환경: ${DB_NAME_DEV} (예: taba_dev)
 -- - 프로덕션 환경: ${DB_NAME_PROD} (예: taba_prod)
+
+-- ============================================
+-- 1. 사용자 (users)
+-- ============================================
+-- 사용자 기본 정보 및 설정
 --
--- 데이터베이스 생성 (필요시 - 환경 변수로 대체 가능)
--- CREATE DATABASE IF NOT EXISTS [데이터베이스명] CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
--- USE [데이터베이스명];
-
--- 주의: 이 스키마는 JPA 엔티티를 기반으로 작성되었습니다.
--- 개발 환경에서는 application-dev.yml의 ddl-auto: update를 사용하세요.
--- 프로덕션 환경에서는 Flyway나 Liquibase 같은 마이그레이션 도구 사용을 권장합니다.
-
--- ============================================
--- 주요 테이블 구조
--- ============================================
-
--- users: 사용자 정보
--- - id (VARCHAR(36), PK)
--- - email (VARCHAR(255), UNIQUE)
--- - password (VARCHAR(255))
--- - nickname (VARCHAR(50))
--- - avatar_url (VARCHAR(500))
--- - push_notification_enabled (BOOLEAN)
--- - fcm_token (VARCHAR(500)) -- FCM 푸시 알림 토큰
--- - language (VARCHAR(10))
--- - created_at, updated_at, deleted_at (TIMESTAMP)
-
--- letters: 편지 정보
--- - id (VARCHAR(36), PK)
--- - sender_id (VARCHAR(36), FK -> users.id)
--- - recipient_id (VARCHAR(36), FK -> users.id, nullable)
--- - title (VARCHAR(200))
--- - content (TEXT)
--- - preview (VARCHAR(500))
--- - visibility (VARCHAR(20), ENUM: PUBLIC, FRIENDS, DIRECT, PRIVATE)
--- - is_anonymous (BOOLEAN)
--- - template_background (VARCHAR(50))
--- - template_text_color (VARCHAR(50))
--- - template_font_family (VARCHAR(100))
--- - template_font_size (DECIMAL(5,2))
--- - scheduled_at (TIMESTAMP, nullable)
--- - sent_at (TIMESTAMP, nullable)
--- - views (INTEGER, default 0)
--- - is_read (BOOLEAN, default false) -- 읽음 상태 (recipient 기준)
--- - read_at (TIMESTAMP, nullable) -- 읽은 시간
--- - created_at, updated_at, deleted_at (TIMESTAMP)
-
--- friendships: 친구 관계
--- - id (VARCHAR(36), PK)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - friend_id (VARCHAR(36), FK -> users.id)
--- - created_at, updated_at, deleted_at (TIMESTAMP)
--- - UNIQUE(user_id, friend_id)
-
--- letter_images: 편지 첨부 이미지
--- - id (VARCHAR(36), PK)
--- - letter_id (VARCHAR(36), FK -> letters.id)
--- - image_url (VARCHAR(500))
--- - image_order (INTEGER)
-
--- letter_recipients: 편지 수신자 (공개 편지의 경우 복수 수신자 지원)
--- - id (VARCHAR(36), PK)
--- - letter_id (VARCHAR(36), FK -> letters.id)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - is_read (BOOLEAN, default false)
--- - read_at (TIMESTAMP, nullable)
--- - created_at, updated_at, deleted_at (TIMESTAMP)
--- - UNIQUE(letter_id, user_id)
-
--- letter_reports: 편지 신고
--- - id (VARCHAR(36), PK)
--- - letter_id (VARCHAR(36), FK -> letters.id)
--- - reporter_id (VARCHAR(36), FK -> users.id)
--- - reason (VARCHAR(500))
--- - created_at (TIMESTAMP)
-
--- invite_codes: 초대 코드
--- - id (VARCHAR(36), PK)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - code (VARCHAR(100), UNIQUE)
--- - expires_at (TIMESTAMP)
--- - used_by_user_id (VARCHAR(36), FK -> users.id, nullable)
--- - used_at (TIMESTAMP, nullable)
--- - created_at (TIMESTAMP)
-
--- notifications: 알림
--- - id (VARCHAR(36), PK)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - title (VARCHAR(200))
--- - subtitle (VARCHAR(500))
--- - category (VARCHAR(50), ENUM)
--- - related_id (VARCHAR(36))
--- - is_read (BOOLEAN, default false)
--- - read_at (TIMESTAMP, nullable)
--- - created_at (TIMESTAMP)
-
--- password_reset_tokens: 비밀번호 재설정 토큰
--- - id (VARCHAR(36), PK)
--- - user_id (VARCHAR(36), FK -> users.id)
--- - token (VARCHAR(255), UNIQUE)
--- - expires_at (TIMESTAMP)
--- - used (BOOLEAN, default false)
--- - created_at (TIMESTAMP)
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - email: 이메일 (VARCHAR(255), UNIQUE, NOT NULL)
+--   - password: 비밀번호 해시 (VARCHAR(255), NOT NULL)
+--   - nickname: 닉네임 (VARCHAR(50), NOT NULL)
+--   - avatar_url: 프로필 이미지 URL (VARCHAR(500))
+--   - language: 언어 설정 (VARCHAR(10), 기본값: 'ko')
+--   - push_notification_enabled: 푸시 알림 활성화 여부 (BOOLEAN, 기본값: true)
+--   - fcm_token: FCM 푸시 알림 토큰 (VARCHAR(500))
+--   - created_at, updated_at, deleted_at: 타임스탬프 (TIMESTAMP)
+--
+-- 인덱스:
+--   - idx_email: email (UNIQUE)
 
 -- ============================================
--- 참고사항
+-- 2. 편지 (letters)
 -- ============================================
--- 1. 친구 간 편지 조회는 letters 테이블을 직접 조회합니다.
---    - sender_id와 recipient_id를 이용하여 양방향 조회
+-- 편지 기본 정보
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - sender_id: 발신자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - recipient_id: 수신자 ID (VARCHAR(36), FK -> users.id, nullable)
+--     * PUBLIC/FRIENDS 편지: NULL
+--     * DIRECT 편지: 수신자 ID
+--   - title: 편지 제목 (VARCHAR(200), NOT NULL)
+--   - content: 편지 내용 (TEXT, NOT NULL)
+--   - preview: 미리보기 텍스트 (VARCHAR(500), NOT NULL)
+--   - visibility: 공개 범위 (VARCHAR(20), ENUM: PUBLIC, FRIENDS, DIRECT, PRIVATE)
+--   - is_anonymous: 익명 여부 (BOOLEAN, 기본값: false)
+--   - template_background: 배경색/템플릿 (VARCHAR(50))
+--   - template_text_color: 텍스트 색상 (VARCHAR(50))
+--   - template_font_family: 폰트 (VARCHAR(100))
+--   - template_font_size: 폰트 크기 (DECIMAL(5,2))
+--   - scheduled_at: 예약 발송 시간 (TIMESTAMP, nullable)
+--   - sent_at: 실제 발송 시간 (TIMESTAMP, nullable)
+--   - views: 조회수 (INTEGER, 기본값: 0)
+--   - is_read: 읽음 상태 (BOOLEAN, 기본값: false)
+--     * DIRECT 편지: recipient 기준 읽음 상태
+--   - read_at: 읽은 시간 (TIMESTAMP, nullable)
+--   - language: 편지 언어 (VARCHAR(10), nullable)
+--     * 가능한 값: 'ko' (한국어), 'en' (영어), 'ja' (일본어)
+--   - created_at, updated_at, deleted_at: 타임스탬프 (TIMESTAMP)
+--
+-- 인덱스:
+--   - idx_sender: sender_id
+--   - idx_recipient: recipient_id
+--   - idx_visibility: visibility
+--   - idx_scheduled_at: scheduled_at
+--   - idx_sent_at: sent_at
+--   - idx_created_at: created_at
+
+-- ============================================
+-- 3. 친구 관계 (friendships)
+-- ============================================
+-- 사용자 간 친구 관계 (양방향)
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - user_id: 사용자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - friend_id: 친구 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - created_at, updated_at, deleted_at: 타임스탬프 (TIMESTAMP)
+--
+-- 제약조건:
+--   - UNIQUE(user_id, friend_id): 중복 친구 관계 방지
+--
+-- 인덱스:
+--   - idx_user: user_id
+--   - idx_friend: friend_id
+--
+-- 참고: 친구 관계는 양방향이므로 A-B 친구 관계를 만들 때
+--       (A, B)와 (B, A) 두 레코드를 모두 생성해야 합니다.
+
+-- ============================================
+-- 4. 편지 이미지 (letter_images)
+-- ============================================
+-- 편지에 첨부된 이미지
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - letter_id: 편지 ID (VARCHAR(36), FK -> letters.id, NOT NULL)
+--   - image_url: 이미지 URL (VARCHAR(500), NOT NULL)
+--   - image_order: 이미지 순서 (INTEGER, 기본값: 0)
+--
+-- 참고: 하나의 편지에 여러 이미지를 첨부할 수 있으며,
+--       image_order로 순서를 관리합니다.
+
+-- ============================================
+-- 5. 편지 수신자 (letter_recipients)
+-- ============================================
+-- 공개 편지의 수신자 및 읽음 상태 관리
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - letter_id: 편지 ID (VARCHAR(36), FK -> letters.id, NOT NULL)
+--   - user_id: 수신자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - is_read: 읽음 상태 (BOOLEAN, 기본값: false)
+--   - read_at: 읽은 시간 (TIMESTAMP, nullable)
+--   - created_at, updated_at, deleted_at: 타임스탬프 (TIMESTAMP)
+--
+-- 제약조건:
+--   - UNIQUE(letter_id, user_id): 한 편지에 대한 중복 수신자 방지
+--
+-- 참고:
+--   - PUBLIC 편지: 공개 편지를 읽은 모든 사용자가 이 테이블에 기록됩니다.
+--   - DIRECT 편지: letters.is_read 필드로 관리되므로 이 테이블을 사용하지 않습니다.
+--   - 각 사용자별로 읽음 상태(is_read)와 읽은 시간(read_at)을 개별 관리합니다.
+
+-- ============================================
+-- 6. 편지 신고 (letter_reports)
+-- ============================================
+-- 편지 신고 정보
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - letter_id: 편지 ID (VARCHAR(36), FK -> letters.id, NOT NULL)
+--   - reporter_id: 신고자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - reason: 신고 사유 (VARCHAR(500), NOT NULL)
+--   - created_at: 신고 시간 (TIMESTAMP, NOT NULL)
+
+-- ============================================
+-- 7. 초대 코드 (invite_codes)
+-- ============================================
+-- 친구 초대를 위한 초대 코드
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - user_id: 코드 생성자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - code: 초대 코드 (VARCHAR(100), UNIQUE, NOT NULL)
+--     * 형식: 6자리 영문+숫자 조합 (예: ABC123, 9X7Y2Z)
+--   - expires_at: 만료 시간 (TIMESTAMP, NOT NULL)
+--     * 기본 유효 시간: 생성 후 3분
+--   - used_by_user_id: 사용한 사용자 ID (VARCHAR(36), FK -> users.id, nullable)
+--   - used_at: 사용 시간 (TIMESTAMP, nullable)
+--   - created_at: 생성 시간 (TIMESTAMP, NOT NULL)
+--
+-- 인덱스:
+--   - idx_user: user_id
+--   - idx_expires_at: expires_at
+--   - idx_used_by: used_by_user_id
+--
+-- 참고:
+--   - 기존에 유효한 코드가 있으면 새로 생성하지 않고 기존 코드를 반환합니다.
+--   - 만료되거나 사용된 코드는 재사용할 수 없습니다.
+
+-- ============================================
+-- 8. 알림 (notifications)
+-- ============================================
+-- 사용자 알림 정보
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - user_id: 사용자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - title: 알림 제목 (VARCHAR(200), NOT NULL)
+--   - subtitle: 알림 부제목 (VARCHAR(500))
+--   - category: 알림 카테고리 (VARCHAR(20), ENUM)
+--     * 가능한 값: LETTER (편지 관련)
+--   - related_id: 관련 엔티티 ID (VARCHAR(36))
+--     * 예: 편지 알림인 경우 letter_id
+--   - is_read: 읽음 상태 (BOOLEAN, 기본값: false)
+--   - read_at: 읽은 시간 (TIMESTAMP, nullable)
+--   - created_at: 생성 시간 (TIMESTAMP, NOT NULL)
+--
+-- 인덱스:
+--   - idx_user: user_id
+--   - idx_category: category
+--   - idx_is_read: is_read
+--   - idx_created_at: created_at
+
+-- ============================================
+-- 9. 비밀번호 재설정 토큰 (password_reset_tokens)
+-- ============================================
+-- 비밀번호 재설정을 위한 토큰
+--
+-- 주요 필드:
+--   - id: UUID (VARCHAR(36), PK)
+--   - user_id: 사용자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
+--   - token: 재설정 토큰 (VARCHAR(255), UNIQUE, NOT NULL)
+--   - expires_at: 만료 시간 (TIMESTAMP, NOT NULL)
+--   - used: 사용 여부 (BOOLEAN, 기본값: false)
+--   - created_at: 생성 시간 (TIMESTAMP, NOT NULL)
+--
+-- 참고:
+--   - 토큰은 일회용이며, 사용되면 재사용할 수 없습니다.
+--   - 만료된 토큰은 사용할 수 없습니다.
+
+-- ============================================
+-- 주요 비즈니스 로직 참고사항
+-- ============================================
+
+-- 1. 친구 간 편지 조회
+--    - DIRECT 편지: letters 테이블에서 sender_id와 recipient_id를 이용하여 양방향 조회
 --    - visibility = 'DIRECT'인 편지만 조회
--- 2. 읽음 상태 관리:
+--    - 예: A와 B가 친구인 경우
+--      * A가 B에게 보낸 편지: sender_id=A, recipient_id=B
+--      * B가 A에게 보낸 편지: sender_id=B, recipient_id=A
+
+-- 2. 읽음 상태 관리
 --    - DIRECT 편지: letters.is_read 필드로 관리 (recipient 기준)
+--      * 수신자가 편지를 읽으면 letters.is_read = true, read_at 업데이트
 --    - PUBLIC 편지: letter_recipients 테이블로 관리 (복수 수신자 지원)
---      - 공개 편지를 읽은 모든 사용자가 letter_recipients에 기록됨
---      - 각 사용자별로 읽음 상태(is_read)와 읽은 시간(read_at) 관리
+--      * 공개 편지를 읽은 모든 사용자가 letter_recipients에 기록됨
+--      * 각 사용자별로 읽음 상태(is_read)와 읽은 시간(read_at) 관리
+--      * 예: 공개 편지를 10명이 읽으면 letter_recipients에 10개 레코드 생성
+
+-- 3. 소프트 삭제 (Soft Delete)
+--    - BaseEntity를 상속받은 모든 엔티티는 deleted_at 필드를 가집니다.
+--    - 삭제 시 실제 레코드를 삭제하지 않고 deleted_at에 타임스탬프를 기록합니다.
+--    - 조회 시 deleted_at IS NULL 조건을 추가하여 삭제된 레코드를 제외합니다.

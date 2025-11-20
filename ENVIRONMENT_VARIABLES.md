@@ -1,6 +1,8 @@
 # 환경 변수 요약
 
-이 문서는 Taba Backend 프로젝트에서 사용하는 환경 변수에 대한 빠른 참조 가이드입니다.
+Taba Backend 프로젝트에서 사용하는 환경 변수에 대한 빠른 참조 가이드입니다.
+
+> **상세 가이드**: [GitHub Secrets 설정 가이드](docs/GITHUB_SECRETS_SETUP.md) - 환경별 시크릿 설정 방법
 
 ## 🔴 필수 환경 변수
 

@@ -8,7 +8,8 @@
 - **Content-Type**: `application/json`
 - **API 버전**: v1
 
-> **참고**: 예시 URL은 개발 환경(`dev.taba.asia`)을 기준으로 작성되었습니다. 프로덕션 환경에서는 `www.taba.asia`로 변경하여 사용하세요.
+> **참고**: 이 문서는 개발/프로덕션 환경 공통 API 명세입니다.  
+> 예시 URL은 개발 환경(`dev.taba.asia`)을 기준으로 작성되었으며, 프로덕션 환경에서는 `www.taba.asia`로 변경하여 사용하세요.
 
 ## 공통 응답 형식
 
