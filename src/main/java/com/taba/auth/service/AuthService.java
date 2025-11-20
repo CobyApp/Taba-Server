@@ -112,10 +112,11 @@ public class AuthService {
         user.updatePassword(passwordEncoder.encode(temporaryPassword));
         userRepository.save(user);
 
-        // 이메일로 임시 비밀번호 발송
+        // 이메일로 임시 비밀번호 발송 (사용자의 언어 설정에 따라)
         try {
-            emailService.sendTemporaryPassword(user.getEmail(), user.getNickname(), temporaryPassword);
-            log.info("Temporary password sent to email: {}", email);
+            String userLanguage = user.getLanguage() != null ? user.getLanguage() : "ko";
+            emailService.sendTemporaryPassword(user.getEmail(), user.getNickname(), temporaryPassword, userLanguage);
+            log.info("Temporary password sent to email: {} (language: {})", email, userLanguage);
         } catch (Exception e) {
             log.error("Failed to send temporary password email to: {}", email, e);
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "이메일 발송에 실패했습니다.");
