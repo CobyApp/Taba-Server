@@ -58,7 +58,7 @@ public class AuthService {
         String avatarUrl = null;
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                avatarUrl = fileService.uploadImage(profileImage);
+                avatarUrl = fileService.uploadImage(profileImage).getUrl();
             } catch (Exception e) {
                 log.error("프로필 이미지 업로드 실패", e);
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);

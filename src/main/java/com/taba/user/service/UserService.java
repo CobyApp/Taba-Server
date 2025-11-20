@@ -54,7 +54,7 @@ public class UserService {
         String finalAvatarUrl = avatarUrl;
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                finalAvatarUrl = fileService.uploadImage(profileImage);
+                finalAvatarUrl = fileService.uploadImage(profileImage).getUrl();
             } catch (Exception e) {
                 log.error("프로필 이미지 업로드 실패", e);
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
