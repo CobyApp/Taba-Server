@@ -141,7 +141,28 @@ public class LetterService {
                 .templateFontSize(request.getTemplate() != null ? request.getTemplate().getFontSize() : null)
                 .scheduledAt(request.getScheduledAt())
                 .language(request.getLanguage())
+                .originalLetterId(originalLetterId) // 원본 편지 ID 저장
                 .build();
+
+        // 공개편지에 답장한 경우 LetterRecipient 생성하여 읽음 처리
+        if (originalLetter.getVisibility() == Letter.Visibility.PUBLIC) {
+            LetterRecipient letterRecipient = letterRecipientRepository
+                    .findByLetterIdAndUserId(originalLetterId, sender.getId())
+                    .orElse(null);
+            
+            if (letterRecipient == null) {
+                letterRecipient = LetterRecipient.builder()
+                        .letter(originalLetter)
+                        .user(sender)
+                        .build();
+            }
+            
+            // 읽음 처리
+            if (letterRecipient.getIsRead() == null || !letterRecipient.getIsRead()) {
+                letterRecipient.markAsRead();
+            }
+            letterRecipientRepository.save(letterRecipient);
+        }
 
         if (request.getAttachedImages() != null) {
             for (int i = 0; i < request.getAttachedImages().size(); i++) {

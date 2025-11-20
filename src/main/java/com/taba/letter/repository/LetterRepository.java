@@ -52,7 +52,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
      * 친구 간 주고받은 편지 조회 (양방향)
      * - DIRECT 타입: sender가 currentUserId이고 recipient가 friendId이거나, 그 반대인 편지
      * - PUBLIC 타입: 친구(friendId)가 작성한 공개편지 중, 내가 답장을 보낸 공개편지만 포함
-     *   (답장을 보낸 시점 이전에 작성된 공개편지만 포함)
+     *   (답장의 originalLetterId가 해당 공개편지 ID와 일치하는 경우만 포함)
      * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,asc - 시간순)
      * 공개편지가 답장보다 시간상 앞서면 공개편지가 우선적으로 표시됩니다.
      * 
@@ -72,9 +72,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "    WHERE reply.sender.id = :currentUserId " +
            "    AND reply.recipient.id = :friendId " +
            "    AND reply.visibility = 'DIRECT' " +
+           "    AND reply.originalLetterId = l.id " +
            "    AND reply.sentAt IS NOT NULL " +
-           "    AND reply.deletedAt IS NULL " +
-           "    AND reply.sentAt >= l.sentAt" +
+           "    AND reply.deletedAt IS NULL" +
            "  )" +
            ") " +
            "AND l.sentAt IS NOT NULL " +
@@ -100,21 +100,15 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
 
     /**
      * 공개편지에 대한 가장 빠른 답장 조회
-     * 공개편지의 sender가 friendId이고, 내가 보낸 답장 중 가장 빠른 것을 찾습니다.
+     * originalLetterId가 공개편지 ID와 일치하는 답장 중 가장 빠른 것을 찾습니다.
      */
     @Query("SELECT reply FROM Letter reply " +
            "WHERE reply.sender.id = :currentUserId " +
            "AND reply.recipient.id = :friendId " +
            "AND reply.visibility = 'DIRECT' " +
+           "AND reply.originalLetterId = :publicLetterId " +
            "AND reply.sentAt IS NOT NULL " +
            "AND reply.deletedAt IS NULL " +
-           "AND EXISTS (" +
-           "  SELECT 1 FROM Letter publicLetter " +
-           "  WHERE publicLetter.id = :publicLetterId " +
-           "  AND publicLetter.sender.id = :friendId " +
-           "  AND publicLetter.visibility = 'PUBLIC' " +
-           "  AND reply.sentAt >= publicLetter.sentAt" +
-           ") " +
            "ORDER BY reply.sentAt ASC")
     List<Letter> findEarliestReplyToPublicLetter(
             @Param("publicLetterId") String publicLetterId,

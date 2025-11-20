@@ -61,6 +61,9 @@
 --   - read_at: 읽은 시간 (TIMESTAMP, nullable)
 --   - language: 편지 언어 (VARCHAR(10), nullable)
 --     * 가능한 값: 'ko' (한국어), 'en' (영어), 'ja' (일본어)
+--   - original_letter_id: 원본 편지 ID (VARCHAR(36), nullable)
+--     * 답장인 경우 원본 편지 ID 저장
+--     * 공개편지에 답장한 경우, 이 필드를 통해 어떤 공개편지에 답장했는지 추적
 --   - created_at, updated_at, deleted_at: 타임스탬프 (TIMESTAMP)
 --
 -- 인덱스:
@@ -70,6 +73,7 @@
 --   - idx_scheduled_at: scheduled_at
 --   - idx_sent_at: sent_at
 --   - idx_created_at: created_at
+--   - idx_original_letter: original_letter_id (답장 조회 성능 향상)
 
 -- ============================================
 -- 3. 친구 관계 (friendships)
@@ -211,10 +215,15 @@
 
 -- 1. 친구 간 편지 조회
 --    - DIRECT 편지: letters 테이블에서 sender_id와 recipient_id를 이용하여 양방향 조회
---    - visibility = 'DIRECT'인 편지만 조회
---    - 예: A와 B가 친구인 경우
---      * A가 B에게 보낸 편지: sender_id=A, recipient_id=B
---      * B가 A에게 보낸 편지: sender_id=B, recipient_id=A
+--      * visibility = 'DIRECT'인 편지만 조회
+--      * 예: A와 B가 친구인 경우
+--        - A가 B에게 보낸 편지: sender_id=A, recipient_id=B
+--        - B가 A에게 보낸 편지: sender_id=B, recipient_id=A
+--    - PUBLIC 편지: 친구가 작성한 공개편지 중, 내가 답장을 보낸 공개편지만 포함
+--      * original_letter_id 필드를 통해 답장이 어떤 공개편지에 대한 답장인지 추적
+--      * 공개편지에 답장하면 해당 공개편지의 original_letter_id가 답장 편지에 저장됨
+--      * 친구와의 편지 목록 조회 시, original_letter_id가 일치하는 공개편지만 포함
+--      * 공개편지의 sentAt이 답장 시간 바로 전(1초 전)으로 조정되어 표시됨
 
 -- 2. 읽음 상태 관리
 --    - DIRECT 편지: letters.is_read 필드로 관리 (recipient 기준)
@@ -223,6 +232,8 @@
 --      * 공개 편지를 읽은 모든 사용자가 letter_recipients에 기록됨
 --      * 각 사용자별로 읽음 상태(is_read)와 읽은 시간(read_at) 관리
 --      * 예: 공개 편지를 10명이 읽으면 letter_recipients에 10개 레코드 생성
+--      * 공개 편지에 답장을 보내면 자동으로 해당 공개 편지가 읽음 처리됨
+--        (LetterRecipient 생성 및 is_read = true로 설정)
 
 -- 3. 소프트 삭제 (Soft Delete)
 --    - BaseEntity를 상속받은 모든 엔티티는 deleted_at 필드를 가집니다.

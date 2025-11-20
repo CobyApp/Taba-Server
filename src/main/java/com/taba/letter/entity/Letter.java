@@ -84,6 +84,9 @@ public class Letter extends BaseEntity {
     @Column(name = "language", length = 10)
     private String language; // ko, en, ja
 
+    @Column(name = "original_letter_id", length = 36)
+    private String originalLetterId; // 답장인 경우 원본 편지 ID
+
     @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LetterImage> images = new ArrayList<>();
 
@@ -101,7 +104,7 @@ public class Letter extends BaseEntity {
     public Letter(User sender, User recipient, String title, String content, String preview,
                   Visibility visibility, Boolean isAnonymous,
                   String templateBackground, String templateTextColor, String templateFontFamily,
-                  Double templateFontSize, LocalDateTime scheduledAt, String language) {
+                  Double templateFontSize, LocalDateTime scheduledAt, String language, String originalLetterId) {
         this.sender = sender;
         this.recipient = recipient;
         this.title = title;
@@ -115,6 +118,7 @@ public class Letter extends BaseEntity {
         this.templateFontSize = templateFontSize;
         this.scheduledAt = scheduledAt;
         this.language = language;
+        this.originalLetterId = originalLetterId;
     }
 
     public void send() {
