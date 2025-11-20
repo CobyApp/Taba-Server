@@ -1,13 +1,14 @@
-# Taba API 명세서 (개발 환경)
+# Taba API 명세서
 
 ## 기본 정보
 
 - **개발 환경 Base URL**: `https://dev.taba.asia/api/v1`
+- **프로덕션 Base URL**: `https://www.taba.asia/api/v1`
 - **인증 방식**: JWT Bearer Token
 - **Content-Type**: `application/json`
 - **API 버전**: v1
 
-> **참고**: 이 문서는 개발 환경용 API 명세서입니다. 프로덕션 환경은 [API_SPECIFICATION_PROD.md](API_SPECIFICATION_PROD.md)를 참고하세요.
+> **참고**: 예시 URL은 개발 환경(`dev.taba.asia`)을 기준으로 작성되었습니다. 프로덕션 환경에서는 `www.taba.asia`로 변경하여 사용하세요.
 
 ## 공통 응답 형식
 
@@ -123,7 +124,7 @@ profileImage: [파일]
 
 ### 2.1 내 프로필 조회
 
-**GET** `/users/me`
+**GET** `/users/{userId}`
 
 **인증**: 필요
 
@@ -143,7 +144,7 @@ profileImage: [파일]
 
 ### 2.2 프로필 수정
 
-**PATCH** `/users/me`
+**PUT** `/users/{userId}`
 
 **인증**: 필요
 
@@ -151,6 +152,7 @@ profileImage: [파일]
 
 **Request**:
 - `nickname`: 닉네임 (선택사항, 2-50자)
+- `avatarUrl`: 아바타 URL (선택사항)
 - `profileImage`: 프로필 이미지 파일 (선택사항)
 
 **Response** (200 OK):
@@ -161,9 +163,51 @@ profileImage: [파일]
     "id": "uuid",
     "email": "user@example.com",
     "nickname": "수정된 닉네임",
-    "profileImageUrl": "http://localhost:8080/api/v1/files/{fileId}"
+    "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
   },
   "message": "프로필이 수정되었습니다."
+}
+```
+
+### 2.3 FCM 토큰 업데이트
+
+**PUT** `/users/{userId}/fcm-token`
+
+**인증**: 필요
+
+**Request Body**:
+```json
+{
+  "fcmToken": "fcm_token_string"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "FCM 토큰이 등록되었습니다."
+}
+```
+
+### 2.4 회원탈퇴
+
+**DELETE** `/users/{userId}`
+
+**인증**: 필요
+
+**참고사항**:
+- 본인만 탈퇴할 수 있습니다.
+- 회원탈퇴 시 사용자 정보는 소프트 삭제됩니다.
+- 탈퇴 후 해당 계정으로 로그인할 수 없습니다.
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "회원탈퇴가 완료되었습니다."
 }
 ```
 
@@ -215,7 +259,7 @@ profileImage: [파일]
     "friend": {
       "id": "uuid",
       "nickname": "친구1",
-      "profileImageUrl": "http://localhost:8080/api/v1/files/{fileId}"
+      "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
     }
   },
   "message": "친구가 추가되었습니다."
@@ -541,9 +585,10 @@ profileImage: [파일]
 
 ## Swagger UI
 
-개발 환경에서 다음 URL에서 인터랙티브 API 문서를 확인할 수 있습니다:
+다음 URL에서 인터랙티브 API 문서를 확인할 수 있습니다:
 
-- **개발 서버**: https://dev.taba.asia/api/v1/swagger-ui/index.html
+- **개발 환경**: https://dev.taba.asia/api/v1/swagger-ui/index.html
+- **프로덕션 환경**: https://www.taba.asia/api/v1/swagger-ui/index.html
 
 ---
 

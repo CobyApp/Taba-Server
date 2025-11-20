@@ -55,6 +55,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null, "FCM 토큰이 등록되었습니다."));
     }
 
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<ApiResponse<?>> withdrawUser(@PathVariable String userId) {
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (!currentUserId.equals(userId)) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.FORBIDDEN);
+        }
+
+        userService.withdrawUser(userId);
+        return ResponseEntity.ok(ApiResponse.success(null, "회원탈퇴가 완료되었습니다."));
+    }
+
     @lombok.Getter
     @lombok.Setter
     static class UpdateProfileRequest {

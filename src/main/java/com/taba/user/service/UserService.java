@@ -76,5 +76,17 @@ public class UserService {
         userRepository.save(user);
         log.info("FCM token updated for user: {}", userId);
     }
+
+    @Transactional
+    public void withdrawUser(String userId) {
+        User user = userRepository.findActiveUserById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 사용자 소프트 삭제
+        user.softDelete();
+        userRepository.save(user);
+        
+        log.info("User withdrawn: {}", userId);
+    }
 }
 
