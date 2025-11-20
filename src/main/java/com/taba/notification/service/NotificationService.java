@@ -79,11 +79,6 @@ public class NotificationService {
     @Transactional
     public void createAndSendNotification(User user, String title, String subtitle, 
                                          Notification.NotificationCategory category, String relatedId) {
-        // 푸시 알림이 비활성화된 경우 알림만 저장하고 푸시는 발송하지 않음
-        if (user.getPushNotificationEnabled() == null || !user.getPushNotificationEnabled()) {
-            log.debug("Push notification disabled for user: {}", user.getId());
-        }
-
         // 알림 저장
         Notification notification = Notification.builder()
                 .user(user)
@@ -105,6 +100,12 @@ public class NotificationService {
                 if (relatedId != null) {
                     data.put("relatedId", relatedId);
                 }
+                
+                // 딥링크 생성
+                String deepLink = generateDeepLink(category, relatedId);
+                if (deepLink != null && !deepLink.isEmpty()) {
+                    data.put("deepLink", deepLink);
+                }
 
                 boolean sent = fcmService.sendPushNotification(
                         user.getFcmToken(),
@@ -114,7 +115,8 @@ public class NotificationService {
                 );
 
                 if (sent) {
-                    log.info("FCM push notification sent successfully to user: {}", user.getId());
+                    log.info("FCM push notification sent successfully to user: {} (deepLink: {})", 
+                            user.getId(), deepLink);
                 } else {
                     log.warn("Failed to send FCM push notification to user: {}", user.getId());
                 }
@@ -127,6 +129,35 @@ public class NotificationService {
                     user.getId(), user.getPushNotificationEnabled(), 
                     user.getFcmToken() != null ? "exists" : "null");
         }
+    }
+
+    /**
+     * 카테고리와 관련 ID를 기반으로 딥링크 생성
+     * 
+     * @param category 알림 카테고리
+     * @param relatedId 관련 ID
+     * @return 딥링크 경로
+     */
+    private String generateDeepLink(Notification.NotificationCategory category, String relatedId) {
+        if (category == null) {
+            return null;
+        }
+
+        return switch (category) {
+            case LETTER, REACTION -> {
+                if (relatedId != null && !relatedId.isEmpty()) {
+                    yield "/letter/" + relatedId;
+                }
+                yield null;
+            }
+            case FRIEND -> {
+                if (relatedId != null && !relatedId.isEmpty()) {
+                    yield "/bouquet/" + relatedId;
+                }
+                yield "/bouquet";
+            }
+            case SYSTEM -> "/notifications";
+        };
     }
 
     private NotificationDto toDto(Notification notification) {

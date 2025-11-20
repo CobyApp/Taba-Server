@@ -83,11 +83,19 @@ public class LetterService {
             letter.send();
             
             // 즉시 발송된 편지인 경우 알림 발송 (FCM 푸시 포함)
-            if (recipient != null) {
+            // DIRECT 편지인 경우에만 푸시 알림 전송
+            if (recipient != null && request.getVisibility() == Letter.Visibility.DIRECT) {
+                String title = String.format("%s님이 편지를 보냈어요", sender.getNickname());
+                String body = letter.getTitle() != null && !letter.getTitle().isEmpty() 
+                        ? letter.getTitle() 
+                        : (letter.getPreview() != null && !letter.getPreview().isEmpty() 
+                                ? letter.getPreview() 
+                                : "새 편지가 도착했어요");
+                
                 notificationService.createAndSendNotification(
                         recipient,
-                        "새로운 편지가 도착했습니다",
-                        letter.getTitle(),
+                        title,
+                        body,
                         com.taba.notification.entity.Notification.NotificationCategory.LETTER,
                         letter.getId()
                 );
@@ -174,10 +182,17 @@ public class LetterService {
             replyLetter.send();
             
             // 즉시 발송된 답장인 경우 알림 발송 (FCM 푸시 포함)
+            String title = String.format("%s님이 편지를 보냈어요", sender.getNickname());
+            String body = replyLetter.getTitle() != null && !replyLetter.getTitle().isEmpty() 
+                    ? replyLetter.getTitle() 
+                    : (replyLetter.getPreview() != null && !replyLetter.getPreview().isEmpty() 
+                            ? replyLetter.getPreview() 
+                            : "새 편지가 도착했어요");
+            
             notificationService.createAndSendNotification(
                     recipient,
-                    "새로운 편지가 도착했습니다",
-                    replyLetter.getTitle(),
+                    title,
+                    body,
                     com.taba.notification.entity.Notification.NotificationCategory.LETTER,
                     replyLetter.getId()
             );

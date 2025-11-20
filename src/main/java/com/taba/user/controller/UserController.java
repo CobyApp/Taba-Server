@@ -55,6 +55,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null, "FCM 토큰이 등록되었습니다."));
     }
 
+    @DeleteMapping("/{userId}/fcm-token")
+    public ResponseEntity<ApiResponse<?>> deleteFcmToken(@PathVariable String userId) {
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (!currentUserId.equals(userId)) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.FORBIDDEN);
+        }
+
+        userService.deleteFcmToken(userId);
+        return ResponseEntity.ok(ApiResponse.success(null, "FCM 토큰이 삭제되었습니다."));
+    }
+
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse<?>> withdrawUser(@PathVariable String userId) {
         String currentUserId = SecurityUtil.getCurrentUserId();

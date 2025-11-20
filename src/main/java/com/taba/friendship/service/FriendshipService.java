@@ -11,6 +11,7 @@ import com.taba.letter.repository.LetterRepository;
 import com.taba.letter.repository.LetterRecipientRepository;
 import com.taba.invite.entity.InviteCode;
 import com.taba.invite.repository.InviteCodeRepository;
+import com.taba.notification.service.NotificationService;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class FriendshipService {
     private final LetterRecipientRepository letterRecipientRepository;
     private final UserRepository userRepository;
     private final InviteCodeRepository inviteCodeRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public com.taba.friendship.dto.AddFriendResponse addFriend(String inviteCode) {
@@ -107,6 +109,17 @@ public class FriendshipService {
         // 초대 코드 사용 처리
         code.use(currentUser);
         inviteCodeRepository.save(code);
+
+        // 친구 추가 알림 전송 (초대 코드를 사용한 사용자에게 알림)
+        String title = String.format("%s님이 친구로 추가되었어요", friendUser.getNickname());
+        String body = "이제 서로 편지를 주고받을 수 있어요";
+        notificationService.createAndSendNotification(
+                currentUser,
+                title,
+                body,
+                com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
+                friendUser.getId()
+        );
 
         // 친구 정보 반환
         com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
@@ -346,6 +359,29 @@ public class FriendshipService {
                 .friend(user1)
                 .build();
         friendshipRepository.save(friendship2);
+        
+        // 친구 추가 알림 전송 (양쪽 사용자에게 알림)
+        // user1에게 알림
+        String title1 = String.format("%s님이 친구로 추가되었어요", user2.getNickname());
+        String body1 = "이제 서로 편지를 주고받을 수 있어요";
+        notificationService.createAndSendNotification(
+                user1,
+                title1,
+                body1,
+                com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
+                user2.getId()
+        );
+        
+        // user2에게 알림
+        String title2 = String.format("%s님이 친구로 추가되었어요", user1.getNickname());
+        String body2 = "이제 서로 편지를 주고받을 수 있어요";
+        notificationService.createAndSendNotification(
+                user2,
+                title2,
+                body2,
+                com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
+                user1.getId()
+        );
     }
 }
 

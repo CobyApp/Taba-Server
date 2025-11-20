@@ -78,6 +78,16 @@ public class UserService {
     }
 
     @Transactional
+    public void deleteFcmToken(String userId) {
+        User user = userRepository.findActiveUserById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        
+        user.updateFcmToken(null);
+        userRepository.save(user);
+        log.info("FCM token deleted for user: {}", userId);
+    }
+
+    @Transactional
     public void withdrawUser(String userId) {
         User user = userRepository.findActiveUserById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

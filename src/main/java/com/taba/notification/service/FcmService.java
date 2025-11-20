@@ -1,5 +1,9 @@
 package com.taba.notification.service;
 
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
@@ -44,6 +48,25 @@ public class FcmService {
             if (data != null && !data.isEmpty()) {
                 messageBuilder.putAllData(data);
             }
+
+            // iOS 설정 (APNs)
+            ApnsConfig apnsConfig = ApnsConfig.builder()
+                    .setAps(Aps.builder()
+                            .setSound("default")
+                            .setBadge(1)
+                            .build())
+                    .build();
+            messageBuilder.setApnsConfig(apnsConfig);
+
+            // Android 설정
+            AndroidConfig androidConfig = AndroidConfig.builder()
+                    .setPriority(AndroidConfig.Priority.HIGH)
+                    .setNotification(AndroidNotification.builder()
+                            .setSound("default")
+                            .setChannelId("taba_notifications")
+                            .build())
+                    .build();
+            messageBuilder.setAndroidConfig(androidConfig);
 
             Message message = messageBuilder.build();
             String response = firebaseMessaging.send(message);
