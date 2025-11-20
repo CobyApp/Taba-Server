@@ -21,12 +21,20 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     Optional<Letter> findActiveById(@Param("id") String id);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL ORDER BY l.sentAt DESC")
-    Page<Letter> findPublicLetters(Pageable pageable);
+    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND (:languages IS NULL OR l.language IN :languages) " +
+           "ORDER BY l.sentAt DESC")
+    Page<Letter> findPublicLetters(@Param("languages") List<String> languages, Pageable pageable);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL AND l.sender.id != :excludeUserId ORDER BY l.sentAt DESC")
-    Page<Letter> findPublicLettersExcludingUser(@Param("excludeUserId") String excludeUserId, Pageable pageable);
+    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.id != :excludeUserId " +
+           "AND (:languages IS NULL OR l.language IN :languages) " +
+           "ORDER BY l.sentAt DESC")
+    Page<Letter> findPublicLettersExcludingUser(
+            @Param("excludeUserId") String excludeUserId,
+            @Param("languages") List<String> languages,
+            Pageable pageable);
 
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL ORDER BY l.createdAt DESC")

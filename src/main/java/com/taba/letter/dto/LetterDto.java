@@ -25,6 +25,7 @@ public class LetterDto {
     private Integer views;
     private List<String> attachedImages;
     private LetterTemplateDto template;
+    private String language; // ko, en, ja
 }
 
 

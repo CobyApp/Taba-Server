@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/letters")
 @RequiredArgsConstructor
@@ -29,8 +31,9 @@ public class LetterController {
 
     @GetMapping("/public")
     public ResponseEntity<ApiResponse<Page<LetterDto>>> getPublicLetters(
+            @RequestParam(required = false) List<String> languages,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<LetterDto> letters = letterService.getPublicLetters(pageable);
+        Page<LetterDto> letters = letterService.getPublicLetters(pageable, languages);
         return ResponseEntity.ok(ApiResponse.success(letters));
     }
 

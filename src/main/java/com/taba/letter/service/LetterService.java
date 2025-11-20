@@ -70,6 +70,7 @@ public class LetterService {
                 .templateFontFamily(request.getTemplate() != null ? request.getTemplate().getFontFamily() : null)
                 .templateFontSize(request.getTemplate() != null ? request.getTemplate().getFontSize() : null)
                 .scheduledAt(request.getScheduledAt())
+                .language(request.getLanguage())
                 .build();
 
         if (request.getAttachedImages() != null) {
@@ -139,6 +140,7 @@ public class LetterService {
                 .templateFontFamily(request.getTemplate() != null ? request.getTemplate().getFontFamily() : null)
                 .templateFontSize(request.getTemplate() != null ? request.getTemplate().getFontSize() : null)
                 .scheduledAt(request.getScheduledAt())
+                .language(request.getLanguage())
                 .build();
 
         if (request.getAttachedImages() != null) {
@@ -165,16 +167,16 @@ public class LetterService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LetterDto> getPublicLetters(Pageable pageable) {
+    public Page<LetterDto> getPublicLetters(Pageable pageable, List<String> languages) {
         String currentUserId = SecurityUtil.getCurrentUserId();
         Page<Letter> letters;
         
         // 로그인한 사용자의 경우 자신이 작성한 편지 제외
         if (currentUserId != null && !currentUserId.isEmpty()) {
-            letters = letterRepository.findPublicLettersExcludingUser(currentUserId, pageable);
+            letters = letterRepository.findPublicLettersExcludingUser(currentUserId, languages, pageable);
         } else {
             // 비로그인 사용자는 모든 공개 편지 조회
-            letters = letterRepository.findPublicLetters(pageable);
+            letters = letterRepository.findPublicLetters(languages, pageable);
         }
         
         return letters.map(letter -> {
@@ -322,6 +324,7 @@ public class LetterService {
                 .views(letter.getViews())
                 .attachedImages(images)
                 .template(template)
+                .language(letter.getLanguage())
                 .build();
     }
 }

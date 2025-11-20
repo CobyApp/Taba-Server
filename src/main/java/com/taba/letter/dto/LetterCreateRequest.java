@@ -33,6 +33,8 @@ public class LetterCreateRequest {
     private LocalDateTime scheduledAt;
 
     private String recipientId;
+
+    private String language; // ko, en, ja
 }
 
 

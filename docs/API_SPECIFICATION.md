@@ -387,7 +387,8 @@ profileImage: [파일]
   },
   "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
   "scheduledAt": "2024-01-01T12:00:00",
-  "recipientId": "uuid"
+  "recipientId": "uuid",
+  "language": "ko"
 }
 ```
 
@@ -395,6 +396,7 @@ profileImage: [파일]
 - `visibility`: `PUBLIC`, `FRIENDS`, `DIRECT`, `PRIVATE` 중 하나 (필수)
 - **익명 기능은 제거되었습니다.** 모든 편지는 작성자 정보가 표시됩니다.
 - `recipientId`: 직접 전송(`DIRECT`) 편지인 경우 필수, 공개 편지인 경우 선택사항
+- `language`: 편지 언어 (선택사항). `ko` (한국어), `en` (영어), `ja` (일본어) 중 하나
 
 **Response** (201 Created):
 ```json
@@ -403,9 +405,25 @@ profileImage: [파일]
   "data": {
     "letter": {
       "id": "uuid",
+      "title": "편지 제목",
       "content": "편지 내용",
-      "imageUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
-      "sentAt": "2024-01-01T00:00:00"
+      "preview": "편지 미리보기",
+      "sender": {
+        "id": "uuid",
+        "nickname": "작성자",
+        "avatarUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
+      },
+      "visibility": "PUBLIC",
+      "sentAt": "2024-01-01T00:00:00",
+      "views": 0,
+      "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
+      "template": {
+        "background": "#1D1433",
+        "textColor": "#FFFFFF",
+        "fontFamily": "Jua",
+        "fontSize": 16.0
+      },
+      "language": "ko"
     }
   },
   "message": "편지가 작성되었습니다."
@@ -440,9 +458,21 @@ profileImage: [파일]
 
 **인증**: 선택사항
 
+**Query Parameters**:
+- `languages` (선택사항): 언어 필터링. 여러 언어를 선택하려면 같은 파라미터를 여러 번 사용하세요.
+  - 예: `?languages=ko&languages=en` (한국어와 영어)
+  - 가능한 값: `ko` (한국어), `en` (영어), `ja` (일본어)
+  - 생략 시 모든 언어의 편지를 조회합니다.
+
 **참고사항**:
 - 모든 편지는 작성자 정보가 표시됩니다 (익명 기능 제거)
 - 로그인한 사용자의 경우 자신이 작성한 편지는 목록에서 제외됩니다
+- 언어 필터링은 여러 언어를 동시에 선택할 수 있습니다 (예: 한국어와 영어)
+
+**Request 예시**:
+```
+GET /letters/public?languages=ko&languages=en&page=0&size=20
+```
 
 **Response** (200 OK):
 ```json
@@ -468,7 +498,8 @@ profileImage: [파일]
           "textColor": "#FFFFFF",
           "fontFamily": "Jua",
           "fontSize": 16.0
-        }
+        },
+        "language": "ko"
       }
     ]
   }
