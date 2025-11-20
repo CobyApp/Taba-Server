@@ -21,5 +21,6 @@ public class UserDto {
     private LocalDateTime joinedAt;
     private Integer friendCount;
     private Integer sentLetters;
+    private Integer unreadLetterCount; // 안 읽은 편지 개수 (친구 목록 조회 시 사용)
 }
 

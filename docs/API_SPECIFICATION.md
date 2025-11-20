@@ -230,14 +230,22 @@ profileImage: [파일]
     "friends": [
       {
         "id": "uuid",
+        "email": "friend@example.com",
         "nickname": "친구1",
-        "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
-        "createdAt": "2024-01-01T00:00:00"
+        "avatarUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+        "joinedAt": "2024-01-01T00:00:00",
+        "friendCount": 5,
+        "sentLetters": 10,
+        "unreadLetterCount": 3
       }
     ]
   }
 }
 ```
+
+**참고사항**:
+- `unreadLetterCount`: 해당 친구로부터 받은 안 읽은 개인편지(DIRECT) 개수
+- 공개편지는 안 읽은 개수에 포함되지 않습니다.
 
 ### 3.2 친구 추가 (초대 코드 사용)
 

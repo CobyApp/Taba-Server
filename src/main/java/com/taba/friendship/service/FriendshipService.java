@@ -126,8 +126,23 @@ public class FriendshipService {
 
         List<Friendship> friendships = friendshipRepository.findByUserId(currentUser.getId());
         return friendships.stream()
-                .map(friendship -> com.taba.user.dto.UserMapper.INSTANCE.toDto(friendship.getFriend()))
+                .map(friendship -> {
+                    com.taba.user.dto.UserDto userDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendship.getFriend());
+                    // 안 읽은 편지 개수 계산
+                    long unreadCount = countUnreadLettersFromFriend(currentUser.getId(), friendship.getFriend().getId());
+                    userDto.setUnreadLetterCount((int) unreadCount);
+                    return userDto;
+                })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 친구로부터 받은 안 읽은 편지 개수 계산
+     * - DIRECT 편지: 친구가 보낸 개인편지 중 읽지 않은 것만 카운트
+     */
+    private long countUnreadLettersFromFriend(String currentUserId, String friendId) {
+        // DIRECT 편지 중 안 읽은 것 개수만 반환
+        return letterRepository.countUnreadLettersBetweenFriends(currentUserId, friendId);
     }
 
     @Transactional(readOnly = true)

@@ -34,5 +34,29 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
      */
     @Query("SELECT lr FROM LetterRecipient lr WHERE lr.user.id = :userId AND lr.letter.visibility = 'PUBLIC' AND lr.deletedAt IS NULL ORDER BY lr.readAt DESC")
     Page<LetterRecipient> findPublicLettersByUserId(@Param("userId") String userId, Pageable pageable);
+
+    /**
+     * 친구가 작성한 공개편지 중, 내가 답장을 보낸 것인데 아직 읽지 않은 것 개수 조회
+     */
+    @Query("SELECT COUNT(DISTINCT lr.letter.id) FROM LetterRecipient lr " +
+           "WHERE lr.user.id = :currentUserId " +
+           "AND lr.letter.sender.id = :friendId " +
+           "AND lr.letter.visibility = 'PUBLIC' " +
+           "AND lr.letter.sentAt IS NOT NULL " +
+           "AND lr.letter.deletedAt IS NULL " +
+           "AND (lr.isRead IS NULL OR lr.isRead = false) " +
+           "AND lr.deletedAt IS NULL " +
+           "AND EXISTS (" +
+           "  SELECT 1 FROM Letter reply " +
+           "  WHERE reply.sender.id = :currentUserId " +
+           "  AND reply.recipient.id = :friendId " +
+           "  AND reply.visibility = 'DIRECT' " +
+           "  AND reply.originalLetterId = lr.letter.id " +
+           "  AND reply.sentAt IS NOT NULL " +
+           "  AND reply.deletedAt IS NULL" +
+           ")")
+    long countUnreadPublicLettersFromFriend(
+            @Param("currentUserId") String currentUserId,
+            @Param("friendId") String friendId);
 }
 
