@@ -53,7 +53,7 @@ public class FriendController {
     @GetMapping("/{friendId}/letters")
     public ResponseEntity<ApiResponse<Page<com.taba.friendship.dto.SharedFlowerDto>>> getFriendLetters(
             @PathVariable String friendId,
-            @PageableDefault(size = 20, sort = "sentAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "sentAt", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<com.taba.friendship.dto.SharedFlowerDto> letters = friendshipService.getFriendLetters(friendId, pageable);
         return ResponseEntity.ok(ApiResponse.success(letters));
     }

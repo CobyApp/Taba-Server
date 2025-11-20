@@ -52,7 +52,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
      * 친구 간 주고받은 편지 조회 (양방향)
      * sender가 currentUserId이고 recipient가 friendId이거나,
      * sender가 friendId이고 recipient가 currentUserId인 편지
-     * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,desc)
+     * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,asc - 시간순)
      * 
      * EntityGraph를 사용하여 sender, recipient, images를 eagerly fetch합니다.
      */
@@ -62,8 +62,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "(l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
            "AND l.visibility = 'DIRECT' " +
            "AND l.sentAt IS NOT NULL " +
-           "AND l.deletedAt IS NULL " +
-           "ORDER BY l.sentAt DESC")
+           "AND l.deletedAt IS NULL")
     Page<Letter> findLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
             @Param("friendId") String friendId,
