@@ -15,10 +15,14 @@ import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -138,9 +142,35 @@ public class FriendshipService {
         friendshipRepository.findByUserIds(currentUser.getId(), friendId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FRIENDSHIP_NOT_FOUND));
 
-        // 친구 간 주고받은 편지 조회
-        org.springframework.data.domain.Page<Letter> letters = 
-                letterRepository.findLettersBetweenFriends(currentUser.getId(), friendId, pageable);
+        // 친구 간 주고받은 편지 조회 (페이지네이션 없이 전체 조회 후 정렬)
+        // 공개편지의 sentAt 조정을 위해 전체를 가져온 후 메모리에서 정렬
+        org.springframework.data.domain.Pageable allPageable = PageRequest.of(0, Integer.MAX_VALUE, 
+                Sort.by(Sort.Direction.ASC, "sentAt"));
+        org.springframework.data.domain.Page<Letter> allLetters = 
+                letterRepository.findLettersBetweenFriends(currentUser.getId(), friendId, allPageable);
+
+        // 공개편지의 조정된 sentAt을 계산하여 정렬
+        List<Letter> sortedLetters = allLetters.getContent().stream()
+                .sorted((l1, l2) -> {
+                    LocalDateTime sentAt1 = getAdjustedSentAt(l1, currentUser.getId(), friendId);
+                    LocalDateTime sentAt2 = getAdjustedSentAt(l2, currentUser.getId(), friendId);
+                    if (sentAt1 == null && sentAt2 == null) return 0;
+                    if (sentAt1 == null) return 1;
+                    if (sentAt2 == null) return -1;
+                    return sentAt1.compareTo(sentAt2);
+                })
+                .collect(Collectors.toList());
+
+        // 페이지네이션 적용
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), sortedLetters.size());
+        List<Letter> pagedLetters = start < sortedLetters.size() 
+                ? sortedLetters.subList(start, end) 
+                : Collections.emptyList();
+
+        // Page 객체 생성
+        org.springframework.data.domain.Page<Letter> letters = new PageImpl<>(
+                pagedLetters, pageable, sortedLetters.size());
 
         return letters.map(letter -> {
             try {
@@ -167,10 +197,10 @@ public class FriendshipService {
 
                 // 읽음 상태 확인 및 공개편지의 sentAt 조정
                 Boolean isRead = null;
-                LocalDateTime adjustedSentAt = letter.getSentAt();
+                LocalDateTime adjustedSentAt = getAdjustedSentAt(letter, currentUser.getId(), friendId);
                 
                 try {
-                    // 공개편지인 경우 LetterRecipient로 읽음 상태 확인 및 sentAt 조정
+                    // 공개편지인 경우 LetterRecipient로 읽음 상태 확인
                     if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
                         LetterRecipient letterRecipient = letterRecipientRepository
                                 .findByLetterIdAndUserId(letter.getId(), currentUser.getId())
@@ -180,14 +210,6 @@ public class FriendshipService {
                         } else {
                             // LetterRecipient가 없으면 아직 읽지 않은 것으로 간주
                             isRead = false;
-                        }
-                        
-                        // 공개편지에 대한 가장 빠른 답장을 찾아서 답장 시간 바로 전으로 sentAt 조정
-                        List<Letter> replies = letterRepository.findEarliestReplyToPublicLetter(
-                                letter.getId(), currentUser.getId(), friendId);
-                        if (!replies.isEmpty() && replies.get(0).getSentAt() != null) {
-                            // 가장 빠른 답장 시간 바로 전 (1초 전)으로 조정
-                            adjustedSentAt = replies.get(0).getSentAt().minusSeconds(1);
                         }
                     } else {
                         // DIRECT 편지인 경우 recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
@@ -217,6 +239,31 @@ public class FriendshipService {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
         });
+    }
+
+    /**
+     * 공개편지의 경우 조정된 sentAt을 반환합니다.
+     * 공개편지에 답장이 있는 경우, 답장 시간 바로 전(1초 전)으로 조정합니다.
+     */
+    private LocalDateTime getAdjustedSentAt(Letter letter, String currentUserId, String friendId) {
+        LocalDateTime adjustedSentAt = letter.getSentAt();
+        
+        try {
+            // 공개편지인 경우 답장 시간을 고려하여 sentAt 조정
+            if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
+                List<Letter> replies = letterRepository.findEarliestReplyToPublicLetter(
+                        letter.getId(), currentUserId, friendId);
+                if (!replies.isEmpty() && replies.get(0).getSentAt() != null) {
+                    // 가장 빠른 답장 시간 바로 전 (1초 전)으로 조정
+                    adjustedSentAt = replies.get(0).getSentAt().minusSeconds(1);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error calculating adjusted sentAt for letter: letterId={}, error={}", 
+                    letter.getId(), e.getMessage());
+        }
+        
+        return adjustedSentAt;
     }
 
     @Transactional
