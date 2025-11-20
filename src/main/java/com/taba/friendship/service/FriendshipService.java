@@ -30,7 +30,7 @@ public class FriendshipService {
     private final InviteCodeRepository inviteCodeRepository;
 
     @Transactional
-    public Friendship addFriend(String inviteCode) {
+    public com.taba.friendship.dto.AddFriendResponse addFriend(String inviteCode) {
         User currentUser = SecurityUtil.getCurrentUser();
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
@@ -57,26 +57,41 @@ public class FriendshipService {
             throw new BusinessException(ErrorCode.INVITE_CODE_ALREADY_USED);
         }
 
-        // 자기 자신의 초대 코드는 사용 불가
-        if (code.getUser().getId().equals(currentUser.getId())) {
-            throw new BusinessException(ErrorCode.CANNOT_USE_OWN_INVITE_CODE);
+        User friendUser = code.getUser();
+        
+        // 자기 자신의 초대 코드인 경우 친구 정보와 함께 반환
+        if (friendUser.getId().equals(currentUser.getId())) {
+            com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
+            return com.taba.friendship.dto.AddFriendResponse.builder()
+                    .friend(friendDto)
+                    .alreadyFriends(false)
+                    .isOwnCode(true)
+                    .build();
         }
-
+        
         // 이미 친구인지 확인
-        if (friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(
-                currentUser.getId(), code.getUser().getId())) {
-            throw new BusinessException(ErrorCode.ALREADY_FRIENDS);
+        boolean alreadyFriends = friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(
+                currentUser.getId(), friendUser.getId());
+
+        // 이미 친구인 경우 친구 정보만 반환
+        if (alreadyFriends) {
+            com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
+            return com.taba.friendship.dto.AddFriendResponse.builder()
+                    .friend(friendDto)
+                    .alreadyFriends(true)
+                    .isOwnCode(false)
+                    .build();
         }
 
         // 양방향 친구 관계 생성
         Friendship friendship1 = Friendship.builder()
                 .user(currentUser)
-                .friend(code.getUser())
+                .friend(friendUser)
                 .build();
         friendshipRepository.save(friendship1);
 
         Friendship friendship2 = Friendship.builder()
-                .user(code.getUser())
+                .user(friendUser)
                 .friend(currentUser)
                 .build();
         friendshipRepository.save(friendship2);
@@ -85,7 +100,13 @@ public class FriendshipService {
         code.use(currentUser);
         inviteCodeRepository.save(code);
 
-        return friendship1;
+        // 친구 정보 반환
+        com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
+        return com.taba.friendship.dto.AddFriendResponse.builder()
+                .friend(friendDto)
+                .alreadyFriends(false)
+                .isOwnCode(false)
+                .build();
     }
 
     @Transactional(readOnly = true)

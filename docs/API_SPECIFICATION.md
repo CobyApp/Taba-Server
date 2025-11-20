@@ -240,7 +240,7 @@ profileImage: [파일]
 
 ### 3.2 친구 추가 (초대 코드 사용)
 
-**POST** `/friends`
+**POST** `/friends/invite`
 
 **인증**: 필요
 
@@ -251,18 +251,74 @@ profileImage: [파일]
 }
 ```
 
-**Response** (201 Created):
+**참고사항**:
+- 올바르지 않은 초대 코드인 경우: `INVALID_INVITE_CODE` 에러 반환
+- 만료된 초대 코드인 경우: `INVITE_CODE_EXPIRED` 에러 반환
+- 이미 사용된 초대 코드인 경우: `INVITE_CODE_ALREADY_USED` 에러 반환
+- 자신의 초대 코드를 사용한 경우: 본인 정보와 함께 "본인은 친구 추가할 수 없습니다." 메시지 반환 (201 Created)
+- 이미 친구인 경우: 친구 정보와 함께 "이미 친구입니다." 메시지 반환 (201 Created)
+- 새로운 친구인 경우: 친구 정보와 함께 "친구가 추가되었습니다." 메시지 반환 (201 Created)
+
+**Response** (201 Created) - 새로운 친구 추가 성공:
 ```json
 {
   "success": true,
   "data": {
     "friend": {
       "id": "uuid",
+      "email": "friend@example.com",
       "nickname": "친구1",
-      "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
-    }
+      "avatarUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+      "joinedAt": "2024-01-01T00:00:00",
+      "friendCount": 5,
+      "sentLetters": 10
+    },
+    "alreadyFriends": false,
+    "isOwnCode": false
   },
   "message": "친구가 추가되었습니다."
+}
+```
+
+**Response** (201 Created) - 자신의 초대 코드를 사용한 경우:
+```json
+{
+  "success": true,
+  "data": {
+    "friend": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "nickname": "본인",
+      "avatarUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+      "joinedAt": "2024-01-01T00:00:00",
+      "friendCount": 5,
+      "sentLetters": 10
+    },
+    "alreadyFriends": false,
+    "isOwnCode": true
+  },
+  "message": "본인은 친구 추가할 수 없습니다."
+}
+```
+
+**Response** (201 Created) - 이미 친구인 경우:
+```json
+{
+  "success": true,
+  "data": {
+    "friend": {
+      "id": "uuid",
+      "email": "friend@example.com",
+      "nickname": "친구1",
+      "avatarUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+      "joinedAt": "2024-01-01T00:00:00",
+      "friendCount": 5,
+      "sentLetters": 10
+    },
+    "alreadyFriends": true,
+    "isOwnCode": false
+  },
+  "message": "이미 친구입니다."
 }
 ```
 

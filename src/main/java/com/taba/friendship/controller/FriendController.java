@@ -22,10 +22,20 @@ public class FriendController {
     private final FriendshipService friendshipService;
 
     @PostMapping("/invite")
-    public ResponseEntity<ApiResponse<?>> addFriend(@Valid @RequestBody InviteRequest request) {
-        friendshipService.addFriend(request.getInviteCode());
+    public ResponseEntity<ApiResponse<com.taba.friendship.dto.AddFriendResponse>> addFriend(@Valid @RequestBody InviteRequest request) {
+        com.taba.friendship.dto.AddFriendResponse response = friendshipService.addFriend(request.getInviteCode());
+        
+        String message;
+        if (response.isOwnCode()) {
+            message = "본인은 친구 추가할 수 없습니다.";
+        } else if (response.isAlreadyFriends()) {
+            message = "이미 친구입니다.";
+        } else {
+            message = "친구가 추가되었습니다.";
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(null, "친구가 추가되었습니다."));
+                .body(ApiResponse.success(response, message));
     }
 
     @GetMapping
