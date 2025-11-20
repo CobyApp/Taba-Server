@@ -528,9 +528,13 @@ profileImage: [파일]
 
 ### 5.1 초대 코드 생성
 
-**POST** `/invite-codes`
+**POST** `/invite-codes/generate`
 
 **인증**: 필요
+
+**참고사항**:
+- 기존에 유효한 초대 코드가 있으면 새로 생성하지 않고 기존 코드를 반환합니다.
+- 초대 코드는 생성 후 3분간 유효합니다.
 
 **Response** (201 Created):
 ```json
@@ -538,26 +542,39 @@ profileImage: [파일]
   "success": true,
   "data": {
     "code": "ABC123",
-    "expiresAt": "2024-01-01T00:03:00"
+    "expiresAt": "2024-01-01T00:03:00",
+    "remainingMinutes": 3
   },
   "message": "초대 코드가 생성되었습니다."
 }
 ```
 
-### 5.2 초대 코드 조회
+### 5.2 현재 초대 코드 조회
 
-**GET** `/invite-codes/me`
+**GET** `/invite-codes/current`
 
 **인증**: 필요
 
-**Response** (200 OK):
+**참고사항**:
+- 현재 유효한 초대 코드가 없거나 만료된 경우 `null`을 반환합니다.
+
+**Response** (200 OK) - 유효한 코드가 있는 경우:
 ```json
 {
   "success": true,
   "data": {
     "code": "ABC123",
-    "expiresAt": "2024-01-01T00:03:00"
+    "expiresAt": "2024-01-01T00:03:00",
+    "remainingMinutes": 2
   }
+}
+```
+
+**Response** (200 OK) - 유효한 코드가 없는 경우:
+```json
+{
+  "success": true,
+  "data": null
 }
 ```
 
