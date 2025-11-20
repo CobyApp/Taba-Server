@@ -46,6 +46,13 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s # 종료 타임아웃 (진행 중인 요청 완료 대기 시간)
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2KB
+
 server:
   port: ${SERVER_PORT:8080}
   servlet:
@@ -61,14 +68,6 @@ file:
     dir: ${FILE_UPLOAD_DIR:/app/uploads}
     max-size: 10485760
     allowed-types: image/jpeg,image/png,image/gif,image/webp
-
-spring:
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 10MB
-      max-request-size: 10MB
-      file-size-threshold: 2KB
 
 logging:
   level:
