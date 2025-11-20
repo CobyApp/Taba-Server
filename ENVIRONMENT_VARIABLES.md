@@ -83,14 +83,40 @@ Taba Backend 프로젝트에서 사용하는 환경 변수에 대한 빠른 참�
 | `SPRING_PROFILES_ACTIVE` | `prod` (프로덕션), `dev` (로컬) | Spring 프로파일 |
 | `FILE_UPLOAD_DIR` | `/app/uploads` | 파일 업로드 디렉토리 |
 
-### 메일 설정 (선택사항)
+### 메일 설정 (비밀번호 찾기 기능 사용 시 필수)
+
+#### GitHub Secrets 설정 (프로덕션/개발 공통)
+
+**공통 설정 (Gmail):**
+- `MAIL_USERNAME` - 발신 이메일 주소 (예: `your-email@gmail.com`) ⚠️ **필수**
+- `MAIL_PASSWORD` - Gmail 앱 비밀번호 (16자리) ⚠️ **필수**
+- `MAIL_HOST` (선택, 기본값: `smtp.gmail.com`)
+- `MAIL_PORT` (선택, 기본값: `587`)
+
+**프론트엔드 URL (환경별 분리):**
+- `FRONTEND_URL_PROD` (선택, 기본값: `http://localhost:3000`)
+- `FRONTEND_URL_DEV` (선택, 기본값: `http://localhost:3000`)
+
+#### 로컬 개발 환경 설정
 
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
-| `MAIL_HOST` | `smtp.gmail.com` | SMTP 서버 호스트 |
-| `MAIL_PORT` | `587` | SMTP 서버 포트 |
-| `MAIL_USERNAME` | 빈 문자열 | SMTP 사용자명 |
-| `MAIL_PASSWORD` | 빈 문자열 | SMTP 비밀번호 |
+| `MAIL_HOST` | `smtp.gmail.com` | SMTP 서버 호스트 (Gmail: `smtp.gmail.com`) |
+| `MAIL_PORT` | `587` | SMTP 서버 포트 (Gmail: `587`) |
+| `MAIL_USERNAME` | 빈 문자열 | **필수** - 발신 이메일 주소 (예: `your-email@gmail.com`) |
+| `MAIL_PASSWORD` | 빈 문자열 | **필수** - 이메일 비밀번호 또는 앱 비밀번호 (Gmail은 앱 비밀번호 사용 권장) |
+| `FRONTEND_URL` | `http://localhost:3000` | 프론트엔드 URL (비밀번호 재설정 링크용, 선택사항) |
+
+**Gmail 사용 시 설정 방법:**
+1. Google 계정 → 보안 → 2단계 인증 활성화
+2. 앱 비밀번호 생성: [Google 계정 관리](https://myaccount.google.com/apppasswords)
+3. 생성된 16자리 앱 비밀번호를 `MAIL_PASSWORD`에 설정 (공백 제거)
+4. `MAIL_USERNAME`에는 Gmail 주소 설정 (예: `your-email@gmail.com`)
+
+**다른 이메일 서비스 사용 시:**
+- Outlook: `MAIL_HOST=smtp-mail.outlook.com`, `MAIL_PORT=587`
+- 네이버: `MAIL_HOST=smtp.naver.com`, `MAIL_PORT=465` (SSL) 또는 `587` (TLS)
+- 다음: `MAIL_HOST=smtp.daum.net`, `MAIL_PORT=465` (SSL) 또는 `587` (TLS)
 
 ---
 

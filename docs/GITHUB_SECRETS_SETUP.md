@@ -251,6 +251,56 @@ GitHub Actions를 통한 자동 배포를 위해 필요한 GitHub Secrets 설정
 
 ---
 
+## 📧 이메일 설정 (비밀번호 찾기 기능용, 공통 사용)
+
+### 9. 이메일 설정 (프로덕션/개발 공통)
+
+**주의**: 메일 설정은 프로덕션과 개발 환경에서 동일하게 사용됩니다.
+
+#### `MAIL_USERNAME` (비밀번호 찾기 기능 사용 시 필수)
+- **설명**: 발신 이메일 주소 (Gmail)
+- **값 예시**: `your-email@gmail.com`
+- **주의**: 비밀번호 찾기 기능을 사용하려면 필수
+
+#### `MAIL_PASSWORD` (비밀번호 찾기 기능 사용 시 필수)
+- **설명**: Gmail 앱 비밀번호 (16자리)
+- **생성 방법**: [Google 계정 관리](https://myaccount.google.com/apppasswords) → 앱 비밀번호 생성
+- **값 예시**: `xxxx xxxx xxxx xxxx` (공백 제거하여 입력)
+- **주의**: 비밀번호 찾기 기능을 사용하려면 필수
+
+#### `MAIL_HOST` (선택사항)
+- **설명**: SMTP 서버 호스트
+- **기본값**: `smtp.gmail.com` (설정하지 않으면 자동 사용)
+- **값 예시**: `smtp.gmail.com`
+
+#### `MAIL_PORT` (선택사항)
+- **설명**: SMTP 서버 포트
+- **기본값**: `587` (설정하지 않으면 자동 사용)
+- **값 예시**: `587` (Gmail TLS)
+
+**Gmail 앱 비밀번호 생성 방법:**
+1. Google 계정 → **보안** → **2단계 인증** 활성화
+2. [Google 계정 관리](https://myaccount.google.com/apppasswords) 접속
+3. **앱 선택** → **메일** 선택
+4. **기기 선택** → **기타(맞춤 이름)** → "Taba Backend" 입력
+5. 생성된 16자리 앱 비밀번호 복사 (공백 제거하여 GitHub Secrets에 입력)
+
+---
+
+### 10. 프론트엔드 URL 설정 (환경별 분리)
+
+#### `FRONTEND_URL_PROD` (선택사항)
+- **설명**: 프로덕션 환경의 프론트엔드 URL (비밀번호 재설정 링크용)
+- **기본값**: `http://localhost:3000` (설정하지 않으면 자동 사용)
+- **값 예시**: `https://www.taba.asia` 또는 `https://taba.asia`
+
+#### `FRONTEND_URL_DEV` (선택사항)
+- **설명**: 개발 환경의 프론트엔드 URL (비밀번호 재설정 링크용)
+- **기본값**: `http://localhost:3000` (설정하지 않으면 자동 사용)
+- **값 예시**: `https://dev.taba.asia` 또는 `http://localhost:3000`
+
+---
+
 ## 📊 시크릿 설정 체크리스트
 
 ### 필수 시크릿 (공통)
@@ -258,6 +308,8 @@ GitHub Actions를 통한 자동 배포를 위해 필요한 GitHub Secrets 설정
 - [ ] `SSH_HOST`
 - [ ] `SSH_USER`
 - [ ] `FCM_SERVICE_ACCOUNT_KEY_JSON`
+- [ ] `MAIL_USERNAME` (비밀번호 찾기 기능 사용 시 필수)
+- [ ] `MAIL_PASSWORD` (비밀번호 찾기 기능 사용 시 필수)
 
 ### 프로덕션 환경 필수
 - [ ] `DB_NAME_PROD`
@@ -282,6 +334,10 @@ GitHub Actions를 통한 자동 배포를 위해 필요한 GitHub Secrets 설정
 - [ ] `REDIS_PASSWORD_DEV` (기본값: 빈 문자열)
 - [ ] `REDIS_EXTERNAL_PORT_DEV` (기본값: 6380)
 - [ ] `EXTERNAL_PORT_DEV` (기본값: 8081)
+- [ ] `MAIL_HOST` (기본값: smtp.gmail.com)
+- [ ] `MAIL_PORT` (기본값: 587)
+- [ ] `FRONTEND_URL_PROD` (기본값: http://localhost:3000)
+- [ ] `FRONTEND_URL_DEV` (기본값: http://localhost:3000)
 
 ---
 
