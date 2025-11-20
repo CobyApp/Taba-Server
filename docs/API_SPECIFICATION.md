@@ -348,18 +348,34 @@ profileImage: [파일]
 {
   "success": true,
   "data": {
-    "letters": [
+    "content": [
       {
         "id": "uuid",
-        "content": "편지 내용",
-        "imageUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+        "letter": {
+          "id": "uuid",
+          "title": "편지 제목",
+          "preview": "편지 미리보기",
+          "fontFamily": "Jua"
+        },
         "sentAt": "2024-01-01T00:00:00",
-        "readAt": "2024-01-01T01:00:00"
+        "sentByMe": false,
+        "isRead": true,
+        "fontFamily": "Jua"
       }
-    ]
+    ],
+    "pageable": { ... },
+    "totalElements": 10,
+    "totalPages": 1
   }
 }
 ```
+
+**참고사항**:
+- 친구 간 주고받은 편지 목록을 반환합니다 (양방향).
+- `sentByMe`: 내가 보낸 편지인지 여부 (true: 내가 보낸 편지, false: 친구가 보낸 편지)
+- `isRead`: 내가 받은 편지인 경우 읽음 상태 (내가 보낸 편지인 경우 null)
+- `letter`: 편지 요약 정보 (id, title, preview, fontFamily)
+- 페이지네이션 정보가 포함됩니다.
 
 ---
 
@@ -398,6 +414,9 @@ profileImage: [파일]
 - **익명 기능은 제거되었습니다.** 모든 편지는 작성자 정보가 표시됩니다.
 - `recipientId`: 직접 전송(`DIRECT`) 편지인 경우 필수, 공개 편지인 경우 선택사항
 - `language`: 편지 언어 (선택사항). `ko` (한국어), `en` (영어), `ja` (일본어) 중 하나
+- `attachedImages`: 첨부 이미지 URL 배열 (선택사항). 여러 이미지를 첨부할 수 있으며, 순서대로 저장됩니다.
+  - 이미지 업로드는 `/files` API를 통해 먼저 수행하고, 반환된 URL을 사용합니다.
+  - 예: `["https://dev.taba.asia/api/v1/files/{fileId1}", "https://dev.taba.asia/api/v1/files/{fileId2}"]`
 
 **Response** (201 Created):
 ```json
@@ -437,6 +456,11 @@ profileImage: [파일]
 
 **인증**: 필요
 
+**참고사항**:
+- 편지의 접근 권한을 확인합니다 (PUBLIC, FRIENDS, DIRECT, PRIVATE)
+- 공개 편지인 경우 조회 시 조회수가 증가하고 읽음 상태가 기록됩니다
+- 직접 전송 편지인 경우 수신자가 읽으면 읽음 상태가 업데이트됩니다
+
 **Response** (200 OK):
 ```json
 {
@@ -444,10 +468,28 @@ profileImage: [파일]
   "data": {
     "letter": {
       "id": "uuid",
+      "title": "편지 제목",
       "content": "편지 내용",
-      "imageUrl": "https://dev.taba.asia/api/v1/files/{fileId}",
+      "preview": "편지 미리보기",
+      "sender": {
+        "id": "uuid",
+        "nickname": "작성자",
+        "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
+      },
+      "visibility": "PUBLIC",
       "sentAt": "2024-01-01T00:00:00",
-      "readAt": "2024-01-01T01:00:00"
+      "views": 10,
+      "attachedImages": [
+        "https://dev.taba.asia/api/v1/files/{fileId1}",
+        "https://dev.taba.asia/api/v1/files/{fileId2}"
+      ],
+      "template": {
+        "background": "#1D1433",
+        "textColor": "#FFFFFF",
+        "fontFamily": "Jua",
+        "fontSize": 16.0
+      },
+      "language": "ko"
     }
   }
 }
@@ -536,6 +578,8 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 - 답장은 항상 `DIRECT` 타입으로 생성됩니다.
 - 친구가 아닌 사용자에게 답장을 보내면 자동으로 양방향 친구 관계가 생성됩니다.
 - 자기 자신에게 답장할 수 없습니다.
+- `attachedImages`: 첨부 이미지 URL 배열 (선택사항). 여러 이미지를 첨부할 수 있으며, 순서대로 저장됩니다.
+  - 이미지 업로드는 `/files` API를 통해 먼저 수행하고, 반환된 URL을 사용합니다.
 
 **Response** (201 Created):
 ```json
@@ -547,7 +591,25 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
       "title": "답장 제목",
       "content": "답장 내용",
       "preview": "답장 미리보기",
-      "sentAt": "2024-01-01T00:00:00"
+      "sender": {
+        "id": "uuid",
+        "nickname": "작성자",
+        "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
+      },
+      "visibility": "DIRECT",
+      "sentAt": "2024-01-01T00:00:00",
+      "views": 0,
+      "attachedImages": [
+        "https://dev.taba.asia/api/v1/files/{fileId1}",
+        "https://dev.taba.asia/api/v1/files/{fileId2}"
+      ],
+      "template": {
+        "background": "#1D1433",
+        "textColor": "#FFFFFF",
+        "fontFamily": "Jua",
+        "fontSize": 16.0
+      },
+      "language": "ko"
     }
   },
   "message": "답장이 전송되었습니다. 친구가 자동으로 추가되었습니다."
