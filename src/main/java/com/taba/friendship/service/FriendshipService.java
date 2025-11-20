@@ -273,18 +273,30 @@ public class FriendshipService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        // 양방향 친구 관계 삭제
-        friendshipRepository.findByUserIds(currentUser.getId(), friendId)
-                .ifPresent(friendship -> {
-                    friendship.softDelete();
-                    friendshipRepository.save(friendship);
-                });
+        // 친구 ID 유효성 검증
+        if (!userRepository.existsById(friendId)) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
 
-        friendshipRepository.findByUserIds(friendId, currentUser.getId())
-                .ifPresent(friendship -> {
-                    friendship.softDelete();
-                    friendshipRepository.save(friendship);
-                });
+        // 자기 자신은 친구 삭제 불가
+        if (currentUser.getId().equals(friendId)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        // 양방향 친구 관계 확인 및 삭제
+        List<Friendship> friendships = friendshipRepository.findByUserIdsList(currentUser.getId(), friendId);
+        
+        if (friendships.isEmpty()) {
+            throw new BusinessException(ErrorCode.FRIENDSHIP_NOT_FOUND);
+        }
+
+        // 양방향 친구 관계 모두 소프트 삭제
+        for (Friendship friendship : friendships) {
+            if (!friendship.isDeleted()) {
+                friendship.softDelete();
+                friendshipRepository.save(friendship);
+            }
+        }
     }
 
     /**
