@@ -106,14 +106,14 @@ public class EmailService {
                 nickname, temporaryPassword
             );
             default -> String.format(
-                "안녕하세요, %s님.\n\n" +
-                "Taba에서 요청하신 임시 비밀번호가 발급되었습니다.\n\n" +
-                "임시 비밀번호: %s\n\n" +
-                "보안을 위해 로그인 후 반드시 비밀번호를 변경해주세요.\n\n" +
-                "감사합니다.\n" +
-                "Taba 팀",
-                nickname, temporaryPassword
-            );
+            "안녕하세요, %s님.\n\n" +
+            "Taba에서 요청하신 임시 비밀번호가 발급되었습니다.\n\n" +
+            "임시 비밀번호: %s\n\n" +
+            "보안을 위해 로그인 후 반드시 비밀번호를 변경해주세요.\n\n" +
+            "감사합니다.\n" +
+            "Taba 팀",
+            nickname, temporaryPassword
+        );
         };
     }
 
@@ -144,16 +144,16 @@ public class EmailService {
                 nickname, resetLink
             );
             default -> String.format(
-                "안녕하세요, %s님.\n\n" +
-                "Taba에서 비밀번호 재설정을 요청하셨습니다.\n\n" +
-                "아래 링크를 클릭하여 비밀번호를 재설정하실 수 있습니다:\n" +
-                "%s\n\n" +
-                "이 링크는 1시간 동안 유효합니다.\n" +
-                "만약 비밀번호 재설정을 요청하지 않으셨다면, 이 이메일을 무시하셔도 됩니다.\n\n" +
-                "감사합니다.\n" +
-                "Taba 팀",
-                nickname, resetLink
-            );
+            "안녕하세요, %s님.\n\n" +
+            "Taba에서 비밀번호 재설정을 요청하셨습니다.\n\n" +
+            "아래 링크를 클릭하여 비밀번호를 재설정하실 수 있습니다:\n" +
+            "%s\n\n" +
+            "이 링크는 1시간 동안 유효합니다.\n" +
+            "만약 비밀번호 재설정을 요청하지 않으셨다면, 이 이메일을 무시하셔도 됩니다.\n\n" +
+            "감사합니다.\n" +
+            "Taba 팀",
+            nickname, resetLink
+        );
         };
     }
 }

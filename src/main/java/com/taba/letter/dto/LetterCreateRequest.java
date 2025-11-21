@@ -13,13 +13,13 @@ import java.util.List;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true) // 알 수 없는 필드 무시 (flowerType 등)
 public class LetterCreateRequest {
-    @NotBlank(message = "제목은 필수입니다.")
+    @NotBlank(message = "{validation.title.required}")
     private String title;
 
-    @NotBlank(message = "내용은 필수입니다.")
+    @NotBlank(message = "{validation.content.required}")
     private String content;
 
-    @NotBlank(message = "미리보기는 필수입니다.")
+    @NotBlank(message = "{validation.preview.required}")
     private String preview;
 
     // 답장 API에서는 선택사항 (서버에서 자동으로 DIRECT로 설정)

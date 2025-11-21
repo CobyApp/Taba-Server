@@ -1,9 +1,12 @@
 package com.taba.letter.controller;
 
 import com.taba.common.dto.ApiResponse;
+import com.taba.common.util.MessageUtil;
+import com.taba.common.util.SecurityUtil;
 import com.taba.letter.dto.LetterCreateRequest;
 import com.taba.letter.dto.LetterDto;
 import com.taba.letter.service.LetterService;
+import com.taba.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -48,7 +51,10 @@ public class LetterController {
             @PathVariable String letterId,
             @RequestBody ReportRequest request) {
         letterService.reportLetter(letterId, request.getReason());
-        return ResponseEntity.ok(ApiResponse.success("신고가 접수되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.letter.reported", language);
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @PostMapping("/{letterId}/reply")
@@ -56,14 +62,20 @@ public class LetterController {
             @PathVariable String letterId,
             @Valid @RequestBody LetterCreateRequest request) {
         LetterDto replyLetter = letterService.replyLetter(letterId, request);
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.letter.reply_sent", language);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(replyLetter, "답장이 전송되었습니다. 친구가 자동으로 추가되었습니다."));
+                .body(ApiResponse.success(replyLetter, message));
     }
 
     @DeleteMapping("/{letterId}")
     public ResponseEntity<ApiResponse<?>> deleteLetter(@PathVariable String letterId) {
         letterService.deleteLetter(letterId);
-        return ResponseEntity.ok(ApiResponse.success("편지가 삭제되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.letter.deleted", language);
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @lombok.Getter

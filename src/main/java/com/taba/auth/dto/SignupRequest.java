@@ -10,22 +10,22 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SignupRequest {
-    @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
-    @NotBlank(message = "비밀번호는 필수입니다.")
-    @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
+    @NotBlank(message = "{validation.password.required}")
+    @Size(min = 8, message = "{validation.password.min_length}")
     private String password;
 
-    @NotBlank(message = "닉네임은 필수입니다.")
-    @Size(min = 2, max = 50, message = "닉네임은 2자 이상 50자 이하여야 합니다.")
+    @NotBlank(message = "{validation.nickname.required}")
+    @Size(min = 2, max = 50, message = "{validation.nickname.size}")
     private String nickname;
 
-    @NotNull(message = "이용약관 동의는 필수입니다.")
+    @NotNull(message = "{validation.terms.required}")
     private Boolean agreeTerms;
 
-    @NotNull(message = "개인정보처리방침 동의는 필수입니다.")
+    @NotNull(message = "{validation.privacy.required}")
     private Boolean agreePrivacy;
 }
 

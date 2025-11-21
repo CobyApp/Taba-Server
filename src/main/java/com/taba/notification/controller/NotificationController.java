@@ -1,9 +1,12 @@
 package com.taba.notification.controller;
 
 import com.taba.common.dto.ApiResponse;
+import com.taba.common.util.MessageUtil;
+import com.taba.common.util.SecurityUtil;
 import com.taba.notification.dto.NotificationDto;
 import com.taba.notification.entity.Notification;
 import com.taba.notification.service.NotificationService;
+import com.taba.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,14 +38,20 @@ public class NotificationController {
     @PutMapping("/read-all")
     public ResponseEntity<ApiResponse<?>> markAllAsRead() {
         int readCount = notificationService.markAllAsRead();
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.notification.all_read", language);
         return ResponseEntity.ok(ApiResponse.success(
-                new ReadAllResponse(readCount, "모든 알림이 읽음 처리되었습니다.")));
+                new ReadAllResponse(readCount, message)));
     }
 
     @DeleteMapping("/{notificationId}")
     public ResponseEntity<ApiResponse<?>> deleteNotification(@PathVariable String notificationId) {
         notificationService.deleteNotification(notificationId);
-        return ResponseEntity.ok(ApiResponse.success("알림이 삭제되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.notification.deleted", language);
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @lombok.Getter

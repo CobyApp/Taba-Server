@@ -1,8 +1,10 @@
 package com.taba.user.controller;
 
 import com.taba.common.dto.ApiResponse;
+import com.taba.common.util.MessageUtil;
 import com.taba.common.util.SecurityUtil;
 import com.taba.user.dto.UserDto;
+import com.taba.user.entity.User;
 import com.taba.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -52,7 +54,10 @@ public class UserController {
         }
 
         userService.updateFcmToken(userId, request.getFcmToken());
-        return ResponseEntity.ok(ApiResponse.success(null, "FCM 토큰이 등록되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.fcm_token.registered", language);
+        return ResponseEntity.ok(ApiResponse.success(null, message));
     }
 
     @DeleteMapping("/{userId}/fcm-token")
@@ -63,7 +68,10 @@ public class UserController {
         }
 
         userService.deleteFcmToken(userId);
-        return ResponseEntity.ok(ApiResponse.success(null, "FCM 토큰이 삭제되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.fcm_token.deleted", language);
+        return ResponseEntity.ok(ApiResponse.success(null, message));
     }
 
     @DeleteMapping("/{userId}")
@@ -74,7 +82,10 @@ public class UserController {
         }
 
         userService.withdrawUser(userId);
-        return ResponseEntity.ok(ApiResponse.success(null, "회원탈퇴가 완료되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.user.withdrawn", language);
+        return ResponseEntity.ok(ApiResponse.success(null, message));
     }
 
     @lombok.Getter

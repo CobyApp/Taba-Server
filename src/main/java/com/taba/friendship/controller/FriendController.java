@@ -1,7 +1,10 @@
 package com.taba.friendship.controller;
 
 import com.taba.common.dto.ApiResponse;
+import com.taba.common.util.MessageUtil;
+import com.taba.common.util.SecurityUtil;
 import com.taba.friendship.service.FriendshipService;
+import com.taba.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,13 +28,16 @@ public class FriendController {
     public ResponseEntity<ApiResponse<com.taba.friendship.dto.AddFriendResponse>> addFriend(@Valid @RequestBody InviteRequest request) {
         com.taba.friendship.dto.AddFriendResponse response = friendshipService.addFriend(request.getInviteCode());
         
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        
         String message;
         if (response.isOwnCode()) {
-            message = "본인은 친구 추가할 수 없습니다.";
+            message = MessageUtil.getMessage("api.friend.cannot_add_self", language);
         } else if (response.isAlreadyFriends()) {
-            message = "이미 친구입니다.";
+            message = MessageUtil.getMessage("api.friend.already_friends", language);
         } else {
-            message = "친구가 추가되었습니다.";
+            message = MessageUtil.getMessage("api.friend.added", language);
         }
         
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -47,7 +53,10 @@ public class FriendController {
     @DeleteMapping("/{friendId}")
     public ResponseEntity<ApiResponse<?>> deleteFriend(@PathVariable String friendId) {
         friendshipService.deleteFriend(friendId);
-        return ResponseEntity.ok(ApiResponse.success("친구 관계가 삭제되었습니다."));
+        User currentUser = SecurityUtil.getCurrentUser();
+        String language = currentUser != null && currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String message = MessageUtil.getMessage("api.friend.deleted", language);
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @GetMapping("/{friendId}/letters")

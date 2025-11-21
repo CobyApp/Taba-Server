@@ -1,6 +1,8 @@
 package com.taba.auth.config;
 
 import com.taba.auth.filter.JwtAuthenticationFilter;
+import com.taba.common.util.MessageUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,14 +70,18 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
+                            String language = getLanguageFromRequest(request);
+                            String message = MessageUtil.getMessage("error.unauthorized", language);
                             response.setStatus(401);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요합니다.\"}}");
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(String.format("{\"success\":false,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"%s\"}}", message));
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            String language = getLanguageFromRequest(request);
+                            String message = MessageUtil.getMessage("error.forbidden", language);
                             response.setStatus(403);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"권한이 없습니다.\"}}");
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(String.format("{\"success\":false,\"error\":{\"code\":\"FORBIDDEN\",\"message\":\"%s\"}}", message));
                         })
                 );
 
@@ -130,6 +136,30 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/webjars/**", swaggerConfig);
         
         return source;
+    }
+    
+    /**
+     * 요청에서 언어 정보를 가져옵니다.
+     * Accept-Language 헤더 또는 사용자 언어 설정을 확인합니다.
+     */
+    private String getLanguageFromRequest(HttpServletRequest request) {
+        // Accept-Language 헤더 확인
+        String acceptLanguage = request.getHeader("Accept-Language");
+        if (acceptLanguage != null && !acceptLanguage.isEmpty()) {
+            // Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8 형식 처리
+            String[] languages = acceptLanguage.split(",");
+            if (languages.length > 0) {
+                String primaryLanguage = languages[0].split(";")[0].trim().toLowerCase();
+                if (primaryLanguage.startsWith("ko")) {
+                    return "ko";
+                } else if (primaryLanguage.startsWith("en")) {
+                    return "en";
+                } else if (primaryLanguage.startsWith("ja")) {
+                    return "ja";
+                }
+            }
+        }
+        return "ko"; // 기본값: 한국어
     }
 }
 

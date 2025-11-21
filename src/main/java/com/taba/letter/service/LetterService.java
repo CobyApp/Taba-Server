@@ -47,7 +47,9 @@ public class LetterService {
 
         // visibility는 필수 (일반 편지 작성 시)
         if (request.getVisibility() == null) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST, "공개 설정은 필수입니다.");
+            String language = sender.getLanguage() != null ? sender.getLanguage() : "ko";
+            String message = com.taba.common.util.MessageUtil.getMessage("validation.visibility.required", language);
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
         }
 
         User recipient = null;
@@ -85,12 +87,15 @@ public class LetterService {
             // 즉시 발송된 편지인 경우 알림 발송 (FCM 푸시 포함)
             // DIRECT 편지인 경우에만 푸시 알림 전송
             if (recipient != null && request.getVisibility() == Letter.Visibility.DIRECT) {
-                String title = String.format("%s님이 편지를 보냈어요", sender.getNickname());
+                String recipientLanguage = recipient.getLanguage() != null ? recipient.getLanguage() : "ko";
+                String title = com.taba.common.util.MessageUtil.getMessage(
+                        "notification.letter.received.title", recipientLanguage, sender.getNickname());
                 String body = letter.getTitle() != null && !letter.getTitle().isEmpty() 
                         ? letter.getTitle() 
                         : (letter.getPreview() != null && !letter.getPreview().isEmpty() 
                                 ? letter.getPreview() 
-                                : "새 편지가 도착했어요");
+                                : com.taba.common.util.MessageUtil.getMessage(
+                                        "notification.letter.received.body", recipientLanguage));
                 
                 notificationService.createAndSendNotification(
                         recipient,
@@ -182,12 +187,15 @@ public class LetterService {
             replyLetter.send();
             
             // 즉시 발송된 답장인 경우 알림 발송 (FCM 푸시 포함)
-            String title = String.format("%s님이 편지를 보냈어요", sender.getNickname());
+            String recipientLanguage = recipient.getLanguage() != null ? recipient.getLanguage() : "ko";
+            String title = com.taba.common.util.MessageUtil.getMessage(
+                    "notification.letter.received.title", recipientLanguage, sender.getNickname());
             String body = replyLetter.getTitle() != null && !replyLetter.getTitle().isEmpty() 
                     ? replyLetter.getTitle() 
                     : (replyLetter.getPreview() != null && !replyLetter.getPreview().isEmpty() 
                             ? replyLetter.getPreview() 
-                            : "새 편지가 도착했어요");
+                            : com.taba.common.util.MessageUtil.getMessage(
+                                    "notification.letter.received.body", recipientLanguage));
             
             notificationService.createAndSendNotification(
                     recipient,

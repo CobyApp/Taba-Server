@@ -111,8 +111,11 @@ public class FriendshipService {
         inviteCodeRepository.save(code);
 
         // 친구 추가 알림 전송 (초대 코드를 사용한 사용자에게 알림)
-        String title = String.format("%s님이 친구로 추가되었어요", friendUser.getNickname());
-        String body = "이제 서로 편지를 주고받을 수 있어요";
+        String userLanguage = currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        String title = com.taba.common.util.MessageUtil.getMessage(
+                "notification.friend.added.title", userLanguage, friendUser.getNickname());
+        String body = com.taba.common.util.MessageUtil.getMessage(
+                "notification.friend.added.body", userLanguage);
         notificationService.createAndSendNotification(
                 currentUser,
                 title,
@@ -362,8 +365,11 @@ public class FriendshipService {
         
         // 친구 추가 알림 전송 (양쪽 사용자에게 알림)
         // user1에게 알림
-        String title1 = String.format("%s님이 친구로 추가되었어요", user2.getNickname());
-        String body1 = "이제 서로 편지를 주고받을 수 있어요";
+        String user1Language = user1.getLanguage() != null ? user1.getLanguage() : "ko";
+        String title1 = com.taba.common.util.MessageUtil.getMessage(
+                "notification.friend.added.title", user1Language, user2.getNickname());
+        String body1 = com.taba.common.util.MessageUtil.getMessage(
+                "notification.friend.added.body", user1Language);
         notificationService.createAndSendNotification(
                 user1,
                 title1,
@@ -373,8 +379,11 @@ public class FriendshipService {
         );
         
         // user2에게 알림
-        String title2 = String.format("%s님이 친구로 추가되었어요", user1.getNickname());
-        String body2 = "이제 서로 편지를 주고받을 수 있어요";
+        String user2Language = user2.getLanguage() != null ? user2.getLanguage() : "ko";
+        String title2 = com.taba.common.util.MessageUtil.getMessage(
+                "notification.friend.added.title", user2Language, user1.getNickname());
+        String body2 = com.taba.common.util.MessageUtil.getMessage(
+                "notification.friend.added.body", user2Language);
         notificationService.createAndSendNotification(
                 user2,
                 title2,

@@ -30,7 +30,7 @@
 -- ============================================
 -- 생성되는 데이터
 -- ============================================
--- 1. 사용자: 8명 (앨리스, 밥, 찰리, 다이애나, 이브, 프랭크, 그레이스, 헨리)
+-- 1. 사용자: 8명 (앨리스-ko, 밥-ko, 찰리-ko, Diana-en, Eve-en, Frank-en, グレース-ja, ヘンリー-ja)
 -- 2. 친구 관계: 5쌍 (양방향)
 -- 3. 편지: 77개 공개 편지 + 8개 직접 전송 편지 + 1개 친구 전용 편지
 -- 4. 편지 이미지: 여러 편지에 첨부
@@ -69,11 +69,11 @@ INSERT INTO users (id, email, password, nickname, avatar_url, language, push_not
 ('11111111-1111-1111-1111-111111111111', 'alice@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '앨리스', 'https://example.com/avatars/alice.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 1 DAY, NULL),
 ('22222222-2222-2222-2222-222222222222', 'bob@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '밥', 'https://example.com/avatars/bob.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 25 DAY, NOW() - INTERVAL 1 DAY, NULL),
 ('33333333-3333-3333-3333-333333333333', 'charlie@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '찰리', 'https://example.com/avatars/charlie.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 20 DAY, NOW() - INTERVAL 1 DAY, NULL),
-('44444444-4444-4444-4444-444444444444', 'diana@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '다이애나', 'https://example.com/avatars/diana.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 15 DAY, NOW() - INTERVAL 1 DAY, NULL),
-('55555555-5555-5555-5555-555555555555', 'eve@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '이브', 'https://example.com/avatars/eve.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 1 DAY, NULL),
-('66666666-6666-6666-6666-666666666666', 'frank@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '프랭크', 'https://example.com/avatars/frank.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 1 DAY, NULL),
-('77777777-7777-7777-7777-777777777777', 'grace@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '그레이스', 'https://example.com/avatars/grace.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 1 DAY, NULL),
-('88888888-8888-8888-8888-888888888888', 'henry@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '헨리', 'https://example.com/avatars/henry.jpg', 'ko', TRUE, NULL, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 1 DAY, NULL);
+('44444444-4444-4444-4444-444444444444', 'diana@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Diana', 'https://example.com/avatars/diana.jpg', 'en', TRUE, NULL, NOW() - INTERVAL 15 DAY, NOW() - INTERVAL 1 DAY, NULL),
+('55555555-5555-5555-5555-555555555555', 'eve@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Eve', 'https://example.com/avatars/eve.jpg', 'en', TRUE, NULL, NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 1 DAY, NULL),
+('66666666-6666-6666-6666-666666666666', 'frank@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Frank', 'https://example.com/avatars/frank.jpg', 'en', TRUE, NULL, NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 1 DAY, NULL),
+('77777777-7777-7777-7777-777777777777', 'grace@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'グレース', 'https://example.com/avatars/grace.jpg', 'ja', TRUE, NULL, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 1 DAY, NULL),
+('88888888-8888-8888-8888-888888888888', 'henry@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ヘンリー', 'https://example.com/avatars/henry.jpg', 'ja', TRUE, NULL, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 1 DAY, NULL);
 
 -- ============================================
 -- 2. 친구 관계 (Friendships)
@@ -90,17 +90,17 @@ INSERT INTO friendships (id, user_id, friend_id, created_at, updated_at, deleted
 ('f3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', NOW() - INTERVAL 15 DAY, NOW() - INTERVAL 15 DAY, NULL),
 ('f4444444-4444-4444-4444-444444444444', '33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', NOW() - INTERVAL 15 DAY, NOW() - INTERVAL 15 DAY, NULL);
 
--- 밥과 다이애나가 친구
+-- 밥과 Diana가 친구
 INSERT INTO friendships (id, user_id, friend_id, created_at, updated_at, deleted_at) VALUES
 ('f5555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 10 DAY, NULL),
 ('f6666666-6666-6666-6666-666666666666', '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 10 DAY, NULL);
 
--- 찰리와 이브가 친구
+-- 찰리와 Eve가 친구
 INSERT INTO friendships (id, user_id, friend_id, created_at, updated_at, deleted_at) VALUES
 ('f7777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '55555555-5555-5555-5555-555555555555', NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 7 DAY, NULL),
 ('f8888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 7 DAY, NULL);
 
--- 다이애나와 프랭크가 친구
+-- Diana와 Frank가 친구
 INSERT INTO friendships (id, user_id, friend_id, created_at, updated_at, deleted_at) VALUES
 ('f9999999-9999-9999-9999-999999999999', '44444444-4444-4444-4444-444444444444', '66666666-6666-6666-6666-666666666666', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL),
 ('faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '66666666-6666-6666-6666-666666666666', '44444444-4444-4444-4444-444444444444', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL);
@@ -121,41 +121,41 @@ INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visib
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
 ('l3333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', NULL, '행복한 하루', '모두 행복한 하루 되세요! 긍정적인 에너지가 가득하길 바랍니다. 작은 것에도 감사하는 마음을 가지세요. ✨', '모두 행복한 하루 되세요! 긍정적인 에너지가 가득하길 바랍니다. 작은 것에도 감사하는 마음을 가지세요. ✨', 'PUBLIC', FALSE, '#1A0016', '#FF00FF', 'Yeon Sung', 16.0, NULL, NOW() - INTERVAL 3 HOUR, 3, FALSE, NULL, 'ko', NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 3 HOUR, NULL);
 
--- 공개 편지 4 (다이애나가 작성, 5시간 전 발송)
+-- 공개 편지 4 (Diana가 작성, 5시간 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('l4444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444', NULL, '따뜻한 하루', '오늘도 따뜻한 하루 되세요. 주변 사람들에게 따뜻한 말 한마디 전해보세요. 사랑과 평화가 함께하길. 💕', '오늘도 따뜻한 하루 되세요. 주변 사람들에게 따뜻한 말 한마디 전해보세요. 사랑과 평화가 함께하길. 💕', 'PUBLIC', FALSE, '#001133', '#FFFFFF', 'Poor Story', 15.0, NULL, NOW() - INTERVAL 5 HOUR, 5, FALSE, NULL, 'ko', NOW() - INTERVAL 5 HOUR, NOW() - INTERVAL 5 HOUR, NULL);
+('l4444444-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444', NULL, 'Warm Day', 'Have a warm day today. Share a kind word with those around you. May love and peace be with you. 💕', 'Have a warm day today. Share a kind word with those around you. May love and peace be with you. 💕', 'PUBLIC', FALSE, '#001133', '#FFFFFF', 'Kalam', 15.0, NULL, NOW() - INTERVAL 5 HOUR, 5, FALSE, NULL, 'en', NOW() - INTERVAL 5 HOUR, NOW() - INTERVAL 5 HOUR, NULL);
 
--- 공개 편지 5 (이브가 작성, 7일 전 발송)
+-- 공개 편지 5 (Eve가 작성, 7일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lddddddd-dddd-dddd-dddd-dddddddddddd', '55555555-5555-5555-5555-555555555555', NULL, '새로운 시작', '새로운 한 주가 시작되었어요. 모두에게 좋은 일만 가득하길 바라요. 힘든 일이 있어도 포기하지 말고 함께 이겨내요! 🌱', '새로운 한 주가 시작되었어요. 모두에게 좋은 일만 가득하길 바라요. 힘든 일이 있어도 포기하지 말고 함께 이겨내요! 🌱', 'PUBLIC', FALSE, '#001100', '#00FF00', 'Dongle', 16.0, NULL, NOW() - INTERVAL 7 DAY, 22, FALSE, NULL, 'ko', NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 7 DAY, NULL);
+('lddddddd-dddd-dddd-dddd-dddddddddddd', '55555555-5555-5555-5555-555555555555', NULL, 'New Beginning', 'A new week has begun. I hope only good things happen to everyone. Even if there are difficult times, don''t give up and overcome them together! 🌱', 'A new week has begun. I hope only good things happen to everyone. Even if there are difficult times, don''t give up and overcome them together! 🌱', 'PUBLIC', FALSE, '#001100', '#00FF00', 'Indie Flower', 16.0, NULL, NOW() - INTERVAL 7 DAY, 22, FALSE, NULL, 'en', NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 7 DAY, NULL);
 
--- 공개 편지 6 (이브가 작성, 4일 전 발송)
+-- 공개 편지 6 (Eve가 작성, 4일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('leeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '55555555-5555-5555-5555-555555555555', NULL, '감사한 마음', '오늘 하루도 감사한 마음으로 시작해요. 작은 것에도 감사할 수 있는 마음을 가지면 더 행복해질 수 있어요. 모두 행복하세요! 🙏', '오늘 하루도 감사한 마음으로 시작해요. 작은 것에도 감사할 수 있는 마음을 가지면 더 행복해질 수 있어요. 모두 행복하세요! 🙏', 'PUBLIC', FALSE, '#1E1A14', '#FFFFFF', 'Gamja Flower', 15.0, NULL, NOW() - INTERVAL 4 DAY, 18, FALSE, NULL, 'ko', NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NULL);
+('leeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '55555555-5555-5555-5555-555555555555', NULL, 'Grateful Heart', 'Start today with a grateful heart. If you can be grateful for even the small things, you can be happier. Be happy everyone! 🙏', 'Start today with a grateful heart. If you can be grateful for even the small things, you can be happier. Be happy everyone! 🙏', 'PUBLIC', FALSE, '#1E1A14', '#FFFFFF', 'Kalam', 15.0, NULL, NOW() - INTERVAL 4 DAY, 18, FALSE, NULL, 'en', NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NULL);
 
--- 공개 편지 7 (프랭크가 작성, 6일 전 발송)
+-- 공개 편지 7 (Frank가 작성, 6일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lfffffff-ffff-ffff-ffff-ffffffffffff', '66666666-6666-6666-6666-666666666666', NULL, '힘내세요!', '모두 힘내세요! 어려운 일이 있어도 포기하지 마세요. 당신은 충분히 강하고 멋져요. 오늘도 화이팅! 💪', '모두 힘내세요! 어려운 일이 있어도 포기하지 마세요. 당신은 충분히 강하고 멋져요. 오늘도 화이팅! 💪', 'PUBLIC', FALSE, '#210014', '#FFFFFF', 'Hi Melody', 17.0, NULL, NOW() - INTERVAL 6 DAY, 31, FALSE, NULL, 'ko', NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 6 DAY, NULL);
+('lfffffff-ffff-ffff-ffff-ffffffffffff', '66666666-6666-6666-6666-666666666666', NULL, '힘내세요!', '모두 힘내세요! 어려운 일이 있어도 포기하지 마세요. 당신은 충분히 강하고 멋져요. 오늘도 화이팅! 💪', '모두 힘내세요! 어려운 일이 있어도 포기하지 마세요. 당신은 충분히 강하고 멋져요. 오늘도 화이팅! 💪', 'PUBLIC', FALSE, '#210014', '#FFFFFF', 'Hi Melody', 17.0, NULL, NOW() - INTERVAL 6 DAY, 31, FALSE, NULL, 'en', NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 6 DAY, NULL);
 
--- 공개 편지 8 (프랭크가 작성, 10시간 전 발송)
+-- 공개 편지 8 (Frank가 작성, 10시간 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lggggggg-gggg-gggg-gggg-gggggggggggg', '66666666-6666-6666-6666-666666666666', NULL, '밤하늘을 보며', '밤하늘을 보니 마음이 편안해져요. 별들이 반짝이는 모습이 정말 아름다워요. 오늘 하루 고생 많으셨어요. 잘 쉬세요. 🌙', '밤하늘을 보니 마음이 편안해져요. 별들이 반짝이는 모습이 정말 아름다워요. 오늘 하루 고생 많으셨어요. 잘 쉬세요. 🌙', 'PUBLIC', FALSE, '#0A0024', '#FFFFFF', 'Nanum Pen Script', 15.0, NULL, NOW() - INTERVAL 10 HOUR, 12, FALSE, NULL, 'ko', NOW() - INTERVAL 10 HOUR, NOW() - INTERVAL 10 HOUR, NULL);
+('lggggggg-gggg-gggg-gggg-gggggggggggg', '66666666-6666-6666-6666-666666666666', NULL, 'Looking at the Night Sky', 'Looking at the night sky makes me feel peaceful. The twinkling stars are really beautiful. You''ve worked hard today. Rest well. 🌙', 'Looking at the night sky makes me feel peaceful. The twinkling stars are really beautiful. You''ve worked hard today. Rest well. 🌙', 'PUBLIC', FALSE, '#0A0024', '#FFFFFF', 'Indie Flower', 15.0, NULL, NOW() - INTERVAL 10 HOUR, 12, FALSE, NULL, 'en', NOW() - INTERVAL 10 HOUR, NOW() - INTERVAL 10 HOUR, NULL);
 
--- 공개 편지 9 (그레이스가 작성, 8일 전 발송)
+-- 공개 편지 9 (グレース가 작성, 8일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', '77777777-7777-7777-7777-777777777777', NULL, '봄날의 기운', '봄이 오고 있어요. 따뜻한 바람이 불어오고 꽃들이 피기 시작했어요. 새로운 계절, 새로운 시작을 함께해요. 🌺', '봄이 오고 있어요. 따뜻한 바람이 불어오고 꽃들이 피기 시작했어요. 새로운 계절, 새로운 시작을 함께해요. 🌺', 'PUBLIC', FALSE, '#061A17', '#FFFFFF', 'Jua', 16.0, NULL, NOW() - INTERVAL 8 DAY, 27, FALSE, NULL, 'ko', NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 8 DAY, NULL);
+('lhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', '77777777-7777-7777-7777-777777777777', NULL, '春の気配', '春が来ています。温かい風が吹いてきて、花が咲き始めました。新しい季節、新しい始まりを一緒に過ごしましょう。 🌺', '春が来ています。温かい風が吹いてきて、花が咲き始めました。新しい季節、新しい始まりを一緒に過ごしましょう。 🌺', 'PUBLIC', FALSE, '#061A17', '#FFFFFF', 'Yomogi', 16.0, NULL, NOW() - INTERVAL 8 DAY, 27, FALSE, NULL, 'ja', NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 8 DAY, NULL);
 
--- 공개 편지 10 (그레이스가 작성, 2시간 전 발송)
+-- 공개 편지 10 (グレース가 작성, 2시간 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('liiiiiii-iiii-iiii-iiii-iiiiiiiiiiii', '77777777-7777-7777-7777-777777777777', NULL, '오늘의 일기', '오늘 하루도 무사히 보내고 있어요. 작은 행복들을 모아서 큰 행복을 만들어가고 있어요. 모두도 행복한 하루 보내세요! 📝', '오늘 하루도 무사히 보내고 있어요. 작은 행복들을 모아서 큰 행복을 만들어가고 있어요. 모두도 행복한 하루 보내세요! 📝', 'PUBLIC', FALSE, '#000000', '#00CC00', 'Sunflower', 15.0, NULL, NOW() - INTERVAL 2 HOUR, 4, FALSE, NULL, 'ko', NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, NULL);
+('liiiiiii-iiii-iiii-iiii-iiiiiiiiiiii', '77777777-7777-7777-7777-777777777777', NULL, '今日の日記', '今日も一日無事に過ごしています。小さな幸せを集めて大きな幸せを作っています。みんなも幸せな一日を過ごしてください！ 📝', '今日も一日無事に過ごしています。小さな幸せを集めて大きな幸せを作っています。みんなも幸せな一日を過ごしてください！ 📝', 'PUBLIC', FALSE, '#000000', '#00CC00', 'Kosugi Maru', 15.0, NULL, NOW() - INTERVAL 2 HOUR, 4, FALSE, NULL, 'ja', NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, NULL);
 
--- 공개 편지 11 (헨리가 작성, 5일 전 발송)
+-- 공개 편지 11 (ヘンリー가 작성, 5일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('ljjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj', '88888888-8888-8888-8888-888888888888', NULL, '좋은 하루 되세요', '모두 좋은 하루 되세요! 오늘도 웃음 가득한 하루가 되길 바라요. 긍정적인 에너지가 가득하길! 😊', '모두 좋은 하루 되세요! 오늘도 웃음 가득한 하루가 되길 바라요. 긍정적인 에너지가 가득하길! 😊', 'PUBLIC', FALSE, '#1D1433', '#FFFFFF', 'Yeon Sung', 15.0, NULL, NOW() - INTERVAL 5 DAY, 19, FALSE, NULL, 'ko', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL);
+('ljjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj', '88888888-8888-8888-8888-888888888888', NULL, '良い一日を', 'みんな良い一日を！今日も笑顔いっぱいの一日になりますように。ポジティブなエネルギーが満ち溢れますように！ 😊', 'みんな良い一日を！今日も笑顔いっぱいの一日になりますように。ポジティブなエネルギーが満ち溢れますように！ 😊', 'PUBLIC', FALSE, '#1D1433', '#FFFFFF', 'Yomogi', 15.0, NULL, NOW() - INTERVAL 5 DAY, 19, FALSE, NULL, 'ja', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL);
 
--- 공개 편지 12 (헨리가 작성, 1시간 전 발송)
+-- 공개 편지 12 (ヘンリー가 작성, 1시간 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk', '88888888-8888-8888-8888-888888888888', NULL, '작은 위로', '힘든 하루를 보내고 계신가요? 괜찮아요. 당신은 충분히 잘하고 있어요. 작은 위로의 말을 전하고 싶어요. 🌟', '힘든 하루를 보내고 계신가요? 괜찮아요. 당신은 충분히 잘하고 있어요. 작은 위로의 말을 전하고 싶어요. 🌟', 'PUBLIC', FALSE, '#1A0016', '#FF00FF', 'Poor Story', 15.0, NULL, NOW() - INTERVAL 1 HOUR, 2, FALSE, NULL, 'ko', NOW() - INTERVAL 1 HOUR, NOW() - INTERVAL 1 HOUR, NULL);
+('lkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk', '88888888-8888-8888-8888-888888888888', NULL, '小さな慰め', 'つらい一日を過ごしていますか？大丈夫です。あなたは十分に頑張っています。小さな慰めの言葉を伝えたいです。 🌟', 'つらい一日を過ごしていますか？大丈夫です。あなたは十分に頑張っています。小さな慰めの言葉を伝えたいです。 🌟', 'PUBLIC', FALSE, '#1A0016', '#FF00FF', 'Kosugi Maru', 15.0, NULL, NOW() - INTERVAL 1 HOUR, 2, FALSE, NULL, 'ja', NOW() - INTERVAL 1 HOUR, NOW() - INTERVAL 1 HOUR, NULL);
 
 -- 공개 편지 13 (앨리스가 작성, 3일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
@@ -169,23 +169,23 @@ INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visib
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
 ('lnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn', '33333333-3333-3333-3333-333333333333', NULL, '새로운 도전', '새로운 도전을 시작해요. 두려워하지 말고 한 걸음씩 나아가요. 당신은 할 수 있어요! 화이팅! 🚀', '새로운 도전을 시작해요. 두려워하지 말고 한 걸음씩 나아가요. 당신은 할 수 있어요! 화이팅! 🚀', 'PUBLIC', FALSE, '#001133', '#FFFFFF', 'Hi Melody', 17.0, NULL, NOW() - INTERVAL 12 DAY, 35, FALSE, NULL, 'ko', NOW() - INTERVAL 12 DAY, NOW() - INTERVAL 12 DAY, NULL);
 
--- 공개 편지 16 (다이애나가 작성, 8시간 전 발송)
+-- 공개 편지 16 (Diana가 작성, 8시간 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('looooooo-oooo-oooo-oooo-oooooooooooo', '44444444-4444-4444-4444-444444444444', NULL, '따뜻한 마음', '따뜻한 마음으로 하루를 시작해요. 작은 친절이 큰 기쁨을 만들어요. 모두에게 따뜻한 하루가 되길 바라요. 💝', '따뜻한 마음으로 하루를 시작해요. 작은 친절이 큰 기쁨을 만들어요. 모두에게 따뜻한 하루가 되길 바라요. 💝', 'PUBLIC', FALSE, '#0A0024', '#FFFFFF', 'Nanum Pen Script', 15.0, NULL, NOW() - INTERVAL 8 HOUR, 11, FALSE, NULL, 'ko', NOW() - INTERVAL 8 HOUR, NOW() - INTERVAL 8 HOUR, NULL);
+('looooooo-oooo-oooo-oooo-oooooooooooo', '44444444-4444-4444-4444-444444444444', NULL, 'Warm Heart', 'Start the day with a warm heart. Small acts of kindness create great joy. I hope everyone has a warm day. 💝', 'Start the day with a warm heart. Small acts of kindness create great joy. I hope everyone has a warm day. 💝', 'PUBLIC', FALSE, '#0A0024', '#FFFFFF', 'Indie Flower', 15.0, NULL, NOW() - INTERVAL 8 HOUR, 11, FALSE, NULL, 'en', NOW() - INTERVAL 8 HOUR, NOW() - INTERVAL 8 HOUR, NULL);
 
--- 공개 편지 17 (이브가 작성, 15분 전 발송)
+-- 공개 편지 17 (Eve가 작성, 15분 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lppppppp-pppp-pppp-pppp-pppppppppppp', '55555555-5555-5555-5555-555555555555', NULL, '지금 이 순간', '지금 이 순간을 소중하게 여겨요. 과거는 지나갔고 미래는 아직 오지 않았어요. 지금 이 순간이 가장 소중해요. ⏰', '지금 이 순간을 소중하게 여겨요. 과거는 지나갔고 미래는 아직 오지 않았어요. 지금 이 순간이 가장 소중해요. ⏰', 'PUBLIC', FALSE, '#061A17', '#FFFFFF', 'Jua', 16.0, NULL, NOW() - INTERVAL 15 MINUTE, 1, FALSE, NULL, 'ko', NOW() - INTERVAL 15 MINUTE, NOW() - INTERVAL 15 MINUTE, NULL);
+('lppppppp-pppp-pppp-pppp-pppppppppppp', '55555555-5555-5555-5555-555555555555', NULL, 'This Moment', 'Cherish this moment. The past is gone and the future hasn''t come yet. This moment is the most precious. ⏰', 'Cherish this moment. The past is gone and the future hasn''t come yet. This moment is the most precious. ⏰', 'PUBLIC', FALSE, '#061A17', '#FFFFFF', 'Kalam', 16.0, NULL, NOW() - INTERVAL 15 MINUTE, 1, FALSE, NULL, 'en', NOW() - INTERVAL 15 MINUTE, NOW() - INTERVAL 15 MINUTE, NULL);
 
--- 공개 편지 18 (프랭크가 작성, 11일 전 발송)
+-- 공개 편지 18 (Frank가 작성, 11일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
 ('lqqqqqqq-qqqq-qqqq-qqqq-qqqqqqqqqqqq', '66666666-6666-6666-6666-666666666666', NULL, '함께하는 힘', '혼자서는 어려운 일도 함께하면 쉬워져요. 서로를 응원하고 지지하는 마음이 중요해요. 함께 힘내요! 🤝', '혼자서는 어려운 일도 함께하면 쉬워져요. 서로를 응원하고 지지하는 마음이 중요해요. 함께 힘내요! 🤝', 'PUBLIC', FALSE, '#001100', '#00FF00', 'Sunflower', 16.0, NULL, NOW() - INTERVAL 11 DAY, 28, FALSE, NULL, 'ko', NOW() - INTERVAL 11 DAY, NOW() - INTERVAL 11 DAY, NULL);
 
--- 공개 편지 19 (그레이스가 작성, 6시간 전 발송)
+-- 공개 편지 19 (グレース가 작성, 6시간 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr', '77777777-7777-7777-7777-777777777777', NULL, '작은 기쁨', '작은 기쁨을 찾아봐요. 아침 커피 한 잔, 따뜻한 햇살, 친구의 미소. 작은 것들이 모여 큰 행복이 되요. 😄', '작은 기쁨을 찾아봐요. 아침 커피 한 잔, 따뜻한 햇살, 친구의 미소. 작은 것들이 모여 큰 행복이 되요. 😄', 'PUBLIC', FALSE, '#2A1F00', '#FFFF00', 'Yeon Sung', 15.0, NULL, NOW() - INTERVAL 6 HOUR, 9, FALSE, NULL, 'ko', NOW() - INTERVAL 6 HOUR, NOW() - INTERVAL 6 HOUR, NULL);
+('lrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr', '77777777-7777-7777-7777-777777777777', NULL, '小さな喜び', '小さな喜びを見つけてみましょう。朝のコーヒー一杯、温かい日差し、友達の笑顔。小さなことが大きな幸せになります。 😄', '小さな喜びを見つけてみましょう。朝のコーヒー一杯、温かい日差し、友達の笑顔。小さなことが大きな幸せになります。 😄', 'PUBLIC', FALSE, '#2A1F00', '#FFFF00', 'Yomogi', 15.0, NULL, NOW() - INTERVAL 6 HOUR, 9, FALSE, NULL, 'ja', NOW() - INTERVAL 6 HOUR, NOW() - INTERVAL 6 HOUR, NULL);
 
--- 공개 편지 20 (헨리가 작성, 13일 전 발송)
+-- 공개 편지 20 (ヘンリー가 작성, 13일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
 ('lsssssss-ssss-ssss-ssss-ssssssssssss', '88888888-8888-8888-8888-888888888888', NULL, '꿈을 향해', '꿈을 향해 한 걸음씩 나아가요. 멀리 보이지 않아도 괜찮아요. 오늘 한 걸음이 내일의 큰 발걸음이 될 거예요. 🌠', '꿈을 향해 한 걸음씩 나아가요. 멀리 보이지 않아도 괜찮아요. 오늘 한 걸음이 내일의 큰 발걸음이 될 거예요. 🌠', 'PUBLIC', FALSE, '#1D1433', '#FFFFFF', 'Poor Story', 16.0, NULL, NOW() - INTERVAL 13 DAY, 42, FALSE, NULL, 'ko', NOW() - INTERVAL 13 DAY, NOW() - INTERVAL 13 DAY, NULL);
 
@@ -203,7 +203,7 @@ INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visib
 ('lt000000-0000-0000-0000-000000000009', '11111111-1111-1111-1111-111111111111', NULL, 'おはようございます', 'おはようございます！今日も素晴らしい一日になりますように。笑顔で過ごしましょう！🌅', 'おはようございます！今日も素晴らしい一日になりますように。笑顔で過ごしましょう！🌅', 'PUBLIC', FALSE, '#1A0016', '#FF00FF', 'Yomogi', 16.0, NULL, NOW() - INTERVAL 30 DAY, 44, FALSE, NULL, 'ja', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 30 DAY, NULL),
 ('lt000000-0000-0000-0000-00000000000a', '22222222-2222-2222-2222-222222222222', NULL, '頑張って', '頑張って！あなたは思っているより強いです。一歩ずつ前進しましょう。応援しています！💪', '頑張って！あなたは思っているより強いです。一歩ずつ前進しましょう。応援しています！💪', 'PUBLIC', FALSE, '#2A1F00', '#FFFF00', 'Kosugi Maru', 15.0, NULL, NOW() - INTERVAL 32 DAY, 51, FALSE, NULL, 'ja', NOW() - INTERVAL 32 DAY, NOW() - INTERVAL 32 DAY, NULL),
 ('lt000000-0000-0000-0000-00000000000b', '33333333-3333-3333-3333-333333333333', NULL, 'ありがとう', 'ありがとうございます。あなたの優しさに感謝しています。素晴らしい一日を！🙏', 'ありがとうございます。あなたの優しさに感謝しています。素晴らしい一日を！🙏', 'PUBLIC', FALSE, '#0A0024', '#FFFFFF', 'M PLUS Rounded 1c', 16.0, NULL, NOW() - INTERVAL 34 DAY, 47, FALSE, NULL, 'ja', NOW() - INTERVAL 34 DAY, NOW() - INTERVAL 34 DAY, NULL),
-('lt000000-0000-0000-0000-00000000000c', '44444444-4444-4444-4444-444444444444', NULL, '素敵な一日', '素敵な一日をお過ごしください。小さな幸せを見つけて、心温まる時間を過ごしましょう。💝', '素敵な一日をお過ごしください。小さな幸せを見つけて、心温まる時間を過ごしましょう。💝', 'PUBLIC', FALSE, '#1E1A14', '#FFFFFF', 'Comic Neue', 15.0, NULL, NOW() - INTERVAL 36 DAY, 53, FALSE, NULL, 'ja', NOW() - INTERVAL 36 DAY, NOW() - INTERVAL 36 DAY, NULL),
+('lt000000-0000-0000-0000-00000000000c', '44444444-4444-4444-4444-444444444444', NULL, '素敵な一日', '素敵な一日をお過ごしください。小さな幸せを見つけて、心温まる時間を過ごしましょう。💝', '素敵な一日をお過ごしください。小さな幸せを見つけて、心温まる時間を過ごしましょう。💝', 'PUBLIC', FALSE, '#1E1A14', '#FFFFFF', 'M PLUS 1p', 15.0, NULL, NOW() - INTERVAL 36 DAY, 53, FALSE, NULL, 'ja', NOW() - INTERVAL 36 DAY, NOW() - INTERVAL 36 DAY, NULL),
 ('lt000000-0000-0000-0000-00000000000d', '55555555-5555-5555-5555-555555555555', NULL, '夢を追いかけて', '夢を追いかけてください。遠くに見えなくても大丈夫です。今日の一歩が明日の大きな一歩になります。🌠', '夢を追いかけてください。遠くに見えなくても大丈夫です。今日の一歩が明日の大きな一歩になります。🌠', 'PUBLIC', FALSE, '#061A17', '#FFFFFF', 'Shippori Mincho', 16.0, NULL, NOW() - INTERVAL 38 DAY, 49, FALSE, NULL, 'ja', NOW() - INTERVAL 38 DAY, NOW() - INTERVAL 38 DAY, NULL),
 ('lt000000-0000-0000-0000-00000000000e', '66666666-6666-6666-6666-666666666666', NULL, '一緒に頑張ろう', '一緒に頑張りましょう！一人では難しいことも、一緒なら簡単になります。お互いを応援し合いましょう！🤝', '一緒に頑張りましょう！一人では難しいことも、一緒なら簡単になります。お互いを応援し合いましょう！🤝', 'PUBLIC', FALSE, '#1D1433', '#FFFFFF', 'Noto Sans JP', 15.0, NULL, NOW() - INTERVAL 40 DAY, 55, FALSE, NULL, 'ja', NOW() - INTERVAL 40 DAY, NOW() - INTERVAL 40 DAY, NULL),
 ('lt000000-0000-0000-0000-00000000000f', '77777777-7777-7777-7777-777777777777', NULL, '小さな喜び', '小さな喜びを見つけてみましょう。朝のコーヒー一杯、温かい日差し、友達の笑顔。小さなことが大きな幸せになります。😄', '小さな喜びを見つけてみましょう。朝のコーヒー一杯、温かい日差し、友達の笑顔。小さなことが大きな幸せになります。😄', 'PUBLIC', FALSE, '#001133', '#FFFFFF', 'Yomogi', 16.0, NULL, NOW() - INTERVAL 42 DAY, 58, FALSE, NULL, 'ja', NOW() - INTERVAL 42 DAY, NOW() - INTERVAL 42 DAY, NULL),
@@ -314,35 +314,35 @@ INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visib
 
 -- 직접 전송 편지 1 (앨리스 -> 밥, 1일 전 발송, 미읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('l5555555-5555-5555-5555-555555555555', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '밥에게', '밥아, 오늘 정말 고마웠어! 덕분에 좋은 하루였어. 다음에 또 만나자. 항상 고마워! 😊', '밥아, 오늘 정말 고마웠어! 덕분에 좋은 하루였어. 다음에 또 만나자. 항상 고마워! 😊', 'DIRECT', FALSE, 'pink', 'black', 'Arial', 14.0, NULL, NOW() - INTERVAL 1 DAY, 0, FALSE, NULL, 'ko', NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY, NULL);
+('l5555555-5555-5555-5555-555555555555', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '밥에게', '밥아, 오늘 정말 고마웠어! 덕분에 좋은 하루였어. 다음에 또 만나자. 항상 고마워! 😊', '밥아, 오늘 정말 고마웠어! 덕분에 좋은 하루였어. 다음에 또 만나자. 항상 고마워! 😊', 'DIRECT', FALSE, '#2D0F1A', '#FFFFFF', 'Jua', 16.0, NULL, NOW() - INTERVAL 1 DAY, 0, FALSE, NULL, 'ko', NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY, NULL);
 
 -- 직접 전송 편지 2 (밥 -> 앨리스, 12시간 전 발송, 읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('l6666666-6666-6666-6666-666666666666', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', '앨리스에게', '앨리스야, 고마워! 나도 좋은 하루였어. 네가 있어서 더 즐거웠어. 다음에 또 만나자! 🌟', '앨리스야, 고마워! 나도 좋은 하루였어. 네가 있어서 더 즐거웠어. 다음에 또 만나자! 🌟', 'DIRECT', FALSE, 'blue', 'white', 'Verdana', 14.0, NULL, NOW() - INTERVAL 12 HOUR, 0, TRUE, NOW() - INTERVAL 11 HOUR, 'ko', NOW() - INTERVAL 12 HOUR, NOW() - INTERVAL 11 HOUR, NULL);
+('l6666666-6666-6666-6666-666666666666', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', '앨리스에게', '앨리스야, 고마워! 나도 좋은 하루였어. 네가 있어서 더 즐거웠어. 다음에 또 만나자! 🌟', '앨리스야, 고마워! 나도 좋은 하루였어. 네가 있어서 더 즐거웠어. 다음에 또 만나자! 🌟', 'DIRECT', FALSE, '#001133', '#FFFFFF', 'Sunflower', 15.0, NULL, NOW() - INTERVAL 12 HOUR, 0, TRUE, NOW() - INTERVAL 11 HOUR, 'ko', NOW() - INTERVAL 12 HOUR, NOW() - INTERVAL 11 HOUR, NULL);
 
 -- 직접 전송 편지 3 (앨리스 -> 찰리, 6시간 전 발송, 미읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('l7777777-7777-7777-7777-777777777777', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', '찰리에게', '찰리야, 오늘 만나서 반가웠어! 다음에 또 만나자. 재밌는 이야기 더 나누고 싶어. 🎉', '찰리야, 오늘 만나서 반가웠어! 다음에 또 만나자. 재밌는 이야기 더 나누고 싶어. 🎉', 'DIRECT', FALSE, 'pink', 'black', 'Arial', 14.0, NULL, NOW() - INTERVAL 6 HOUR, 0, FALSE, NULL, 'ko', NOW() - INTERVAL 6 HOUR, NOW() - INTERVAL 6 HOUR, NULL);
+('l7777777-7777-7777-7777-777777777777', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', '찰리에게', '찰리야, 오늘 만나서 반가웠어! 다음에 또 만나자. 재밌는 이야기 더 나누고 싶어. 🎉', '찰리야, 오늘 만나서 반가웠어! 다음에 또 만나자. 재밌는 이야기 더 나누고 싶어. 🎉', 'DIRECT', FALSE, '#1A0016', '#FF00FF', 'Yeon Sung', 16.0, NULL, NOW() - INTERVAL 6 HOUR, 0, FALSE, NULL, 'ko', NOW() - INTERVAL 6 HOUR, NOW() - INTERVAL 6 HOUR, NULL);
 
 -- 직접 전송 편지 4 (찰리 -> 앨리스, 2시간 전 발송, 미읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('l8888888-8888-8888-8888-888888888888', '33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', '앨리스에게', '앨리스야, 나도 반가웠어! 다음에 또 만나자. 오늘 정말 즐거웠어. 고마워! 😄', '앨리스야, 나도 반가웠어! 다음에 또 만나자. 오늘 정말 즐거웠어. 고마워! 😄', 'DIRECT', FALSE, 'white', 'black', 'Times New Roman', 14.0, NULL, NOW() - INTERVAL 2 HOUR, 0, FALSE, NULL, 'ko', NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, NULL);
+('l8888888-8888-8888-8888-888888888888', '33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', '앨리스에게', '앨리스야, 나도 반가웠어! 다음에 또 만나자. 오늘 정말 즐거웠어. 고마워! 😄', '앨리스야, 나도 반가웠어! 다음에 또 만나자. 오늘 정말 즐거웠어. 고마워! 😄', 'DIRECT', FALSE, '#0A0024', '#FFFFFF', 'Poor Story', 15.0, NULL, NOW() - INTERVAL 2 HOUR, 0, FALSE, NULL, 'ko', NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, NULL);
 
--- 직접 전송 편지 5 (밥 -> 다이애나, 1시간 전 발송, 읽음)
+-- 직접 전송 편지 5 (밥 -> Diana, 1시간 전 발송, 읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('l9999999-9999-9999-9999-999999999999', '22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', '다이애나에게', '다이애나야, 오늘 정말 고마웠어! 사랑해! 항상 네가 있어서 행복해. 💖', '다이애나야, 오늘 정말 고마웠어! 사랑해! 항상 네가 있어서 행복해. 💖', 'DIRECT', FALSE, 'red', 'white', 'Arial', 16.0, NULL, NOW() - INTERVAL 1 HOUR, 0, TRUE, NOW() - INTERVAL 30 MINUTE, 'ko', NOW() - INTERVAL 1 HOUR, NOW() - INTERVAL 30 MINUTE, NULL);
+('l9999999-9999-9999-9999-999999999999', '22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', 'To Diana', 'Diana, thank you so much today! I love you! I''m always happy because of you. 💖', 'Diana, thank you so much today! I love you! I''m always happy because of you. 💖', 'DIRECT', FALSE, '#210014', '#FFFFFF', 'Indie Flower', 16.0, NULL, NOW() - INTERVAL 1 HOUR, 0, TRUE, NOW() - INTERVAL 30 MINUTE, 'en', NOW() - INTERVAL 1 HOUR, NOW() - INTERVAL 30 MINUTE, NULL);
 
--- 직접 전송 편지 6 (다이애나 -> 밥, 30분 전 발송, 읽음)
+-- 직접 전송 편지 6 (Diana -> 밥, 30분 전 발송, 읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('laaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', '밥에게', '밥아, 나도 고마워! 너도 항상 고마워. 우리 함께라서 더 행복해. ❤️', '밥아, 나도 고마워! 너도 항상 고마워. 우리 함께라서 더 행복해. ❤️', 'DIRECT', FALSE, 'purple', 'white', 'Georgia', 15.0, NULL, NOW() - INTERVAL 30 MINUTE, 0, TRUE, NOW() - INTERVAL 20 MINUTE, 'ko', NOW() - INTERVAL 30 MINUTE, NOW() - INTERVAL 20 MINUTE, NULL);
+('laaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', 'To Bob', 'Bob, thank you too! I''m always grateful to you. We are happier together. ❤️', 'Bob, thank you too! I''m always grateful to you. We are happier together. ❤️', 'DIRECT', FALSE, '#1D1433', '#FFFFFF', 'Kalam', 15.0, NULL, NOW() - INTERVAL 30 MINUTE, 0, TRUE, NOW() - INTERVAL 20 MINUTE, 'en', NOW() - INTERVAL 30 MINUTE, NOW() - INTERVAL 20 MINUTE, NULL);
 
--- 직접 전송 편지 7 (이브 -> 찰리, 4시간 전 발송, 읽음)
+-- 직접 전송 편지 7 (Eve -> 찰리, 4시간 전 발송, 읽음)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', '찰리에게', '찰리야, 오늘 만나서 정말 좋았어! 다음에 또 만나자. 재밌는 시간이었어. 🎊', '찰리야, 오늘 만나서 정말 좋았어! 다음에 또 만나자. 재밌는 시간이었어. 🎊', 'DIRECT', FALSE, 'green', 'black', 'Courier New', 14.0, NULL, NOW() - INTERVAL 4 HOUR, 0, TRUE, NOW() - INTERVAL 3 HOUR, 'ko', NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 3 HOUR, NULL);
+('lbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', 'To Charlie', 'Charlie, it was really nice to meet you today! Let''s meet again. It was a fun time. 🎊', 'Charlie, it was really nice to meet you today! Let''s meet again. It was a fun time. 🎊', 'DIRECT', FALSE, '#001100', '#00FF00', 'Patrick Hand', 15.0, NULL, NOW() - INTERVAL 4 HOUR, 0, TRUE, NOW() - INTERVAL 3 HOUR, 'en', NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 3 HOUR, NULL);
 
--- 친구 전용 편지 1 (프랭크 -> 다이애나, 친구만 볼 수 있음, 3일 전 발송)
+-- 친구 전용 편지 1 (Frank -> Diana, 친구만 볼 수 있음, 3일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lccccccc-cccc-cccc-cccc-cccccccccccc', '66666666-6666-6666-6666-666666666666', NULL, '친구들에게', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', 'FRIENDS', FALSE, 'orange', 'black', 'Arial', 14.0, NULL, NOW() - INTERVAL 3 DAY, 2, FALSE, NULL, 'ko', NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL);
+('lccccccc-cccc-cccc-cccc-cccccccccccc', '66666666-6666-6666-6666-666666666666', NULL, '친구들에게', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', 'FRIENDS', FALSE, '#2A1F00', '#FFFF00', 'Jua', 16.0, NULL, NOW() - INTERVAL 3 DAY, 2, FALSE, NULL, 'en', NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL);
 
 -- ============================================
 -- 4. 편지 이미지 (Letter Images)
@@ -361,16 +361,16 @@ INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 ('i4444444-4444-4444-4444-444444444444', 'l9999999-9999-9999-9999-999999999999', 'https://example.com/images/letter5-image1.jpg', 0);
 
--- 공개 편지 5 (이브)에 이미지 1개
+-- 공개 편지 5 (Eve)에 이미지 1개
 INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 ('i5555555-5555-5555-5555-555555555555', 'lddddddd-dddd-dddd-dddd-dddddddddddd', 'https://example.com/images/public-letter5-image1.jpg', 0);
 
--- 공개 편지 7 (프랭크)에 이미지 2개
+-- 공개 편지 7 (Frank)에 이미지 2개
 INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 ('i6666666-6666-6666-6666-666666666666', 'lfffffff-ffff-ffff-ffff-ffffffffffff', 'https://example.com/images/public-letter7-image1.jpg', 0),
 ('i7777777-7777-7777-7777-777777777777', 'lfffffff-ffff-ffff-ffff-ffffffffffff', 'https://example.com/images/public-letter7-image2.jpg', 1);
 
--- 공개 편지 9 (그레이스)에 이미지 1개
+-- 공개 편지 9 (グレース)에 이미지 1개
 INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 ('i8888888-8888-8888-8888-888888888888', 'lhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', 'https://example.com/images/public-letter9-image1.jpg', 0);
 
@@ -382,7 +382,7 @@ INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 ('iaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'lnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn', 'https://example.com/images/public-letter15-image1.jpg', 0);
 
--- 공개 편지 17 (이브)에 이미지 1개
+-- 공개 편지 17 (Eve)에 이미지 1개
 INSERT INTO letter_images (id, letter_id, image_url, image_order) VALUES
 ('ibbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'lppppppp-pppp-pppp-pppp-pppppppppppp', 'https://example.com/images/public-letter17-image1.jpg', 0);
 
@@ -398,59 +398,59 @@ INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r2222222-2222-2222-2222-222222222222', 'l1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY, NULL);
 
--- 다이애나가 밥의 공개 편지를 읽음 (미읽음 상태)
+-- Diana가 밥의 공개 편지를 읽음 (미읽음 상태)
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r3333333-3333-3333-3333-333333333333', 'l2222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', FALSE, NULL, NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY, NULL);
 
--- 이브가 찰리의 공개 편지를 읽음
+-- Eve가 찰리의 공개 편지를 읽음
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r4444444-4444-4444-4444-444444444444', 'l3333333-3333-3333-3333-333333333333', '55555555-5555-5555-5555-555555555555', TRUE, NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, NOW() - INTERVAL 2 HOUR, NULL);
 
--- 프랭크가 다이애나의 공개 편지를 읽음
+-- Frank가 Diana의 공개 편지를 읽음
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r5555555-5555-5555-5555-555555555555', 'l4444444-4444-4444-4444-444444444444', '66666666-6666-6666-6666-666666666666', TRUE, NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 4 HOUR, NULL);
 
--- 공개 편지 5 (이브) 읽은 사용자들
+-- 공개 편지 5 (Eve) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r6666666-6666-6666-6666-666666666666', 'lddddddd-dddd-dddd-dddd-dddddddddddd', '11111111-1111-1111-1111-111111111111', TRUE, NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 6 DAY, NULL),
 ('r7777777-7777-7777-7777-777777777777', 'lddddddd-dddd-dddd-dddd-dddddddddddd', '22222222-2222-2222-2222-222222222222', TRUE, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL),
 ('r8888888-8888-8888-8888-888888888888', 'lddddddd-dddd-dddd-dddd-dddddddddddd', '33333333-3333-3333-3333-333333333333', FALSE, NULL, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NULL);
 
--- 공개 편지 6 (이브, 익명) 읽은 사용자들
+-- 공개 편지 6 (Eve, 익명) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r9999999-9999-9999-9999-999999999999', 'leeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '44444444-4444-4444-4444-444444444444', TRUE, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL),
 ('raaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'leeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '66666666-6666-6666-6666-666666666666', TRUE, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY, NULL);
 
--- 공개 편지 7 (프랭크) 읽은 사용자들
+-- 공개 편지 7 (Frank) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('rbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'lfffffff-ffff-ffff-ffff-ffffffffffff', '11111111-1111-1111-1111-111111111111', TRUE, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL),
 ('rccccccc-cccc-cccc-cccc-cccccccccccc', 'lfffffff-ffff-ffff-ffff-ffffffffffff', '22222222-2222-2222-2222-222222222222', TRUE, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NULL),
 ('rddddddd-dddd-dddd-dddd-dddddddddddd', 'lfffffff-ffff-ffff-ffff-ffffffffffff', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL),
 ('reeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'lfffffff-ffff-ffff-ffff-ffffffffffff', '44444444-4444-4444-4444-444444444444', FALSE, NULL, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY, NULL);
 
--- 공개 편지 8 (프랭크, 익명) 읽은 사용자들
+-- 공개 편지 8 (Frank, 익명) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('rfffffff-ffff-ffff-ffff-ffffffffffff', 'lggggggg-gggg-gggg-gggg-gggggggggggg', '55555555-5555-5555-5555-555555555555', TRUE, NOW() - INTERVAL 8 HOUR, NOW() - INTERVAL 8 HOUR, NOW() - INTERVAL 8 HOUR, NULL),
 ('rggggggg-gggg-gggg-gggg-gggggggggggg', 'lggggggg-gggg-gggg-gggg-gggggggggggg', '77777777-7777-7777-7777-777777777777', TRUE, NOW() - INTERVAL 7 HOUR, NOW() - INTERVAL 7 HOUR, NOW() - INTERVAL 7 HOUR, NULL);
 
--- 공개 편지 9 (그레이스) 읽은 사용자들
+-- 공개 편지 9 (グレース) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('rhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', 'lhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', '11111111-1111-1111-1111-111111111111', TRUE, NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 7 DAY, NOW() - INTERVAL 7 DAY, NULL),
 ('riiiiiii-iiii-iiii-iiii-iiiiiiiiiiii', 'lhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 6 DAY, NOW() - INTERVAL 6 DAY, NULL),
 ('rjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj', 'lhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh', '55555555-5555-5555-5555-555555555555', FALSE, NULL, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 5 DAY, NULL);
 
--- 공개 편지 10 (그레이스) 읽은 사용자들
+-- 공개 편지 10 (グレース) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('rkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk', 'liiiiiii-iiii-iiii-iiii-iiiiiiiiiiii', '22222222-2222-2222-2222-222222222222', TRUE, NOW() - INTERVAL 1 HOUR, NOW() - INTERVAL 1 HOUR, NOW() - INTERVAL 1 HOUR, NULL),
 ('rlllllll-llll-llll-llll-llllllllllll', 'liiiiiii-iiii-iiii-iiii-iiiiiiiiiiii', '44444444-4444-4444-4444-444444444444', FALSE, NULL, NOW() - INTERVAL 30 MINUTE, NOW() - INTERVAL 30 MINUTE, NULL);
 
--- 공개 편지 11 (헨리) 읽은 사용자들
+-- 공개 편지 11 (ヘンリー) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('rmmmmmmm-mmmm-mmmm-mmmm-mmmmmmmmmmmm', 'ljjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj', '11111111-1111-1111-1111-111111111111', TRUE, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 4 DAY, NULL),
 ('rnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn', 'ljjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL),
 ('rooooooo-oooo-oooo-oooo-oooooooooooo', 'ljjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj', '66666666-6666-6666-6666-666666666666', FALSE, NULL, NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 2 DAY, NULL);
 
--- 공개 편지 12 (헨리, 익명) 읽은 사용자들
+-- 공개 편지 12 (ヘンリー, 익명) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('rppppppp-pppp-pppp-pppp-pppppppppppp', 'lkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk', '22222222-2222-2222-2222-222222222222', TRUE, NOW() - INTERVAL 50 MINUTE, NOW() - INTERVAL 50 MINUTE, NOW() - INTERVAL 50 MINUTE, NULL);
 
@@ -473,27 +473,27 @@ INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created
 ('ryyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy', 'lnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn', '44444444-4444-4444-4444-444444444444', TRUE, NOW() - INTERVAL 9 DAY, NOW() - INTERVAL 9 DAY, NOW() - INTERVAL 9 DAY, NULL),
 ('rzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz', 'lnnnnnnn-nnnn-nnnn-nnnn-nnnnnnnnnnnn', '55555555-5555-5555-5555-555555555555', FALSE, NULL, NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 8 DAY, NULL);
 
--- 공개 편지 16 (다이애나, 익명) 읽은 사용자들
+-- 공개 편지 16 (Diana, 익명) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r111111a-1111-1111-1111-111111111111', 'looooooo-oooo-oooo-oooo-oooooooooooo', '22222222-2222-2222-2222-222222222222', TRUE, NOW() - INTERVAL 7 HOUR, NOW() - INTERVAL 7 HOUR, NOW() - INTERVAL 7 HOUR, NULL),
 ('r222222a-2222-2222-2222-222222222222', 'looooooo-oooo-oooo-oooo-oooooooooooo', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 6 HOUR, NOW() - INTERVAL 6 HOUR, NOW() - INTERVAL 6 HOUR, NULL);
 
--- 공개 편지 17 (이브) 읽은 사용자들
+-- 공개 편지 17 (Eve) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r333333a-3333-3333-3333-333333333333', 'lppppppp-pppp-pppp-pppp-pppppppppppp', '11111111-1111-1111-1111-111111111111', FALSE, NULL, NOW() - INTERVAL 10 MINUTE, NOW() - INTERVAL 10 MINUTE, NULL);
 
--- 공개 편지 18 (프랭크) 읽은 사용자들
+-- 공개 편지 18 (Frank) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r444444a-4444-4444-4444-444444444444', 'lqqqqqqq-qqqq-qqqq-qqqq-qqqqqqqqqqqq', '11111111-1111-1111-1111-111111111111', TRUE, NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 10 DAY, NOW() - INTERVAL 10 DAY, NULL),
 ('r555555a-5555-5555-5555-555555555555', 'lqqqqqqq-qqqq-qqqq-qqqq-qqqqqqqqqqqq', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 9 DAY, NOW() - INTERVAL 9 DAY, NOW() - INTERVAL 9 DAY, NULL),
 ('r666666a-6666-6666-6666-666666666666', 'lqqqqqqq-qqqq-qqqq-qqqq-qqqqqqqqqqqq', '77777777-7777-7777-7777-777777777777', FALSE, NULL, NOW() - INTERVAL 8 DAY, NOW() - INTERVAL 8 DAY, NULL);
 
--- 공개 편지 19 (그레이스, 익명) 읽은 사용자들
+-- 공개 편지 19 (グレース, 익명) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r777777a-7777-7777-7777-777777777777', 'lrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr', '22222222-2222-2222-2222-222222222222', TRUE, NOW() - INTERVAL 5 HOUR, NOW() - INTERVAL 5 HOUR, NOW() - INTERVAL 5 HOUR, NULL),
 ('r888888a-8888-8888-8888-888888888888', 'lrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr', '44444444-4444-4444-4444-444444444444', TRUE, NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 4 HOUR, NULL);
 
--- 공개 편지 20 (헨리) 읽은 사용자들
+-- 공개 편지 20 (ヘンリー) 읽은 사용자들
 INSERT INTO letter_recipients (id, letter_id, user_id, is_read, read_at, created_at, updated_at, deleted_at) VALUES
 ('r999999a-9999-9999-9999-999999999999', 'lsssssss-ssss-ssss-ssss-ssssssssssss', '11111111-1111-1111-1111-111111111111', TRUE, NOW() - INTERVAL 12 DAY, NOW() - INTERVAL 12 DAY, NOW() - INTERVAL 12 DAY, NULL),
 ('raaaaaab-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'lsssssss-ssss-ssss-ssss-ssssssssssss', '33333333-3333-3333-3333-333333333333', TRUE, NOW() - INTERVAL 11 DAY, NOW() - INTERVAL 11 DAY, NOW() - INTERVAL 11 DAY, NULL),
@@ -512,20 +512,20 @@ INSERT INTO notifications (id, user_id, title, subtitle, category, related_id, i
 -- 밥에게 알림 (편지 받음)
 INSERT INTO notifications (id, user_id, title, subtitle, category, related_id, is_read, read_at, created_at) VALUES
 ('n3333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '새 편지 도착', '앨리스로부터 편지가 도착했습니다.', 'LETTER', 'l5555555-5555-5555-5555-555555555555', TRUE, NOW() - INTERVAL 1 DAY, NOW() - INTERVAL 1 DAY),
-('n4444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', '새 편지 도착', '다이애나로부터 편지가 도착했습니다.', 'LETTER', 'laaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', TRUE, NOW() - INTERVAL 20 MINUTE, NOW() - INTERVAL 30 MINUTE);
+('n4444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', '새 편지 도착', 'Diana로부터 편지가 도착했습니다.', 'LETTER', 'laaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', TRUE, NOW() - INTERVAL 20 MINUTE, NOW() - INTERVAL 30 MINUTE);
 
--- 다이애나에게 알림 (편지 받음)
+-- Diana에게 알림 (편지 받음)
 INSERT INTO notifications (id, user_id, title, subtitle, category, related_id, is_read, read_at, created_at) VALUES
-('n5555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', '새 편지 도착', '밥으로부터 편지가 도착했습니다.', 'LETTER', 'l9999999-9999-9999-9999-999999999999', TRUE, NOW() - INTERVAL 30 MINUTE, NOW() - INTERVAL 1 HOUR);
+('n5555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', 'New Letter Arrived', 'A letter from Bob has arrived.', 'LETTER', 'l9999999-9999-9999-9999-999999999999', TRUE, NOW() - INTERVAL 30 MINUTE, NOW() - INTERVAL 1 HOUR);
 
 -- 찰리에게 알림 (편지 받음)
 INSERT INTO notifications (id, user_id, title, subtitle, category, related_id, is_read, read_at, created_at) VALUES
 ('n6666666-6666-6666-6666-666666666666', '33333333-3333-3333-3333-333333333333', '새 편지 도착', '앨리스로부터 편지가 도착했습니다.', 'LETTER', 'l7777777-7777-7777-7777-777777777777', FALSE, NULL, NOW() - INTERVAL 6 HOUR),
-('n7777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '새 편지 도착', '이브로부터 편지가 도착했습니다.', 'LETTER', 'lbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', TRUE, NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 4 HOUR);
+('n7777777-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '새 편지 도착', 'Eve로부터 편지가 도착했습니다.', 'LETTER', 'lbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', TRUE, NOW() - INTERVAL 3 HOUR, NOW() - INTERVAL 4 HOUR);
 
--- 이브에게 알림 (편지 받음)
+-- Eve에게 알림 (편지 받음)
 INSERT INTO notifications (id, user_id, title, subtitle, category, related_id, is_read, read_at, created_at) VALUES
-('n8888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', '새 편지 도착', '찰리로부터 편지가 도착했습니다.', 'LETTER', 'lccccccc-cccc-cccc-cccc-cccccccccccc', FALSE, NULL, NOW() - INTERVAL 3 DAY);
+('n8888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', 'New Letter Arrived', 'A letter from Charlie has arrived.', 'LETTER', 'lccccccc-cccc-cccc-cccc-cccccccccccc', FALSE, NULL, NOW() - INTERVAL 3 DAY);
 
 -- ============================================
 -- 완료 메시지 및 데이터 확인
