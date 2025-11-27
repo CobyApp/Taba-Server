@@ -55,8 +55,11 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     /**
      * 친구 간 주고받은 편지 조회 (양방향)
      * - DIRECT 타입: sender가 currentUserId이고 recipient가 friendId이거나, 그 반대인 편지
+     *   (공개편지에 대한 답장 포함: originalLetterId가 있는 DIRECT 편지도 포함)
      * - PUBLIC 타입: 친구(friendId)가 작성한 공개편지 중, 내가 답장을 보낸 공개편지만 포함
      *   (답장의 originalLetterId가 해당 공개편지 ID와 일치하는 경우만 포함)
+     * - PUBLIC 타입: 내가 작성한 공개편지 중, 친구가 답장을 보낸 공개편지도 포함
+     *   (친구가 보낸 답장의 originalLetterId가 해당 공개편지 ID와 일치하는 경우만 포함)
      * 정렬은 Pageable의 sort 파라미터로 제어 (기본값: sentAt,asc - 시간순)
      * 공개편지가 답장보다 시간상 앞서면 공개편지가 우선적으로 표시됩니다.
      * 
@@ -68,6 +71,10 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "  ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
            "   (l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
            "  AND l.visibility = 'DIRECT' " +
+           "  AND l.sentAt IS NOT NULL " +
+           "  AND l.deletedAt IS NULL " +
+           "  AND l.sender.deletedAt IS NULL " +
+           "  AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL)" +
            ") OR (" +
            "  l.sender.id = :friendId " +
            "  AND l.visibility = 'PUBLIC' " +
@@ -80,11 +87,25 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "    AND reply.sentAt IS NOT NULL " +
            "    AND reply.deletedAt IS NULL" +
            "  )" +
-           ") " +
-           "AND l.sentAt IS NOT NULL " +
-           "AND l.deletedAt IS NULL " +
-           "AND l.sender.deletedAt IS NULL " +
-           "AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL)")
+           "  AND l.sentAt IS NOT NULL " +
+           "  AND l.deletedAt IS NULL " +
+           "  AND l.sender.deletedAt IS NULL " +
+           ") OR (" +
+           "  l.sender.id = :currentUserId " +
+           "  AND l.visibility = 'PUBLIC' " +
+           "  AND EXISTS (" +
+           "    SELECT 1 FROM Letter reply " +
+           "    WHERE reply.sender.id = :friendId " +
+           "    AND reply.recipient.id = :currentUserId " +
+           "    AND reply.visibility = 'DIRECT' " +
+           "    AND reply.originalLetterId = l.id " +
+           "    AND reply.sentAt IS NOT NULL " +
+           "    AND reply.deletedAt IS NULL" +
+           "  )" +
+           "  AND l.sentAt IS NOT NULL " +
+           "  AND l.deletedAt IS NULL " +
+           "  AND l.sender.deletedAt IS NULL " +
+           ")")
     Page<Letter> findLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
             @Param("friendId") String friendId,
@@ -108,10 +129,11 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     /**
      * 공개편지에 대한 가장 빠른 답장 조회
      * originalLetterId가 공개편지 ID와 일치하는 답장 중 가장 빠른 것을 찾습니다.
+     * 양방향으로 조회 (내가 보낸 답장 또는 친구가 보낸 답장)
      */
     @Query("SELECT reply FROM Letter reply " +
-           "WHERE reply.sender.id = :currentUserId " +
-           "AND reply.recipient.id = :friendId " +
+           "WHERE ((reply.sender.id = :currentUserId AND reply.recipient.id = :friendId) OR " +
+           "       (reply.sender.id = :friendId AND reply.recipient.id = :currentUserId)) " +
            "AND reply.visibility = 'DIRECT' " +
            "AND reply.originalLetterId = :publicLetterId " +
            "AND reply.sentAt IS NOT NULL " +
