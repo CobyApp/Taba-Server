@@ -228,6 +228,27 @@ public class LetterService {
             letters = letterRepository.findPublicLetters(languages, pageable);
         }
         
+        // 네이티브 쿼리 결과의 관계를 명시적으로 로드 (N+1 문제 방지)
+        List<Letter> letterList = letters.getContent();
+        if (!letterList.isEmpty()) {
+            // sender와 images를 배치로 로드
+            List<String> letterIds = letterList.stream()
+                    .map(Letter::getId)
+                    .collect(Collectors.toList());
+            
+            // sender와 images를 한 번에 로드하기 위해 엔티티를 다시 조회
+            List<Letter> lettersWithRelations = letterRepository.findAllById(letterIds);
+            // 관계를 로드하기 위해 접근
+            lettersWithRelations.forEach(letter -> {
+                if (letter.getSender() != null) {
+                    letter.getSender().getId();
+                }
+                if (letter.getImages() != null) {
+                    letter.getImages().size();
+                }
+            });
+        }
+        
         return letters.map(letter -> {
             letter.incrementViews();
             // 읽음 처리 적용
