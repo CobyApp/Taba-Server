@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -218,36 +219,35 @@ public class LetterService {
     @Transactional
     public Page<LetterDto> getPublicLetters(Pageable pageable, List<String> languages) {
         String currentUserId = SecurityUtil.getCurrentUserId();
-        Page<Letter> letters;
+        List<Letter> allLetters;
         
         // 로그인한 사용자의 경우 자신이 작성한 편지 제외
         if (currentUserId != null && !currentUserId.isEmpty()) {
-            letters = letterRepository.findPublicLettersExcludingUser(currentUserId, languages, pageable);
+            allLetters = letterRepository.findPublicLettersExcludingUserList(currentUserId, languages);
         } else {
             // 비로그인 사용자는 모든 공개 편지 조회
-            letters = letterRepository.findPublicLetters(languages, pageable);
+            allLetters = letterRepository.findPublicLettersList(languages);
         }
         
-        // 네이티브 쿼리 결과의 관계를 명시적으로 로드 (N+1 문제 방지)
-        List<Letter> letterList = letters.getContent();
-        if (!letterList.isEmpty()) {
-            // sender와 images를 배치로 로드
-            List<String> letterIds = letterList.stream()
-                    .map(Letter::getId)
-                    .collect(Collectors.toList());
-            
-            // sender와 images를 한 번에 로드하기 위해 엔티티를 다시 조회
-            List<Letter> lettersWithRelations = letterRepository.findAllById(letterIds);
-            // 관계를 로드하기 위해 접근
-            lettersWithRelations.forEach(letter -> {
-                if (letter.getSender() != null) {
-                    letter.getSender().getId();
-                }
-                if (letter.getImages() != null) {
-                    letter.getImages().size();
-                }
-            });
-        }
+        // 랜덤 정렬
+        Collections.shuffle(allLetters);
+        
+        // 수동 페이징 처리
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+        int start = page * size;
+        int end = Math.min(start + size, allLetters.size());
+        
+        List<Letter> pagedLetters = start < allLetters.size() 
+                ? allLetters.subList(start, end)
+                : Collections.emptyList();
+        
+        // Page 객체 생성
+        Page<Letter> letters = new org.springframework.data.domain.PageImpl<>(
+                pagedLetters, 
+                pageable, 
+                allLetters.size()
+        );
         
         return letters.map(letter -> {
             letter.incrementViews();

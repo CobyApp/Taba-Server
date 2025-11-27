@@ -22,35 +22,19 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     Optional<Letter> findActiveById(@Param("id") String id);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query(value = "SELECT l.* FROM letters l " +
-           "WHERE l.visibility = 'PUBLIC' AND l.sent_at IS NOT NULL AND l.deleted_at IS NULL " +
-           "AND EXISTS (SELECT 1 FROM users u WHERE u.id = l.sender_id AND u.deleted_at IS NULL) " +
-           "AND (:languages IS NULL OR l.language IN :languages) " +
-           "ORDER BY RAND()",
-           nativeQuery = true,
-           countQuery = "SELECT COUNT(*) FROM letters l " +
-           "WHERE l.visibility = 'PUBLIC' AND l.sent_at IS NOT NULL AND l.deleted_at IS NULL " +
-           "AND EXISTS (SELECT 1 FROM users u WHERE u.id = l.sender_id AND u.deleted_at IS NULL) " +
-           "AND (:languages IS NULL OR l.language IN :languages)")
-    Page<Letter> findPublicLetters(@Param("languages") List<String> languages, Pageable pageable);
+    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
+           "AND (:languages IS NULL OR SIZE(:languages) = 0 OR l.language IN :languages)")
+    List<Letter> findPublicLettersList(@Param("languages") List<String> languages);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query(value = "SELECT l.* FROM letters l " +
-           "WHERE l.visibility = 'PUBLIC' AND l.sent_at IS NOT NULL AND l.deleted_at IS NULL " +
-           "AND EXISTS (SELECT 1 FROM users u WHERE u.id = l.sender_id AND u.deleted_at IS NULL) " +
-           "AND l.sender_id != :excludeUserId " +
-           "AND (:languages IS NULL OR l.language IN :languages) " +
-           "ORDER BY RAND()",
-           nativeQuery = true,
-           countQuery = "SELECT COUNT(*) FROM letters l " +
-           "WHERE l.visibility = 'PUBLIC' AND l.sent_at IS NOT NULL AND l.deleted_at IS NULL " +
-           "AND EXISTS (SELECT 1 FROM users u WHERE u.id = l.sender_id AND u.deleted_at IS NULL) " +
-           "AND l.sender_id != :excludeUserId " +
-           "AND (:languages IS NULL OR l.language IN :languages)")
-    Page<Letter> findPublicLettersExcludingUser(
+    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
+           "AND l.sender.id != :excludeUserId " +
+           "AND (:languages IS NULL OR SIZE(:languages) = 0 OR l.language IN :languages)")
+    List<Letter> findPublicLettersExcludingUserList(
             @Param("excludeUserId") String excludeUserId,
-            @Param("languages") List<String> languages,
-            Pageable pageable);
+            @Param("languages") List<String> languages);
 
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL " +
