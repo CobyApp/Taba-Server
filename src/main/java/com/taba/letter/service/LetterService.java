@@ -221,12 +221,15 @@ public class LetterService {
         String currentUserId = SecurityUtil.getCurrentUserId();
         List<Letter> allLetters;
         
+        // languages가 null이거나 비어있으면 null로 변환 (모든 언어 조회)
+        List<String> languagesParam = (languages == null || languages.isEmpty()) ? null : languages;
+        
         // 로그인한 사용자의 경우 자신이 작성한 편지 제외
         if (currentUserId != null && !currentUserId.isEmpty()) {
-            allLetters = letterRepository.findPublicLettersExcludingUserList(currentUserId, languages);
+            allLetters = letterRepository.findPublicLettersExcludingUserList(currentUserId, languagesParam);
         } else {
             // 비로그인 사용자는 모든 공개 편지 조회
-            allLetters = letterRepository.findPublicLettersList(languages);
+            allLetters = letterRepository.findPublicLettersList(languagesParam);
         }
         
         // 랜덤 정렬

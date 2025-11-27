@@ -24,14 +24,14 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
            "AND l.sender.deletedAt IS NULL " +
-           "AND (:languages IS NULL OR SIZE(:languages) = 0 OR l.language IN :languages)")
+           "AND (:languages IS NULL OR l.language IN :languages)")
     List<Letter> findPublicLettersList(@Param("languages") List<String> languages);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
            "AND l.sender.deletedAt IS NULL " +
            "AND l.sender.id != :excludeUserId " +
-           "AND (:languages IS NULL OR SIZE(:languages) = 0 OR l.language IN :languages)")
+           "AND (:languages IS NULL OR l.language IN :languages)")
     List<Letter> findPublicLettersExcludingUserList(
             @Param("excludeUserId") String excludeUserId,
             @Param("languages") List<String> languages);
