@@ -294,8 +294,28 @@ public class LetterService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
+        // 편지 소프트 삭제
         letter.softDelete();
         letterRepository.save(letter);
+
+        // 관련된 LetterRecipient도 소프트 삭제 처리
+        // (PUBLIC, FRIENDS 편지의 경우 여러 사용자가 읽었을 수 있으므로)
+        // 삭제되지 않은 것만 조회하여 소프트 삭제
+        List<LetterRecipient> recipients = letterRecipientRepository.findAllByLetterId(letterId);
+        for (LetterRecipient recipient : recipients) {
+            recipient.softDelete();
+            letterRecipientRepository.save(recipient);
+        }
+
+        // LetterImage는 BaseEntity를 상속받지 않아서 cascade = ALL, orphanRemoval = true로 인해
+        // JPA가 자동으로 하드 삭제합니다. 이미지 파일은 외부 스토리지에 있으므로
+        // DB 레코드만 삭제하는 것으로 충분합니다.
+
+        // LetterReport는 신고 기록이므로 삭제하지 않습니다.
+        // (BaseEntity를 상속받지 않아서 deletedAt이 없고, 신고 기록은 보관해야 함)
+
+        // 답장(originalLetterId가 이 편지를 참조하는 경우)은 삭제하지 않습니다.
+        // 답장은 독립적인 편지이므로 원본 편지가 삭제되어도 유지됩니다.
     }
 
     /**

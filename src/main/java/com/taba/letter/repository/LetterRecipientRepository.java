@@ -24,10 +24,17 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
     long countUnreadByUserId(@Param("userId") String userId);
     
     /**
-     * 특정 편지를 읽은 모든 사용자 조회
+     * 특정 편지를 읽은 모든 사용자 조회 (삭제되지 않은 것만)
      */
     @Query("SELECT lr FROM LetterRecipient lr WHERE lr.letter.id = :letterId AND lr.deletedAt IS NULL ORDER BY lr.readAt DESC")
     List<LetterRecipient> findAllByLetterId(@Param("letterId") String letterId);
+    
+    /**
+     * 특정 편지의 모든 LetterRecipient 조회 (삭제 여부와 관계없이)
+     * 편지 삭제 시 관련된 모든 LetterRecipient를 소프트 삭제하기 위해 사용
+     */
+    @Query("SELECT lr FROM LetterRecipient lr WHERE lr.letter.id = :letterId ORDER BY lr.readAt DESC")
+    List<LetterRecipient> findAllByLetterIdIncludingDeleted(@Param("letterId") String letterId);
     
     /**
      * 사용자가 읽은 공개 편지 목록 조회
