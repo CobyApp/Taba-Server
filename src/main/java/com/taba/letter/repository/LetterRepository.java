@@ -76,6 +76,22 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "  AND l.sender.deletedAt IS NULL " +
            "  AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL)" +
            ") OR (" +
+           "  l.visibility = 'DIRECT' " +
+           "  AND l.originalLetterId IS NOT NULL " +
+           "  AND ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
+           "       (l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
+           "  AND l.sentAt IS NOT NULL " +
+           "  AND l.deletedAt IS NULL " +
+           "  AND l.sender.deletedAt IS NULL " +
+           "  AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL) " +
+           "  AND EXISTS (" +
+           "    SELECT 1 FROM Letter original " +
+           "    WHERE original.id = l.originalLetterId " +
+           "    AND original.visibility = 'PUBLIC' " +
+           "    AND original.deletedAt IS NULL " +
+           "    AND original.sender.deletedAt IS NULL" +
+           "  )" +
+           ") OR (" +
            "  l.sender.id = :friendId " +
            "  AND l.visibility = 'PUBLIC' " +
            "  AND EXISTS (" +
@@ -105,22 +121,6 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "  AND l.sentAt IS NOT NULL " +
            "  AND l.deletedAt IS NULL " +
            "  AND l.sender.deletedAt IS NULL " +
-           ") OR (" +
-           "  l.visibility = 'DIRECT' " +
-           "  AND l.originalLetterId IS NOT NULL " +
-           "  AND l.sentAt IS NOT NULL " +
-           "  AND l.deletedAt IS NULL " +
-           "  AND l.sender.deletedAt IS NULL " +
-           "  AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL) " +
-           "  AND EXISTS (" +
-           "    SELECT 1 FROM Letter original " +
-           "    WHERE original.id = l.originalLetterId " +
-           "    AND original.visibility = 'PUBLIC' " +
-           "    AND ((original.sender.id = :currentUserId AND l.sender.id = :friendId AND l.recipient.id = :currentUserId) OR " +
-           "         (original.sender.id = :friendId AND l.sender.id = :currentUserId AND l.recipient.id = :friendId)) " +
-           "    AND original.deletedAt IS NULL " +
-           "    AND original.sender.deletedAt IS NULL" +
-           "  )" +
            ")")
     Page<Letter> findLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
