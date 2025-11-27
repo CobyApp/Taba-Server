@@ -17,17 +17,20 @@ import java.util.Optional;
 public interface LetterRepository extends JpaRepository<Letter, String> {
     
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query("SELECT l FROM Letter l WHERE l.id = :id AND l.deletedAt IS NULL")
+    @Query("SELECT l FROM Letter l WHERE l.id = :id AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL")
     Optional<Letter> findActiveById(@Param("id") String id);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
            "AND (:languages IS NULL OR l.language IN :languages) " +
            "ORDER BY l.sentAt DESC")
     Page<Letter> findPublicLetters(@Param("languages") List<String> languages, Pageable pageable);
 
     @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
            "AND l.sender.id != :excludeUserId " +
            "AND (:languages IS NULL OR l.language IN :languages) " +
            "ORDER BY l.sentAt DESC")
@@ -37,15 +40,19 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
             Pageable pageable);
 
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL ORDER BY l.createdAt DESC")
+    @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL ORDER BY l.createdAt DESC")
     Page<Letter> findBySenderId(@Param("userId") String userId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query("SELECT l FROM Letter l WHERE l.recipient.id = :userId AND l.visibility = 'DIRECT' AND l.deletedAt IS NULL ORDER BY l.sentAt DESC")
+    @Query("SELECT l FROM Letter l WHERE l.recipient.id = :userId AND l.visibility = 'DIRECT' AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL AND (l.recipient.deletedAt IS NULL OR l.recipient.id = :userId) " +
+           "ORDER BY l.sentAt DESC")
     Page<Letter> findByRecipientId(@Param("userId") String userId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
-    @Query("SELECT l FROM Letter l WHERE l.scheduledAt <= :now AND l.sentAt IS NULL AND l.deletedAt IS NULL")
+    @Query("SELECT l FROM Letter l WHERE l.scheduledAt <= :now AND l.sentAt IS NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL")
     List<Letter> findScheduledLettersToSend(@Param("now") LocalDateTime now);
 
     /**
@@ -78,7 +85,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "  )" +
            ") " +
            "AND l.sentAt IS NOT NULL " +
-           "AND l.deletedAt IS NULL")
+           "AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
+           "AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL)")
     Page<Letter> findLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
             @Param("friendId") String friendId,
@@ -93,6 +102,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "AND l.visibility = 'DIRECT' " +
            "AND l.sentAt IS NOT NULL " +
            "AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
            "AND (l.isRead IS NULL OR l.isRead = false)")
     long countUnreadLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
@@ -109,6 +119,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "AND reply.originalLetterId = :publicLetterId " +
            "AND reply.sentAt IS NOT NULL " +
            "AND reply.deletedAt IS NULL " +
+           "AND reply.sender.deletedAt IS NULL " +
            "ORDER BY reply.sentAt ASC")
     List<Letter> findEarliestReplyToPublicLetter(
             @Param("publicLetterId") String publicLetterId,

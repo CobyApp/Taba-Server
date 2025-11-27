@@ -15,6 +15,10 @@ public class SecurityUtil {
         return null;
     }
 
+    /**
+     * SecurityContext에서 캐시된 User를 반환합니다.
+     * 최신 데이터가 필요한 경우 UserService를 통해 조회하세요.
+     */
     public static User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof User) {

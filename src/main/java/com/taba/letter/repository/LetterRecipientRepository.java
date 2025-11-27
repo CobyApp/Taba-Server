@@ -39,7 +39,9 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
     /**
      * 사용자가 읽은 공개 편지 목록 조회
      */
-    @Query("SELECT lr FROM LetterRecipient lr WHERE lr.user.id = :userId AND lr.letter.visibility = 'PUBLIC' AND lr.deletedAt IS NULL ORDER BY lr.readAt DESC")
+    @Query("SELECT lr FROM LetterRecipient lr WHERE lr.user.id = :userId AND lr.letter.visibility = 'PUBLIC' " +
+           "AND lr.deletedAt IS NULL AND lr.letter.deletedAt IS NULL " +
+           "AND lr.letter.sender.deletedAt IS NULL ORDER BY lr.readAt DESC")
     Page<LetterRecipient> findPublicLettersByUserId(@Param("userId") String userId, Pageable pageable);
 
     /**
@@ -51,6 +53,7 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
            "AND lr.letter.visibility = 'PUBLIC' " +
            "AND lr.letter.sentAt IS NOT NULL " +
            "AND lr.letter.deletedAt IS NULL " +
+           "AND lr.letter.sender.deletedAt IS NULL " +
            "AND (lr.isRead IS NULL OR lr.isRead = false) " +
            "AND lr.deletedAt IS NULL " +
            "AND EXISTS (" +
@@ -60,7 +63,8 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
            "  AND reply.visibility = 'DIRECT' " +
            "  AND reply.originalLetterId = lr.letter.id " +
            "  AND reply.sentAt IS NOT NULL " +
-           "  AND reply.deletedAt IS NULL" +
+           "  AND reply.deletedAt IS NULL " +
+           "  AND reply.sender.deletedAt IS NULL" +
            ")")
     long countUnreadPublicLettersFromFriend(
             @Param("currentUserId") String currentUserId,

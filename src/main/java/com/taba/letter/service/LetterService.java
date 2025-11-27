@@ -37,6 +37,7 @@ public class LetterService {
     private final FriendshipService friendshipService;
     private final FriendshipRepository friendshipRepository;
     private final NotificationService notificationService;
+    private final com.taba.user.service.UserService userService;
 
     @Transactional
     public LetterDto createLetter(LetterCreateRequest request) {
@@ -44,6 +45,8 @@ public class LetterService {
         if (sender == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
+        // 최신 유저 정보 조회 (닉네임/프로필 변경사항 반영)
+        sender = userService.refreshUser(sender);
 
         // visibility는 필수 (일반 편지 작성 시)
         if (request.getVisibility() == null) {
@@ -120,6 +123,8 @@ public class LetterService {
         if (sender == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
+        // 최신 유저 정보 조회 (닉네임/프로필 변경사항 반영)
+        sender = userService.refreshUser(sender);
 
         // 원본 편지 조회
         Letter originalLetter = letterRepository.findActiveById(originalLetterId)
@@ -415,12 +420,15 @@ public class LetterService {
                     .build();
         }
 
+        // sender 정보를 최신 데이터로 조회
+        User freshSender = userService.refreshUser(letter.getSender());
+
         return LetterDto.builder()
                 .id(letter.getId())
                 .title(letter.getTitle())
                 .content(letter.getContent())
                 .preview(letter.getPreview())
-                .sender(com.taba.user.dto.UserMapper.INSTANCE.toDto(letter.getSender()))
+                .sender(com.taba.user.dto.UserMapper.INSTANCE.toDto(freshSender))
                 .visibility(letter.getVisibility())
                 .sentAt(letter.getSentAt())
                 .views(letter.getViews())

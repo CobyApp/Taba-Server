@@ -38,6 +38,7 @@ public class FriendshipService {
     private final UserRepository userRepository;
     private final InviteCodeRepository inviteCodeRepository;
     private final NotificationService notificationService;
+    private final com.taba.user.service.UserService userService;
 
     @Transactional
     public com.taba.friendship.dto.AddFriendResponse addFriend(String inviteCode) {
@@ -69,9 +70,12 @@ public class FriendshipService {
 
         User friendUser = code.getUser();
         
+        // 최신 친구 정보 조회
+        User freshFriendUser = userService.refreshUser(friendUser);
+        
         // 자기 자신의 초대 코드인 경우 친구 정보와 함께 반환
-        if (friendUser.getId().equals(currentUser.getId())) {
-            com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
+        if (freshFriendUser.getId().equals(currentUser.getId())) {
+            com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(freshFriendUser);
             return com.taba.friendship.dto.AddFriendResponse.builder()
                     .friend(friendDto)
                     .alreadyFriends(false)
@@ -81,11 +85,11 @@ public class FriendshipService {
         
         // 이미 친구인지 확인
         boolean alreadyFriends = friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(
-                currentUser.getId(), friendUser.getId());
+                currentUser.getId(), freshFriendUser.getId());
 
         // 이미 친구인 경우 친구 정보만 반환
         if (alreadyFriends) {
-            com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
+            com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(freshFriendUser);
             return com.taba.friendship.dto.AddFriendResponse.builder()
                     .friend(friendDto)
                     .alreadyFriends(true)
@@ -96,12 +100,12 @@ public class FriendshipService {
         // 양방향 친구 관계 생성
         Friendship friendship1 = Friendship.builder()
                 .user(currentUser)
-                .friend(friendUser)
+                .friend(freshFriendUser)
                 .build();
         friendshipRepository.save(friendship1);
 
         Friendship friendship2 = Friendship.builder()
-                .user(friendUser)
+                .user(freshFriendUser)
                 .friend(currentUser)
                 .build();
         friendshipRepository.save(friendship2);
@@ -113,7 +117,7 @@ public class FriendshipService {
         // 친구 추가 알림 전송 (초대 코드를 사용한 사용자에게 알림)
         String userLanguage = currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
         String title = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.title", userLanguage, friendUser.getNickname());
+                "notification.friend.added.title", userLanguage, freshFriendUser.getNickname());
         String body = com.taba.common.util.MessageUtil.getMessage(
                 "notification.friend.added.body", userLanguage);
         notificationService.createAndSendNotification(
@@ -121,11 +125,11 @@ public class FriendshipService {
                 title,
                 body,
                 com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
-                friendUser.getId()
+                freshFriendUser.getId()
         );
 
-        // 친구 정보 반환
-        com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendUser);
+        // 친구 정보 반환 (최신 데이터 사용)
+        com.taba.user.dto.UserDto friendDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(freshFriendUser);
         return com.taba.friendship.dto.AddFriendResponse.builder()
                 .friend(friendDto)
                 .alreadyFriends(false)
@@ -143,9 +147,11 @@ public class FriendshipService {
         List<Friendship> friendships = friendshipRepository.findByUserId(currentUser.getId());
         return friendships.stream()
                 .map(friendship -> {
-                    com.taba.user.dto.UserDto userDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(friendship.getFriend());
+                    // 친구 정보를 최신 데이터로 조회
+                    User freshFriend = userService.refreshUser(friendship.getFriend());
+                    com.taba.user.dto.UserDto userDto = com.taba.user.dto.UserMapper.INSTANCE.toDto(freshFriend);
                     // 안 읽은 편지 개수 계산
-                    long unreadCount = countUnreadLettersFromFriend(currentUser.getId(), friendship.getFriend().getId());
+                    long unreadCount = countUnreadLettersFromFriend(currentUser.getId(), freshFriend.getId());
                     userDto.setUnreadLetterCount((int) unreadCount);
                     return userDto;
                 })
@@ -350,46 +356,50 @@ public class FriendshipService {
         User user2 = userRepository.findActiveUserById(userId2)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        // 최신 유저 정보 조회 (닉네임 변경사항 반영)
+        User freshUser1 = userService.refreshUser(user1);
+        User freshUser2 = userService.refreshUser(user2);
+
         // 양방향 친구 관계 생성
         Friendship friendship1 = Friendship.builder()
-                .user(user1)
-                .friend(user2)
+                .user(freshUser1)
+                .friend(freshUser2)
                 .build();
         friendshipRepository.save(friendship1);
 
         Friendship friendship2 = Friendship.builder()
-                .user(user2)
-                .friend(user1)
+                .user(freshUser2)
+                .friend(freshUser1)
                 .build();
         friendshipRepository.save(friendship2);
         
         // 친구 추가 알림 전송 (양쪽 사용자에게 알림)
         // user1에게 알림
-        String user1Language = user1.getLanguage() != null ? user1.getLanguage() : "ko";
+        String user1Language = freshUser1.getLanguage() != null ? freshUser1.getLanguage() : "ko";
         String title1 = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.title", user1Language, user2.getNickname());
+                "notification.friend.added.title", user1Language, freshUser2.getNickname());
         String body1 = com.taba.common.util.MessageUtil.getMessage(
                 "notification.friend.added.body", user1Language);
         notificationService.createAndSendNotification(
-                user1,
+                freshUser1,
                 title1,
                 body1,
                 com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
-                user2.getId()
+                freshUser2.getId()
         );
         
         // user2에게 알림
-        String user2Language = user2.getLanguage() != null ? user2.getLanguage() : "ko";
+        String user2Language = freshUser2.getLanguage() != null ? freshUser2.getLanguage() : "ko";
         String title2 = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.title", user2Language, user1.getNickname());
+                "notification.friend.added.title", user2Language, freshUser1.getNickname());
         String body2 = com.taba.common.util.MessageUtil.getMessage(
                 "notification.friend.added.body", user2Language);
         notificationService.createAndSendNotification(
-                user2,
+                freshUser2,
                 title2,
                 body2,
                 com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
-                user1.getId()
+                freshUser1.getId()
         );
     }
 }

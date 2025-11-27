@@ -12,13 +12,16 @@ import java.util.Optional;
 @Repository
 public interface FriendshipRepository extends JpaRepository<Friendship, String> {
     
-    @Query("SELECT f FROM Friendship f WHERE (f.user.id = :userId OR f.friend.id = :userId) AND f.deletedAt IS NULL")
+    @Query("SELECT f FROM Friendship f WHERE (f.user.id = :userId OR f.friend.id = :userId) " +
+           "AND f.deletedAt IS NULL AND f.user.deletedAt IS NULL AND f.friend.deletedAt IS NULL")
     List<Friendship> findAllByUserId(@Param("userId") String userId);
 
-    @Query("SELECT f FROM Friendship f WHERE f.user.id = :userId AND f.deletedAt IS NULL")
+    @Query("SELECT f FROM Friendship f WHERE f.user.id = :userId " +
+           "AND f.deletedAt IS NULL AND f.user.deletedAt IS NULL AND f.friend.deletedAt IS NULL")
     List<Friendship> findByUserId(@Param("userId") String userId);
 
-    @Query("SELECT f FROM Friendship f WHERE ((f.user.id = :userId AND f.friend.id = :friendId) OR (f.user.id = :friendId AND f.friend.id = :userId)) AND f.deletedAt IS NULL")
+    @Query("SELECT f FROM Friendship f WHERE ((f.user.id = :userId AND f.friend.id = :friendId) OR (f.user.id = :friendId AND f.friend.id = :userId)) " +
+           "AND f.deletedAt IS NULL AND f.user.deletedAt IS NULL AND f.friend.deletedAt IS NULL")
     List<Friendship> findByUserIdsList(@Param("userId") String userId, @Param("friendId") String friendId);
     
     // 기존 메서드 - List에서 첫 번째만 반환하도록 수정
@@ -31,6 +34,9 @@ public interface FriendshipRepository extends JpaRepository<Friendship, String> 
         return Optional.of(friendships.get(0));
     }
 
-    boolean existsByUserIdAndFriendIdAndDeletedAtIsNull(String userId, String friendId);
+    @Query("SELECT COUNT(f) > 0 FROM Friendship f WHERE " +
+           "((f.user.id = :userId AND f.friend.id = :friendId) OR (f.user.id = :friendId AND f.friend.id = :userId)) " +
+           "AND f.deletedAt IS NULL AND f.user.deletedAt IS NULL AND f.friend.deletedAt IS NULL")
+    boolean existsByUserIdAndFriendIdAndDeletedAtIsNull(@Param("userId") String userId, @Param("friendId") String friendId);
 }
 

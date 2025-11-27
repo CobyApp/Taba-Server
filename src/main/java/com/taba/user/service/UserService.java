@@ -45,6 +45,30 @@ public class UserService {
         return userDto;
     }
 
+    /**
+     * User 엔티티를 최신 데이터로 새로고침하여 반환합니다.
+     * 닉네임이나 프로필 변경사항이 즉시 반영됩니다.
+     */
+    @Transactional(readOnly = true)
+    public User refreshUser(User user) {
+        if (user == null || user.getId() == null) {
+            return user;
+        }
+        return userRepository.findActiveUserById(user.getId())
+                .orElse(user);
+    }
+
+    /**
+     * User ID로 최신 User 엔티티를 조회합니다.
+     */
+    @Transactional(readOnly = true)
+    public User getFreshUser(String userId) {
+        if (userId == null) {
+            return null;
+        }
+        return userRepository.findActiveUserById(userId).orElse(null);
+    }
+
     @Transactional
     public UserDto updateProfile(String userId, String nickname, String avatarUrl, MultipartFile profileImage) {
         User user = userRepository.findActiveUserById(userId)
