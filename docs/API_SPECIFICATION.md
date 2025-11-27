@@ -405,6 +405,7 @@ profileImage: [파일]
 - `isRead`: 
   - DIRECT 편지: 내가 받은 편지인 경우 읽음 상태 (내가 보낸 편지인 경우 null)
   - PUBLIC 편지: 공개편지에 답장을 보내면 자동으로 읽음 처리되며, 이후 읽음 상태가 표시됩니다 (아직 읽지 않은 경우 false)
+  - FRIENDS 편지: 친구 전용 편지의 경우 `LetterRecipient`를 통해 읽음 상태가 관리되며, 편지를 조회하면 자동으로 읽음 처리됩니다
 - `letter`: 편지 요약 정보 (id, title, preview, fontFamily)
 - 시간순 정렬: `sentAt` 기준 오름차순 정렬 (오래된 편지부터 최신 편지 순서)
 - 페이지네이션 정보가 포함됩니다.
@@ -490,9 +491,11 @@ profileImage: [파일]
 
 **참고사항**:
 - 편지의 접근 권한을 확인합니다 (PUBLIC, FRIENDS, DIRECT, PRIVATE)
-- **읽음 처리**:
-  - 공개 편지(PUBLIC): 조회 시 조회수가 증가하고, `LetterRecipient`를 통해 읽음 상태가 자동으로 기록됩니다. 작성자가 아닌 경우에만 읽음 처리가 됩니다.
-  - 직접 전송 편지(DIRECT): 수신자가 조회하면 읽음 상태(`isRead`)가 자동으로 업데이트됩니다.
+- **읽음 처리** (작성자가 아닌 경우에만 자동 처리):
+  - 공개 편지(PUBLIC): `LetterRecipient` 테이블을 통해 읽음 상태가 자동으로 기록됩니다. 여러 사용자가 읽을 수 있으므로 사용자별로 읽음 상태를 관리합니다.
+  - 친구 전용 편지(FRIENDS): `LetterRecipient` 테이블을 통해 읽음 상태가 자동으로 기록됩니다. 친구 관계인 사용자만 읽을 수 있으며, 사용자별로 읽음 상태를 관리합니다.
+  - 직접 전송 편지(DIRECT): 수신자가 조회하면 `Letter` 엔티티의 `isRead` 필드가 자동으로 업데이트됩니다. 1:1 편지이므로 편지 자체의 읽음 상태로 관리합니다.
+  - 비공개 편지(PRIVATE): 본인만 볼 수 있으므로 읽음 처리가 필요하지 않습니다.
 - 편지를 조회하면 조회수(`views`)가 증가합니다.
 
 **Response** (200 OK):
@@ -545,6 +548,10 @@ profileImage: [파일]
 - 모든 편지는 작성자 정보가 표시됩니다 (익명 기능 제거)
 - 로그인한 사용자의 경우 자신이 작성한 편지는 목록에서 제외됩니다
 - 언어 필터링은 여러 언어를 동시에 선택할 수 있습니다 (예: 한국어와 영어)
+- **읽음 처리**: 로그인한 사용자가 목록에서 편지를 조회하면 자동으로 읽음 처리가 됩니다.
+  - 공개 편지(PUBLIC): `LetterRecipient` 테이블을 통해 읽음 상태가 기록됩니다.
+  - 작성자가 아닌 경우에만 읽음 처리가 수행됩니다.
+- 편지를 조회하면 조회수(`views`)가 증가합니다.
 
 **Request 예시**:
 ```
@@ -583,7 +590,65 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 }
 ```
 
-### 4.4 편지 답장
+### 4.4 내가 작성한 편지 목록 조회
+
+**GET** `/letters/my`
+
+**인증**: 필요
+
+**Query Parameters**:
+- `page`: 페이지 번호 (기본값: 0)
+- `size`: 페이지 크기 (기본값: 20)
+- `sort`: 정렬 기준 (기본값: createdAt,desc)
+
+**참고사항**:
+- 현재 로그인한 사용자가 작성한 모든 편지를 조회합니다.
+- 삭제되지 않은 편지만 조회됩니다 (소프트 삭제).
+- 작성일 기준 내림차순으로 정렬됩니다 (최신 편지부터).
+- 본인이 작성한 편지이므로 읽음 처리는 수행되지 않습니다.
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "content": [
+      {
+        "id": "uuid",
+        "title": "편지 제목",
+        "content": "편지 내용",
+        "preview": "편지 미리보기",
+        "sender": {
+          "id": "uuid",
+          "nickname": "작성자",
+          "avatarUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
+        },
+        "visibility": "PUBLIC",
+        "sentAt": "2024-01-01T00:00:00",
+        "views": 10,
+        "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
+        "template": {
+          "background": "#1D1433",
+          "textColor": "#FFFFFF",
+          "fontFamily": "Jua",
+          "fontSize": 16.0
+        },
+        "language": "ko"
+      }
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 20
+    },
+    "totalElements": 1,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### 4.5 편지 답장
 
 **POST** `/letters/{letterId}/reply`
 
@@ -612,9 +677,11 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 - 답장은 항상 `DIRECT` 타입으로 생성됩니다.
 - 친구가 아닌 사용자에게 답장을 보내면 자동으로 양방향 친구 관계가 생성됩니다.
 - 자기 자신에게 답장할 수 없습니다.
-- **공개 편지에 답장하는 경우**:
+- **공개 편지(PUBLIC)에 답장하는 경우**:
   - 원본 편지 ID(`originalLetterId`)가 답장 편지에 저장되어, 친구와의 편지 목록에서 해당 공개편지만 표시됩니다.
   - 공개 편지에 답장을 보내면 자동으로 해당 공개 편지가 읽음 처리됩니다 (`LetterRecipient`를 통해).
+- **친구 전용 편지(FRIENDS)에 답장하는 경우**:
+  - 친구 전용 편지에 답장을 보내면 자동으로 해당 편지가 읽음 처리됩니다 (`LetterRecipient`를 통해).
 - `attachedImages`: 첨부 이미지 URL 배열 (선택사항). 여러 이미지를 첨부할 수 있으며, 순서대로 저장됩니다.
   - 이미지 업로드는 `/files` API를 통해 먼저 수행하고, 반환된 URL을 사용합니다.
 
@@ -652,6 +719,31 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
   "message": "답장이 전송되었습니다. 친구가 자동으로 추가되었습니다."
 }
 ```
+
+---
+
+### 4.6 편지 삭제
+
+**DELETE** `/letters/{letterId}`
+
+**인증**: 필요
+
+**참고사항**:
+- 자신이 작성한 편지만 삭제할 수 있습니다.
+- 편지는 소프트 삭제됩니다 (실제로 삭제되지 않고 `deletedAt` 필드에 타임스탬프가 기록됩니다).
+- 삭제된 편지는 조회되지 않습니다.
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "message": "편지가 삭제되었습니다."
+}
+```
+
+**에러 응답**:
+- `403 Forbidden`: 자신이 작성한 편지가 아닌 경우
+- `404 Not Found`: 편지를 찾을 수 없는 경우
 
 ---
 

@@ -210,7 +210,7 @@ public class LetterService {
         return toDto(replyLetter, sender.getId());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<LetterDto> getPublicLetters(Pageable pageable, List<String> languages) {
         String currentUserId = SecurityUtil.getCurrentUserId();
         Page<Letter> letters;
@@ -225,9 +225,25 @@ public class LetterService {
         
         return letters.map(letter -> {
             letter.incrementViews();
+            // 읽음 처리 적용
+            markLetterAsReadIfNeeded(letter, currentUserId);
             letterRepository.save(letter);
             return toDto(letter, currentUserId);
         });
+    }
+
+    /**
+     * 내가 작성한 편지 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<LetterDto> getMyLetters(Pageable pageable) {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Page<Letter> letters = letterRepository.findBySenderId(currentUser.getId(), pageable);
+        return letters.map(letter -> toDto(letter, currentUser.getId()));
     }
 
     @Transactional
@@ -240,40 +256,8 @@ public class LetterService {
 
         letter.incrementViews();
         
-        // 공개 편지인 경우 LetterRecipient로 읽음 처리
-        if (letter.getVisibility() == Letter.Visibility.PUBLIC && currentUserId != null && !currentUserId.isEmpty()) {
-            User currentUser = userRepository.findActiveUserById(currentUserId)
-                    .orElse(null);
-            
-            if (currentUser != null && !letter.getSender().getId().equals(currentUserId)) {
-                // 이미 LetterRecipient가 있는지 확인
-                LetterRecipient letterRecipient = letterRecipientRepository
-                        .findByLetterIdAndUserId(letterId, currentUserId)
-                        .orElse(null);
-                
-                if (letterRecipient == null) {
-                    // 새로운 LetterRecipient 생성
-                    letterRecipient = LetterRecipient.builder()
-                            .letter(letter)
-                            .user(currentUser)
-                            .build();
-                    letterRecipient = letterRecipientRepository.save(letterRecipient);
-                }
-                
-                // 읽지 않은 경우 읽음 처리
-                if (letterRecipient.getIsRead() == null || !letterRecipient.getIsRead()) {
-                    letterRecipient.markAsRead();
-                    letterRecipientRepository.save(letterRecipient);
-                }
-            }
-        } else if (letter.getVisibility() == Letter.Visibility.DIRECT) {
-            // DIRECT 편지의 경우 기존 로직 유지 (recipient 필드 사용)
-            if (letter.getRecipient() != null && 
-                letter.getRecipient().getId().equals(currentUserId) && 
-                (letter.getIsRead() == null || !letter.getIsRead())) {
-                letter.markAsRead();
-            }
-        }
+        // 읽음 처리 적용
+        markLetterAsReadIfNeeded(letter, currentUserId);
         
         letterRepository.save(letter);
 
@@ -312,6 +296,60 @@ public class LetterService {
 
         letter.softDelete();
         letterRepository.save(letter);
+    }
+
+    /**
+     * 편지 읽음 처리 (모든 편지 타입에 적용)
+     * 작성자가 아닌 경우에만 읽음 처리를 수행합니다.
+     * 
+     * @param letter 편지 엔티티
+     * @param currentUserId 현재 사용자 ID
+     */
+    private void markLetterAsReadIfNeeded(Letter letter, String currentUserId) {
+        // 작성자가 아니고, 로그인한 사용자인 경우에만 읽음 처리
+        if (currentUserId != null && !currentUserId.isEmpty() && 
+            !letter.getSender().getId().equals(currentUserId)) {
+            
+            User currentUser = userRepository.findActiveUserById(currentUserId)
+                    .orElse(null);
+            
+            if (currentUser != null) {
+                // PUBLIC 또는 FRIENDS 편지인 경우 LetterRecipient로 읽음 처리
+                if (letter.getVisibility() == Letter.Visibility.PUBLIC || 
+                    letter.getVisibility() == Letter.Visibility.FRIENDS) {
+                    // 이미 LetterRecipient가 있는지 확인
+                    LetterRecipient letterRecipient = letterRecipientRepository
+                            .findByLetterIdAndUserId(letter.getId(), currentUserId)
+                            .orElse(null);
+                    
+                    if (letterRecipient == null) {
+                        // 새로운 LetterRecipient 생성
+                        letterRecipient = LetterRecipient.builder()
+                                .letter(letter)
+                                .user(currentUser)
+                                .build();
+                        letterRecipient = letterRecipientRepository.save(letterRecipient);
+                    }
+                    
+                    // 읽지 않은 경우 읽음 처리
+                    if (letterRecipient.getIsRead() == null || !letterRecipient.getIsRead()) {
+                        letterRecipient.markAsRead();
+                        letterRecipientRepository.save(letterRecipient);
+                    }
+                } else if (letter.getVisibility() == Letter.Visibility.DIRECT) {
+                    // DIRECT 편지의 경우 Letter 엔티티의 isRead 필드 사용
+                    if (letter.getRecipient() != null && 
+                        letter.getRecipient().getId().equals(currentUserId) && 
+                        (letter.getIsRead() == null || !letter.getIsRead())) {
+                        letter.markAsRead();
+                    }
+                } else if (letter.getVisibility() == Letter.Visibility.PRIVATE) {
+                    // PRIVATE 편지도 읽음 처리 (본인만 볼 수 있지만, 일관성을 위해 처리)
+                    // PRIVATE 편지는 checkLetterAccess에서 본인만 접근 가능하도록 보장됨
+                    // 읽음 처리는 필요 없지만, 향후 확장성을 위해 주석으로 남김
+                }
+            }
+        }
     }
 
     private void checkLetterAccess(Letter letter, String currentUserId) {

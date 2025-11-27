@@ -40,6 +40,13 @@ public class LetterController {
         return ResponseEntity.ok(ApiResponse.success(letters));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<Page<LetterDto>>> getMyLetters(
+            @PageableDefault(size = 20, sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
+        Page<LetterDto> letters = letterService.getMyLetters(pageable);
+        return ResponseEntity.ok(ApiResponse.success(letters));
+    }
+
     @GetMapping("/{letterId}")
     public ResponseEntity<ApiResponse<LetterDto>> getLetter(@PathVariable String letterId) {
         LetterDto letterDto = letterService.getLetter(letterId);
