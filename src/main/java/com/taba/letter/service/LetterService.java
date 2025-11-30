@@ -181,6 +181,51 @@ public class LetterService {
                 letterRecipient.markAsRead();
             }
             letterRecipientRepository.save(letterRecipient);
+            
+            // 공개편지를 DIRECT 타입으로 복사하여 친구와의 편지 목록에 추가
+            // 이미 존재하는지 확인 (중복 방지)
+            boolean publicLetterCopyExists = letterRepository.existsByOriginalLetterIdAndSenderAndRecipient(
+                    originalLetterId, originalLetter.getSender().getId(), sender.getId());
+            
+            if (!publicLetterCopyExists) {
+                // 답장 시간보다 빠르게 설정 (답장 시간의 1초 전)
+                LocalDateTime replySentAt = (request.getScheduledAt() == null || request.getScheduledAt().isBefore(LocalDateTime.now()))
+                        ? LocalDateTime.now()
+                        : request.getScheduledAt();
+                LocalDateTime publicLetterSentAt = replySentAt.minusSeconds(1);
+                
+                // 공개편지를 DIRECT 타입으로 복사
+                // sender: 공개편지 작성자, recipient: 답장을 보낸 사람
+                // 쿼리가 양방향으로 조회하므로 하나만 생성해도 양쪽 모두에서 보임
+                Letter publicLetterCopy = Letter.builder()
+                        .sender(originalLetter.getSender())
+                        .recipient(sender)
+                        .title(originalLetter.getTitle())
+                        .content(originalLetter.getContent())
+                        .preview(originalLetter.getPreview())
+                        .visibility(Letter.Visibility.DIRECT) // DIRECT 타입으로 복사
+                        .isAnonymous(false)
+                        .templateBackground(originalLetter.getTemplateBackground())
+                        .templateTextColor(originalLetter.getTemplateTextColor())
+                        .templateFontFamily(originalLetter.getTemplateFontFamily())
+                        .templateFontSize(originalLetter.getTemplateFontSize())
+                        .language(originalLetter.getLanguage())
+                        .originalLetterId(originalLetterId) // 원본 공개편지 ID 저장
+                        .build();
+                
+                // sentAt 설정 (답장보다 빠르게)
+                publicLetterCopy.setSentAt(publicLetterSentAt);
+                
+                // 이미지 복사
+                if (originalLetter.getImages() != null && !originalLetter.getImages().isEmpty()) {
+                    for (int i = 0; i < originalLetter.getImages().size(); i++) {
+                        LetterImage originalImage = originalLetter.getImages().get(i);
+                        publicLetterCopy.addImage(new LetterImage(originalImage.getImageUrl(), i));
+                    }
+                }
+                
+                letterRepository.save(publicLetterCopy);
+            }
         }
 
         if (request.getAttachedImages() != null) {

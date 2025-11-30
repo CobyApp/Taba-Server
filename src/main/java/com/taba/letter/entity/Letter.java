@@ -125,6 +125,10 @@ public class Letter extends BaseEntity {
         this.sentAt = LocalDateTime.now();
     }
 
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
+
     public void incrementViews() {
         this.views++;
     }
