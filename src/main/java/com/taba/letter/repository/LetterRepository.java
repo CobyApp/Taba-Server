@@ -92,39 +92,34 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "    AND original.sender.deletedAt IS NULL" +
            "  )" +
            ") OR (" +
-           "  l.sender.id = :friendId " +
-           "  AND l.visibility = 'PUBLIC' " +
-           "  AND EXISTS (" +
-           "    SELECT 1 FROM Letter reply " +
-           "    WHERE reply.sender.id = :currentUserId " +
-           "    AND reply.recipient.id = :friendId " +
-           "    AND reply.visibility = 'DIRECT' " +
-           "    AND reply.originalLetterId = l.id " +
-           "    AND reply.sentAt IS NOT NULL " +
-           "    AND reply.deletedAt IS NULL " +
-           "    AND reply.sender.deletedAt IS NULL " +
-           "    AND (reply.recipient IS NULL OR reply.recipient.deletedAt IS NULL)" +
-           "  )" +
+           "  l.visibility = 'PUBLIC' " +
            "  AND l.sentAt IS NOT NULL " +
            "  AND l.deletedAt IS NULL " +
            "  AND l.sender.deletedAt IS NULL " +
-           ") OR (" +
-           "  l.sender.id = :currentUserId " +
-           "  AND l.visibility = 'PUBLIC' " +
-           "  AND EXISTS (" +
-           "    SELECT 1 FROM Letter reply " +
-           "    WHERE reply.sender.id = :friendId " +
-           "    AND reply.recipient.id = :currentUserId " +
-           "    AND reply.visibility = 'DIRECT' " +
-           "    AND reply.originalLetterId = l.id " +
-           "    AND reply.sentAt IS NOT NULL " +
-           "    AND reply.deletedAt IS NULL " +
-           "    AND reply.sender.deletedAt IS NULL " +
-           "    AND (reply.recipient IS NULL OR reply.recipient.deletedAt IS NULL)" +
+           "  AND (" +
+           "    (l.sender.id = :friendId AND EXISTS (" +
+           "      SELECT 1 FROM Letter reply " +
+           "      WHERE reply.sender.id = :currentUserId " +
+           "      AND reply.recipient.id = :friendId " +
+           "      AND reply.visibility = 'DIRECT' " +
+           "      AND reply.originalLetterId = l.id " +
+           "      AND reply.sentAt IS NOT NULL " +
+           "      AND reply.deletedAt IS NULL " +
+           "      AND reply.sender.deletedAt IS NULL " +
+           "      AND (reply.recipient IS NULL OR reply.recipient.deletedAt IS NULL)" +
+           "    )) OR " +
+           "    (l.sender.id = :currentUserId AND EXISTS (" +
+           "      SELECT 1 FROM Letter reply " +
+           "      WHERE reply.sender.id = :friendId " +
+           "      AND reply.recipient.id = :currentUserId " +
+           "      AND reply.visibility = 'DIRECT' " +
+           "      AND reply.originalLetterId = l.id " +
+           "      AND reply.sentAt IS NOT NULL " +
+           "      AND reply.deletedAt IS NULL " +
+           "      AND reply.sender.deletedAt IS NULL " +
+           "      AND (reply.recipient IS NULL OR reply.recipient.deletedAt IS NULL)" +
+           "    ))" +
            "  )" +
-           "  AND l.sentAt IS NOT NULL " +
-           "  AND l.deletedAt IS NULL " +
-           "  AND l.sender.deletedAt IS NULL " +
            ")")
     Page<Letter> findLettersBetweenFriends(
             @Param("currentUserId") String currentUserId,
