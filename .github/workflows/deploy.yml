@@ -353,8 +353,15 @@ jobs:
               exit 1
             fi
             echo "✅ MySQL and Redis are running, starting backend..."
-            # --force-recreate 옵션으로 ContainerConfig 에러 방지
-            $COMPOSE_CMD up -d --no-deps --force-recreate backend || exit 1
+            # ContainerConfig 에러 방지를 위해 기존 백엔드 컨테이너 완전히 제거
+            echo "=== Removing existing backend container to prevent ContainerConfig errors ==="
+            docker stop "$BACKEND_CONTAINER" 2>/dev/null || true
+            docker rm -f "$BACKEND_CONTAINER" 2>/dev/null || true
+            # docker-compose를 사용하여 컨테이너 제거 (메타데이터 정리)
+            $COMPOSE_CMD rm -f backend 2>/dev/null || true
+            sleep 2
+            # 백엔드 컨테이너 시작
+            $COMPOSE_CMD up -d --no-deps --force-recreate --remove-orphans backend || exit 1
             sleep 5
             echo "=== Backend logs ==="
             docker logs --tail=30 "$BACKEND_CONTAINER" 2>&1
