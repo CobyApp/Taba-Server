@@ -253,10 +253,8 @@ public class LetterService {
         );
         
         return letters.map(letter -> {
-            letter.incrementViews();
-            // 읽음 처리 적용
-            markLetterAsReadIfNeeded(letter, currentUserId);
-            letterRepository.save(letter);
+            // 목록 조회 시에는 조회수 증가 및 읽음 처리하지 않음
+            // 실제 편지 상세 조회 시에만 처리됨 (getLetter 메서드)
             return toDto(letter, currentUserId);
         });
     }
