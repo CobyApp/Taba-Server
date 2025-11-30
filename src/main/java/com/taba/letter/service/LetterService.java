@@ -224,6 +224,9 @@ public class LetterService {
                     }
                 }
                 
+                // 복사된 공개편지는 읽음 처리 (답장을 보낸 사람이 이미 읽었으므로)
+                publicLetterCopy.markAsRead();
+                
                 letterRepository.save(publicLetterCopy);
             }
         }
