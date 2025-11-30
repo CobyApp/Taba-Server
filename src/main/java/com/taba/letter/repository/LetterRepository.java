@@ -101,7 +101,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "    AND reply.visibility = 'DIRECT' " +
            "    AND reply.originalLetterId = l.id " +
            "    AND reply.sentAt IS NOT NULL " +
-           "    AND reply.deletedAt IS NULL" +
+           "    AND reply.deletedAt IS NULL " +
+           "    AND reply.sender.deletedAt IS NULL " +
+           "    AND (reply.recipient IS NULL OR reply.recipient.deletedAt IS NULL)" +
            "  )" +
            "  AND l.sentAt IS NOT NULL " +
            "  AND l.deletedAt IS NULL " +
@@ -116,7 +118,9 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "    AND reply.visibility = 'DIRECT' " +
            "    AND reply.originalLetterId = l.id " +
            "    AND reply.sentAt IS NOT NULL " +
-           "    AND reply.deletedAt IS NULL" +
+           "    AND reply.deletedAt IS NULL " +
+           "    AND reply.sender.deletedAt IS NULL " +
+           "    AND (reply.recipient IS NULL OR reply.recipient.deletedAt IS NULL)" +
            "  )" +
            "  AND l.sentAt IS NOT NULL " +
            "  AND l.deletedAt IS NULL " +
