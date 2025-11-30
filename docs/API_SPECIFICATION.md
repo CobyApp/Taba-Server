@@ -501,6 +501,10 @@ profileImage: [파일]
   - 직접 전송 편지(DIRECT): 수신자가 조회하면 `Letter` 엔티티의 `isRead` 필드가 자동으로 업데이트됩니다. 1:1 편지이므로 편지 자체의 읽음 상태로 관리합니다.
   - 비공개 편지(PRIVATE): 본인만 볼 수 있으므로 읽음 처리가 필요하지 않습니다.
 - 편지를 조회하면 조회수(`views`)가 증가합니다.
+- `isRead`: 읽음 상태 (작성자가 아닌 경우에만 표시)
+  - `true`: 읽음
+  - `false`: 읽지 않음
+  - `null`: 작성자인 경우
 
 **Response** (200 OK):
 ```json
@@ -530,7 +534,8 @@ profileImage: [파일]
         "fontFamily": "Jua",
         "fontSize": 16.0
       },
-      "language": "ko"
+      "language": "ko",
+      "isRead": true
     }
   }
 }
@@ -556,6 +561,10 @@ profileImage: [파일]
   - 공개 편지(PUBLIC): `LetterRecipient` 테이블을 통해 읽음 상태가 기록됩니다.
   - 작성자가 아닌 경우에만 읽음 처리가 수행됩니다.
 - 편지를 조회하면 조회수(`views`)가 증가합니다.
+- `isRead`: 읽음 상태 (로그인한 사용자이고 작성자가 아닌 경우에만 표시)
+  - `true`: 읽음
+  - `false`: 읽지 않음
+  - `null`: 작성자인 경우 또는 비로그인 사용자
 
 **Request 예시**:
 ```
@@ -567,19 +576,20 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 {
   "success": true,
   "data": {
-    "letters": [
+    "content": [
       {
         "id": "uuid",
         "title": "편지 제목",
         "content": "편지 내용",
         "preview": "편지 미리보기",
-        "sentAt": "2024-01-01T00:00:00",
-        "views": 10,
         "sender": {
           "id": "uuid",
           "nickname": "작성자",
           "profileImageUrl": "https://dev.taba.asia/api/v1/files/{fileId}"
         },
+        "visibility": "PUBLIC",
+        "sentAt": "2024-01-01T00:00:00",
+        "views": 10,
         "attachedImages": ["https://dev.taba.asia/api/v1/files/{fileId}"],
         "template": {
           "background": "#1D1433",
@@ -587,9 +597,13 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
           "fontFamily": "Jua",
           "fontSize": 16.0
         },
-        "language": "ko"
+        "language": "ko",
+        "isRead": true
       }
-    ]
+    ],
+    "pageable": { ... },
+    "totalElements": 100,
+    "totalPages": 5
   }
 }
 ```
