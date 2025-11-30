@@ -29,6 +29,12 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success(notifications));
     }
 
+    @GetMapping("/unread-count")
+    public ResponseEntity<ApiResponse<UnreadCountResponse>> getUnreadCount() {
+        long unreadCount = notificationService.getUnreadCount();
+        return ResponseEntity.ok(ApiResponse.success(new UnreadCountResponse(unreadCount)));
+    }
+
     @PutMapping("/{notificationId}/read")
     public ResponseEntity<ApiResponse<NotificationDto>> markAsRead(@PathVariable String notificationId) {
         NotificationDto notification = notificationService.markAsRead(notificationId);
@@ -59,6 +65,12 @@ public class NotificationController {
     public static class ReadAllResponse {
         private int readCount;
         private String message;
+    }
+
+    @lombok.Getter
+    @lombok.AllArgsConstructor
+    public static class UnreadCountResponse {
+        private long unreadCount;
     }
 }
 

@@ -37,10 +37,35 @@ public class NotificationService {
         return notifications.map(this::toDto);
     }
 
+    /**
+     * 읽지 않은 알림 개수 조회
+     * 
+     * @return 읽지 않은 알림 개수
+     */
+    @Transactional(readOnly = true)
+    public long getUnreadCount() {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
+        }
+
+        return notificationRepository.countUnreadByUserId(currentUser.getId());
+    }
+
     @Transactional
     public NotificationDto markAsRead(String notificationId) {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
+        }
+
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        // 알림 소유자 확인
+        if (!notification.getUser().getId().equals(currentUser.getId())) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND);
+        }
 
         notification.markAsRead();
         notification = notificationRepository.save(notification);
@@ -61,8 +86,18 @@ public class NotificationService {
 
     @Transactional
     public void deleteNotification(String notificationId) {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
+        }
+
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        // 알림 소유자 확인
+        if (!notification.getUser().getId().equals(currentUser.getId())) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND);
+        }
 
         notificationRepository.delete(notification);
     }
@@ -94,6 +129,10 @@ public class NotificationService {
         if (user.getPushNotificationEnabled() != null && user.getPushNotificationEnabled() 
             && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
             try {
+                // 읽지 않은 알림 개수 계산 (앱 뱃지 숫자)
+                long unreadCount = notificationRepository.countUnreadByUserId(user.getId());
+                int badgeCount = (int) Math.max(0, unreadCount); // 음수 방지
+
                 Map<String, String> data = new HashMap<>();
                 data.put("notificationId", notification.getId());
                 data.put("category", category.name());
@@ -111,7 +150,8 @@ public class NotificationService {
                         user.getFcmToken(),
                         title,
                         subtitle != null ? subtitle : "",
-                        data
+                        data,
+                        badgeCount
                 );
 
                 if (sent) {
@@ -161,13 +201,17 @@ public class NotificationService {
     }
 
     private NotificationDto toDto(Notification notification) {
+        // isRead가 false이면 읽지 않음(isUnread = true), isRead가 true이면 읽음(isUnread = false)
+        Boolean isRead = notification.getIsRead();
+        Boolean isUnread = (isRead == null || !isRead);
+        
         return NotificationDto.builder()
                 .id(notification.getId())
                 .title(notification.getTitle())
                 .subtitle(notification.getSubtitle())
                 .time(notification.getCreatedAt())
                 .category(notification.getCategory())
-                .isUnread(notification.getIsRead())
+                .isUnread(isUnread)
                 .relatedId(notification.getRelatedId())
                 .build();
     }

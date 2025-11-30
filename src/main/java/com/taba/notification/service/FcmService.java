@@ -26,9 +26,10 @@ public class FcmService {
      * @param title 알림 제목
      * @param body 알림 본문
      * @param data 추가 데이터 (선택사항)
+     * @param badgeCount 읽지 않은 알림 개수 (앱 뱃지 숫자, null이면 1로 설정)
      * @return 성공 여부
      */
-    public boolean sendPushNotification(String fcmToken, String title, String body, java.util.Map<String, String> data) {
+    public boolean sendPushNotification(String fcmToken, String title, String body, java.util.Map<String, String> data, Integer badgeCount) {
         if (fcmToken == null || fcmToken.isEmpty()) {
             log.warn("FCM token is null or empty, skipping push notification");
             return false;
@@ -49,11 +50,14 @@ public class FcmService {
                 messageBuilder.putAllData(data);
             }
 
+            // 읽지 않은 알림 개수로 뱃지 설정 (null이면 1로 기본값 설정)
+            int badge = (badgeCount != null && badgeCount >= 0) ? badgeCount : 1;
+
             // iOS 설정 (APNs)
             ApnsConfig apnsConfig = ApnsConfig.builder()
                     .setAps(Aps.builder()
                             .setSound("default")
-                            .setBadge(1)
+                            .setBadge(badge)
                             .build())
                     .build();
             messageBuilder.setApnsConfig(apnsConfig);
@@ -91,7 +95,49 @@ public class FcmService {
     }
 
     /**
+     * FCM 푸시 알림 발송 (badgeCount 기본값 1)
+     * 
+     * @param fcmToken FCM 토큰
+     * @param title 알림 제목
+     * @param body 알림 본문
+     * @param data 추가 데이터 (선택사항)
+     * @return 성공 여부
+     */
+    public boolean sendPushNotification(String fcmToken, String title, String body, java.util.Map<String, String> data) {
+        return sendPushNotification(fcmToken, title, body, data, null);
+    }
+
+    /**
      * 여러 기기에 FCM 푸시 알림 발송 (멀티캐스트)
+     * 
+     * @param fcmTokens FCM 토큰 리스트
+     * @param title 알림 제목
+     * @param body 알림 본문
+     * @param data 추가 데이터 (선택사항)
+     * @param badgeCount 읽지 않은 알림 개수 (앱 뱃지 숫자, null이면 1로 설정)
+     * @return 성공한 발송 수
+     */
+    public int sendMulticastPushNotification(
+            java.util.List<String> fcmTokens, 
+            String title, 
+            String body, 
+            java.util.Map<String, String> data,
+            Integer badgeCount) {
+        if (fcmTokens == null || fcmTokens.isEmpty()) {
+            return 0;
+        }
+
+        int successCount = 0;
+        for (String token : fcmTokens) {
+            if (sendPushNotification(token, title, body, data, badgeCount)) {
+                successCount++;
+            }
+        }
+        return successCount;
+    }
+
+    /**
+     * 여러 기기에 FCM 푸시 알림 발송 (멀티캐스트, badgeCount 기본값 1)
      * 
      * @param fcmTokens FCM 토큰 리스트
      * @param title 알림 제목
@@ -104,17 +150,7 @@ public class FcmService {
             String title, 
             String body, 
             java.util.Map<String, String> data) {
-        if (fcmTokens == null || fcmTokens.isEmpty()) {
-            return 0;
-        }
-
-        int successCount = 0;
-        for (String token : fcmTokens) {
-            if (sendPushNotification(token, title, body, data)) {
-                successCount++;
-            }
-        }
-        return successCount;
+        return sendMulticastPushNotification(fcmTokens, title, body, data, null);
     }
 }
 

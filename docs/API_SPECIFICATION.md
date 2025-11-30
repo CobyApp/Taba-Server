@@ -827,27 +827,49 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 
 **인증**: 필요
 
+**Query Parameters**:
+- `category` (선택): 알림 카테고리 필터링 (`LETTER`, `REACTION`, `FRIEND`, `SYSTEM`)
+- `page` (선택): 페이지 번호 (기본값: 0)
+- `size` (선택): 페이지 크기 (기본값: 20)
+
 **Response** (200 OK):
 ```json
 {
   "success": true,
   "data": {
-    "notifications": [
+    "content": [
       {
         "id": "uuid",
-        "type": "LETTER_RECEIVED",
-        "message": "새 편지를 받았습니다.",
-        "read": false,
-        "createdAt": "2024-01-01T00:00:00"
+        "title": "새 편지를 받았습니다.",
+        "subtitle": "친구1님이 편지를 보냈습니다.",
+        "time": "2024-01-01T00:00:00",
+        "category": "LETTER",
+        "isUnread": true,
+        "relatedId": "letter-uuid"
       }
-    ]
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 20
+    },
+    "totalElements": 50,
+    "totalPages": 3,
+    "last": false,
+    "first": true,
+    "numberOfElements": 20
   }
 }
 ```
 
-### 6.2 알림 읽음 처리
+**참고사항**:
+- `isUnread`: `true`이면 읽지 않은 알림, `false`이면 읽은 알림
+- `category`: 알림 카테고리 (`LETTER`, `REACTION`, `FRIEND`, `SYSTEM`)
+- `relatedId`: 관련된 리소스 ID (예: 편지 ID, 친구 ID 등)
+- 페이지네이션을 지원합니다.
 
-**PATCH** `/notifications/{notificationId}/read`
+### 6.2 읽지 않은 알림 개수 조회
+
+**GET** `/notifications/unread-count`
 
 **인증**: 필요
 
@@ -855,9 +877,88 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 ```json
 {
   "success": true,
-  "message": "알림이 읽음 처리되었습니다."
+  "data": {
+    "unreadCount": 5
+  }
 }
 ```
+
+**참고사항**:
+- 현재 사용자의 읽지 않은 알림 개수를 반환합니다.
+- `isRead = false`인 알림만 카운트됩니다.
+
+### 6.3 알림 읽음 처리
+
+**PUT** `/notifications/{notificationId}/read`
+
+**인증**: 필요
+
+**Path Parameters**:
+- `notificationId`: 알림 ID
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "title": "새 편지를 받았습니다.",
+    "subtitle": "친구1님이 편지를 보냈습니다.",
+    "time": "2024-01-01T00:00:00",
+    "category": "LETTER",
+    "isUnread": false,
+    "relatedId": "letter-uuid"
+  }
+}
+```
+
+**참고사항**:
+- 알림을 읽음 처리하면 `isUnread`가 `false`로 변경됩니다.
+- 존재하지 않는 알림 ID인 경우: `NOTIFICATION_NOT_FOUND` 에러 반환
+
+### 6.4 모든 알림 읽음 처리
+
+**PUT** `/notifications/read-all`
+
+**인증**: 필요
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "readCount": 10,
+    "message": "모든 알림이 읽음 처리되었습니다."
+  }
+}
+```
+
+**참고사항**:
+- 현재 사용자의 모든 읽지 않은 알림을 일괄 읽음 처리합니다.
+- `readCount`: 읽음 처리된 알림 개수
+- 메시지는 사용자의 언어 설정에 따라 다르게 반환됩니다.
+
+### 6.5 알림 삭제
+
+**DELETE** `/notifications/{notificationId}`
+
+**인증**: 필요
+
+**Path Parameters**:
+- `notificationId`: 알림 ID
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": "알림이 삭제되었습니다.",
+  "message": "알림이 삭제되었습니다."
+}
+```
+
+**참고사항**:
+- 존재하지 않는 알림 ID인 경우: `NOTIFICATION_NOT_FOUND` 에러 반환
+- 메시지는 사용자의 언어 설정에 따라 다르게 반환됩니다.
 
 ---
 
