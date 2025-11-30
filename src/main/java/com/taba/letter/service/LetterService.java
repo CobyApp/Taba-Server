@@ -447,6 +447,33 @@ public class LetterService {
         // sender 정보를 최신 데이터로 조회
         User freshSender = userService.refreshUser(letter.getSender());
 
+        // 읽음 상태 확인
+        Boolean isRead = null;
+        if (currentUserId != null && !currentUserId.isEmpty() && 
+            !letter.getSender().getId().equals(currentUserId)) {
+            // 작성자가 아닌 경우에만 읽음 상태 확인
+            if (letter.getVisibility() == Letter.Visibility.PUBLIC || 
+                letter.getVisibility() == Letter.Visibility.FRIENDS) {
+                // PUBLIC 또는 FRIENDS 편지인 경우 LetterRecipient로 읽음 상태 확인
+                LetterRecipient letterRecipient = letterRecipientRepository
+                        .findByLetterIdAndUserId(letter.getId(), currentUserId)
+                        .orElse(null);
+                if (letterRecipient != null) {
+                    isRead = letterRecipient.getIsRead() != null ? letterRecipient.getIsRead() : false;
+                } else {
+                    // LetterRecipient가 없으면 아직 읽지 않은 것으로 간주
+                    isRead = false;
+                }
+            } else if (letter.getVisibility() == Letter.Visibility.DIRECT) {
+                // DIRECT 편지인 경우 recipient 기준으로 읽음 상태 확인 (내가 받은 편지인 경우)
+                if (letter.getRecipient() != null && 
+                    letter.getRecipient().getId().equals(currentUserId)) {
+                    isRead = letter.getIsRead() != null ? letter.getIsRead() : false;
+                }
+                // 내가 보낸 편지는 읽음 상태가 의미 없으므로 null
+            }
+        }
+
         return LetterDto.builder()
                 .id(letter.getId())
                 .title(letter.getTitle())
@@ -459,6 +486,7 @@ public class LetterService {
                 .attachedImages(images)
                 .template(template)
                 .language(letter.getLanguage())
+                .isRead(isRead)
                 .build();
     }
 }

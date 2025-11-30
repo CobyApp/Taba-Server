@@ -26,6 +26,7 @@ public class LetterDto {
     private List<String> attachedImages;
     private LetterTemplateDto template;
     private String language; // ko, en, ja
+    private Boolean isRead; // 읽음 상태 (PUBLIC/FRIENDS: LetterRecipient 기준, DIRECT: Letter.isRead 기준, 작성자인 경우 null)
 }
 
 
