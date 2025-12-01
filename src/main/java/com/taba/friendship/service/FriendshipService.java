@@ -114,18 +114,19 @@ public class FriendshipService {
         code.use(currentUser);
         inviteCodeRepository.save(code);
 
-        // 친구 추가 알림 전송 (초대 코드를 사용한 사용자에게 알림)
-        String userLanguage = currentUser.getLanguage() != null ? currentUser.getLanguage() : "ko";
+        // 친구 추가 알림 전송 (초대 코드를 받은 사용자에게 알림)
+        // 친구를 추가한 사람이 아닌, 상대방에게 알림을 보냅니다
+        String friendLanguage = freshFriendUser.getLanguage() != null ? freshFriendUser.getLanguage() : "ko";
         String title = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.title", userLanguage, freshFriendUser.getNickname());
+                "notification.friend.added.title", friendLanguage, currentUser.getNickname());
         String body = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.body", userLanguage);
+                "notification.friend.added.body", friendLanguage);
         notificationService.createAndSendNotification(
-                currentUser,
+                freshFriendUser,
                 title,
                 body,
                 com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
-                freshFriendUser.getId()
+                currentUser.getId()
         );
 
         // 친구 정보 반환 (최신 데이터 사용)
@@ -385,22 +386,9 @@ public class FriendshipService {
                 .build();
         friendshipRepository.save(friendship2);
         
-        // 친구 추가 알림 전송 (양쪽 사용자에게 알림)
-        // user1에게 알림
-        String user1Language = freshUser1.getLanguage() != null ? freshUser1.getLanguage() : "ko";
-        String title1 = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.title", user1Language, freshUser2.getNickname());
-        String body1 = com.taba.common.util.MessageUtil.getMessage(
-                "notification.friend.added.body", user1Language);
-        notificationService.createAndSendNotification(
-                freshUser1,
-                title1,
-                body1,
-                com.taba.notification.entity.Notification.NotificationCategory.FRIEND,
-                freshUser2.getId()
-        );
-        
-        // user2에게 알림
+        // 친구 추가 알림 전송 (상대방에게만 알림)
+        // 편지 답장 시 자동 친구 추가인 경우, 답장을 보낸 사람은 이미 편지 알림을 받았으므로
+        // 친구 추가 알림은 상대방(user2)에게만 보냅니다
         String user2Language = freshUser2.getLanguage() != null ? freshUser2.getLanguage() : "ko";
         String title2 = com.taba.common.util.MessageUtil.getMessage(
                 "notification.friend.added.title", user2Language, freshUser1.getNickname());
