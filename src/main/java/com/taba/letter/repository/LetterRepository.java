@@ -94,6 +94,19 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
             @Param("friendId") String friendId);
 
     /**
+     * 사용자가 받은 전체 읽지 않은 편지 개수 조회
+     * - DIRECT 타입 편지 중 읽지 않은 것만 카운트
+     */
+    @Query("SELECT COUNT(l) FROM Letter l WHERE " +
+           "l.recipient.id = :userId " +
+           "AND l.visibility = 'DIRECT' " +
+           "AND l.sentAt IS NOT NULL " +
+           "AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
+           "AND (l.isRead IS NULL OR l.isRead = false)")
+    long countTotalUnreadLettersByUserId(@Param("userId") String userId);
+
+    /**
      * 공개편지에 대한 가장 빠른 답장 조회
      * originalLetterId가 공개편지 ID와 일치하는 답장 중 가장 빠른 것을 찾습니다.
      * 양방향으로 조회 (내가 보낸 답장 또는 친구가 보낸 답장)

@@ -821,6 +821,15 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 
 ## 6. 알림 API (`/notifications`)
 
+**참고사항**:
+- 알림이 생성될 때마다 FCM 푸시 알림이 자동으로 발송됩니다 (사용자가 푸시 알림을 활성화하고 FCM 토큰이 등록된 경우).
+- **뱃지 숫자**: FCM 푸시 알림의 뱃지 숫자는 해당 사용자의 읽지 않은 편지 개수로 자동 계산됩니다.
+  - 메인화면(친구 목록)에서 표시되는 읽지 않은 편지 개수와 동일한 값입니다.
+  - DIRECT 타입 편지 중 `isRead = false` 또는 `isRead = null`인 편지만 카운트됩니다.
+  - 알림이 생성될 때마다 실시간으로 읽지 않은 편지 개수를 조회하여 뱃지 숫자로 설정합니다.
+  - 뱃지 숫자는 음수가 되지 않도록 보장됩니다 (`Math.max(0, unreadLetterCount)`).
+  - iOS APNs를 통해 앱 아이콘에 뱃지가 표시됩니다.
+
 ### 6.1 알림 목록 조회
 
 **GET** `/notifications`
@@ -886,6 +895,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 **참고사항**:
 - 현재 사용자의 읽지 않은 알림 개수를 반환합니다.
 - `isRead = false`인 알림만 카운트됩니다.
+- **참고**: 이 API는 읽지 않은 알림 개수를 반환하며, FCM 푸시 알림의 뱃지 숫자는 읽지 않은 편지 개수로 계산됩니다.
 
 ### 6.3 알림 읽음 처리
 
