@@ -12,7 +12,6 @@ import com.taba.letter.repository.LetterRepository;
 import com.taba.letter.repository.LetterRecipientRepository;
 import com.taba.letter.repository.LetterReportRepository;
 import com.taba.friendship.service.FriendshipService;
-import com.taba.friendship.repository.FriendshipRepository;
 import com.taba.notification.service.NotificationService;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
@@ -36,7 +35,6 @@ public class LetterService {
     private final LetterReportRepository letterReportRepository;
     private final UserRepository userRepository;
     private final FriendshipService friendshipService;
-    private final FriendshipRepository friendshipRepository;
     private final NotificationService notificationService;
     private final com.taba.user.service.UserService userService;
 
@@ -60,6 +58,33 @@ public class LetterService {
         if (request.getRecipientId() != null) {
             recipient = userRepository.findActiveUserById(request.getRecipientId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        }
+
+        // 예약전송인 경우: DIRECT만 허용하고 친구 관계 확인
+        if (request.getScheduledAt() != null && request.getScheduledAt().isAfter(LocalDateTime.now())) {
+            // 예약전송은 DIRECT만 가능
+            if (request.getVisibility() != Letter.Visibility.DIRECT) {
+                String language = sender.getLanguage() != null ? sender.getLanguage() : "ko";
+                String message = com.taba.common.util.MessageUtil.getMessage(
+                        "error.scheduled_letter.only_direct", language);
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
+            }
+            
+            // 수신자가 필수
+            if (recipient == null) {
+                String language = sender.getLanguage() != null ? sender.getLanguage() : "ko";
+                String message = com.taba.common.util.MessageUtil.getMessage(
+                        "error.scheduled_letter.recipient_required", language);
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
+            }
+            
+            // 친구 관계 확인
+            if (!friendshipService.existsFriendship(sender.getId(), recipient.getId())) {
+                String language = sender.getLanguage() != null ? sender.getLanguage() : "ko";
+                String message = com.taba.common.util.MessageUtil.getMessage(
+                        "error.scheduled_letter.friendship_required", language);
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
+            }
         }
 
         // 익명 기능 제거: 항상 false로 설정
@@ -374,7 +399,7 @@ public class LetterService {
         letterRepository.save(letter);
 
         // 관련된 LetterRecipient도 소프트 삭제 처리
-        // (PUBLIC, FRIENDS 편지의 경우 여러 사용자가 읽었을 수 있으므로)
+        // (PUBLIC 편지의 경우 여러 사용자가 읽었을 수 있으므로)
         // 삭제되지 않은 것만 조회하여 소프트 삭제
         List<LetterRecipient> recipients = letterRecipientRepository.findAllByLetterId(letterId);
         for (LetterRecipient recipient : recipients) {
@@ -409,9 +434,8 @@ public class LetterService {
                     .orElse(null);
             
             if (currentUser != null) {
-                // PUBLIC 또는 FRIENDS 편지인 경우 LetterRecipient로 읽음 처리
-                if (letter.getVisibility() == Letter.Visibility.PUBLIC || 
-                    letter.getVisibility() == Letter.Visibility.FRIENDS) {
+                // PUBLIC 편지인 경우 LetterRecipient로 읽음 처리
+                if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
                     // 이미 LetterRecipient가 있는지 확인
                     LetterRecipient letterRecipient = letterRecipientRepository
                             .findByLetterIdAndUserId(letter.getId(), currentUserId)
@@ -438,33 +462,37 @@ public class LetterService {
                         (letter.getIsRead() == null || !letter.getIsRead())) {
                         letter.markAsRead();
                     }
-                } else if (letter.getVisibility() == Letter.Visibility.PRIVATE) {
-                    // PRIVATE 편지도 읽음 처리 (본인만 볼 수 있지만, 일관성을 위해 처리)
-                    // PRIVATE 편지는 checkLetterAccess에서 본인만 접근 가능하도록 보장됨
-                    // 읽음 처리는 필요 없지만, 향후 확장성을 위해 주석으로 남김
                 }
             }
         }
     }
 
     private void checkLetterAccess(Letter letter, String currentUserId) {
-        if (letter.getVisibility() == Letter.Visibility.PRIVATE) {
-            if (currentUserId == null || !letter.getSender().getId().equals(currentUserId)) {
-                throw new BusinessException(ErrorCode.FORBIDDEN);
-            }
-        } else if (letter.getVisibility() == Letter.Visibility.DIRECT) {
+        if (letter.getVisibility() == Letter.Visibility.DIRECT) {
             if (currentUserId == null || 
                 (!letter.getSender().getId().equals(currentUserId) && 
                  (letter.getRecipient() == null || !letter.getRecipient().getId().equals(currentUserId)))) {
                 throw new BusinessException(ErrorCode.FORBIDDEN);
             }
-        } else if (letter.getVisibility() == Letter.Visibility.FRIENDS) {
-            if (currentUserId == null) {
-                throw new BusinessException(ErrorCode.UNAUTHORIZED);
-            }
-            if (!letter.getSender().getId().equals(currentUserId) &&
-                    !friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(currentUserId, letter.getSender().getId())) {
-                throw new BusinessException(ErrorCode.FORBIDDEN);
+            
+            // 예약전송 편지인 경우: 받는 사람은 예약 시간 전까지 접근 불가
+            if (letter.getScheduledAt() != null && letter.getSentAt() == null) {
+                // 예약전송이 아직 발송되지 않은 경우
+                if (letter.getRecipient() != null && 
+                    letter.getRecipient().getId().equals(currentUserId) &&
+                    !letter.getSender().getId().equals(currentUserId)) {
+                    // 받는 사람이고, 보낸 사람이 아닌 경우
+                    LocalDateTime now = LocalDateTime.now();
+                    if (now.isBefore(letter.getScheduledAt())) {
+                        // 아직 예약 시간이 지나지 않았으면 접근 불가
+                        User currentUser = userRepository.findActiveUserById(currentUserId).orElse(null);
+                        String language = currentUser != null && currentUser.getLanguage() != null 
+                                ? currentUser.getLanguage() : "ko";
+                        String message = com.taba.common.util.MessageUtil.getMessage(
+                                "error.scheduled_letter.not_accessible_yet", language);
+                        throw new BusinessException(ErrorCode.FORBIDDEN, message);
+                    }
+                }
             }
         }
         // PUBLIC 편지는 누구나 접근 가능
@@ -498,9 +526,8 @@ public class LetterService {
         if (currentUserId != null && !currentUserId.isEmpty() && 
             !letter.getSender().getId().equals(currentUserId)) {
             // 작성자가 아닌 경우에만 읽음 상태 확인
-            if (letter.getVisibility() == Letter.Visibility.PUBLIC || 
-                letter.getVisibility() == Letter.Visibility.FRIENDS) {
-                // PUBLIC 또는 FRIENDS 편지인 경우 LetterRecipient로 읽음 상태 확인
+            if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
+                // PUBLIC 편지인 경우 LetterRecipient로 읽음 상태 확인
                 LetterRecipient letterRecipient = letterRecipientRepository
                         .findByLetterIdAndUserId(letter.getId(), currentUserId)
                         .orElse(null);

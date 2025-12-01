@@ -68,7 +68,7 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
            "  ((l.sender.id = :currentUserId AND l.recipient.id = :friendId) OR " +
            "   (l.sender.id = :friendId AND l.recipient.id = :currentUserId)) " +
            "  AND l.visibility = 'DIRECT' " +
-           "  AND l.sentAt IS NOT NULL " +
+           "  AND (l.sentAt IS NOT NULL OR (l.scheduledAt IS NOT NULL AND l.sentAt IS NULL)) " +
            "  AND l.deletedAt IS NULL " +
            "  AND l.sender.deletedAt IS NULL " +
            "  AND (l.recipient IS NULL OR l.recipient.deletedAt IS NULL)" +

@@ -279,15 +279,20 @@ public class FriendshipService {
     }
 
     /**
-     * 공개편지의 경우 조정된 sentAt을 반환합니다.
-     * 공개편지에 답장이 있는 경우, 답장 시간 바로 전(1초 전)으로 조정합니다.
+     * 편지의 조정된 sentAt을 반환합니다.
+     * - 예약전송 편지: scheduledAt 사용 (아직 발송되지 않은 경우)
+     * - 공개편지: 답장이 있는 경우 답장 시간 바로 전(1초 전)으로 조정
      */
     private LocalDateTime getAdjustedSentAt(Letter letter, String currentUserId, String friendId) {
+        // 예약전송 편지인 경우 scheduledAt 사용
         LocalDateTime adjustedSentAt = letter.getSentAt();
+        if (adjustedSentAt == null && letter.getScheduledAt() != null) {
+            adjustedSentAt = letter.getScheduledAt();
+        }
         
         try {
             // 공개편지인 경우 답장 시간을 고려하여 sentAt 조정
-            if (letter.getVisibility() == Letter.Visibility.PUBLIC) {
+            if (letter.getVisibility() == Letter.Visibility.PUBLIC && adjustedSentAt != null) {
                 List<Letter> replies = letterRepository.findEarliestReplyToPublicLetter(
                         letter.getId(), currentUserId, friendId);
                 if (!replies.isEmpty() && replies.get(0).getSentAt() != null) {
@@ -334,6 +339,13 @@ public class FriendshipService {
                 friendshipRepository.save(friendship);
             }
         }
+    }
+
+    /**
+     * 친구 관계 존재 여부 확인
+     */
+    public boolean existsFriendship(String userId1, String userId2) {
+        return friendshipRepository.existsByUserIdAndFriendIdAndDeletedAtIsNull(userId1, userId2);
     }
 
     /**
