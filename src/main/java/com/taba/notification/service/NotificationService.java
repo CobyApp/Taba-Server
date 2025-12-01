@@ -209,6 +209,28 @@ public class NotificationService {
     }
 
     /**
+     * 뱃지 숫자를 현재 읽지 않은 알림 개수로 동기화
+     * 앱이 포그라운드로 올라오거나 알림 목록 화면 진입 시 호출
+     * 
+     * @return 읽지 않은 알림 개수
+     */
+    @Transactional(readOnly = true)
+    public long syncBadge() {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if (currentUser == null) {
+            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
+        }
+        
+        // 현재 읽지 않은 알림 개수 계산
+        long unreadCount = notificationRepository.countUnreadByUserId(currentUser.getId());
+        
+        // 뱃지 업데이트 푸시 전송 (읽지 않은 알림 개수로 동기화)
+        sendBadgeUpdateIfNeeded(currentUser);
+        
+        return unreadCount;
+    }
+
+    /**
      * 뱃지 업데이트 푸시 알림 발송 (필요한 경우에만)
      * 
      * @param user 사용자

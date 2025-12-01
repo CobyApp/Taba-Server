@@ -955,6 +955,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 - 알림 생성 시: 새 알림이 생성되면 읽지 않은 알림 개수를 계산하여 뱃지 숫자로 전송합니다.
 - 알림 읽음 처리 시: 읽지 않은 알림을 읽음 처리하면 업데이트된 뱃지 숫자가 silent push로 전송됩니다.
 - 알림 삭제 시: 읽지 않은 알림을 삭제하면 업데이트된 뱃지 숫자가 silent push로 전송됩니다.
+- 뱃지 동기화 시: 앱이 포그라운드로 올라오거나 알림 목록 화면 진입 시 현재 읽지 않은 알림 개수로 뱃지를 동기화합니다.
 
 **FCM Data Payload 구조** (알림 생성 시):
 ```json
@@ -974,6 +975,28 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
   "badge": "2"
 }
 ```
+
+**Response** (200 OK):
+```json
+{
+  "success": true,
+  "data": {
+    "unreadCount": 3
+  }
+}
+```
+
+### 6.7 뱃지 동기화
+
+**POST** `/notifications/badge/sync`
+
+**인증**: 필요
+
+**참고사항**:
+- 현재 읽지 않은 알림 개수를 계산하여 뱃지 숫자를 동기화합니다.
+- 앱이 포그라운드로 올라오거나 알림 목록 화면 진입 시 호출하는 것을 권장합니다.
+- 읽지 않은 알림 개수를 반환하며, 동시에 FCM 푸시 알림으로 뱃지 숫자를 업데이트합니다.
+- iOS와 Android 모두 지원합니다.
 
 **Response** (200 OK):
 ```json

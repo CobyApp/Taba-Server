@@ -60,6 +60,12 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success(new UnreadCountResponse((int) unreadCount)));
     }
 
+    @PostMapping("/badge/sync")
+    public ResponseEntity<ApiResponse<UnreadCountResponse>> syncBadge() {
+        long unreadCount = notificationService.syncBadge();
+        return ResponseEntity.ok(ApiResponse.success(new UnreadCountResponse((int) unreadCount)));
+    }
+
     @lombok.Getter
     @lombok.AllArgsConstructor
     public static class ReadAllResponse {
