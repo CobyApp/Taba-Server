@@ -873,6 +873,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 **참고사항**:
 - 특정 알림을 읽음 처리합니다.
 - 읽음 처리된 알림의 `isUnread` 값이 `false`로 변경됩니다.
+- 읽지 않은 알림을 읽음 처리한 경우, 업데이트된 뱃지 숫자가 FCM 푸시 알림으로 자동 전송됩니다 (iOS/Android 모두 지원).
 
 **Response** (200 OK):
 ```json
@@ -899,6 +900,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 **참고사항**:
 - 현재 사용자의 모든 읽지 않은 알림을 일괄 읽음 처리합니다.
 - 읽음 처리된 알림 개수를 반환합니다.
+- 읽음 처리한 알림이 있는 경우, 업데이트된 뱃지 숫자가 FCM 푸시 알림으로 자동 전송됩니다 (iOS/Android 모두 지원).
 
 **Response** (200 OK):
 ```json
@@ -920,6 +922,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 **참고사항**:
 - 본인의 알림만 삭제할 수 있습니다.
 - 알림 삭제 시 읽지 않은 알림 개수(`/notifications/unread-count`)에 즉시 반영됩니다.
+- 읽지 않은 알림을 삭제한 경우, 업데이트된 뱃지 숫자가 FCM 푸시 알림으로 자동 전송됩니다 (iOS/Android 모두 지원).
 
 **Response** (200 OK):
 ```json
@@ -941,6 +944,36 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 - 앱 뱃지 숫자 표시용으로 사용됩니다.
 - FCM 푸시 알림 발송 시에도 이 개수가 뱃지 숫자로 전송됩니다.
 - 알림 생성, 읽음 처리, 삭제 시 즉시 반영됩니다.
+
+### 6.6 FCM 푸시 알림 및 뱃지
+
+**FCM 푸시 알림 뱃지 지원**:
+- **iOS**: APNs의 `badge` 필드를 통해 읽지 않은 알림 개수가 자동으로 설정됩니다.
+- **Android**: FCM data payload의 `badge` 필드에 읽지 않은 알림 개수가 포함됩니다. 앱에서 이 값을 받아 뱃지를 업데이트할 수 있습니다.
+
+**뱃지 업데이트 시점**:
+- 알림 생성 시: 새 알림이 생성되면 읽지 않은 알림 개수를 계산하여 뱃지 숫자로 전송합니다.
+- 알림 읽음 처리 시: 읽지 않은 알림을 읽음 처리하면 업데이트된 뱃지 숫자가 silent push로 전송됩니다.
+- 알림 삭제 시: 읽지 않은 알림을 삭제하면 업데이트된 뱃지 숫자가 silent push로 전송됩니다.
+
+**FCM Data Payload 구조** (알림 생성 시):
+```json
+{
+  "notificationId": "uuid",
+  "category": "LETTER",
+  "relatedId": "letter-uuid",
+  "deepLink": "/letter/letter-uuid",
+  "badge": "3"
+}
+```
+
+**FCM Data Payload 구조** (뱃지 업데이트만):
+```json
+{
+  "type": "badge_update",
+  "badge": "2"
+}
+```
 
 **Response** (200 OK):
 ```json
@@ -1011,4 +1044,10 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 
 ### 편지 답장 시 자동 친구 추가
 - 친구가 아닌 사용자에게 답장을 보내면 자동으로 양방향 친구 관계가 생성됩니다
+
+### 알림 뱃지 숫자
+- 뱃지 숫자는 **읽지 않은 알림 개수**로 표시됩니다.
+- iOS와 Android 모두 지원합니다.
+- 알림 생성, 읽음 처리, 삭제 시 뱃지 숫자가 자동으로 업데이트됩니다.
+- FCM 푸시 알림을 통해 뱃지 숫자가 실시간으로 동기화됩니다.
 

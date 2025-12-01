@@ -44,8 +44,18 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
 
+        User user = notification.getUser();
+        boolean wasUnread = notification.getIsRead() == null || !notification.getIsRead();
+
         notification.markAsRead();
         notification = notificationRepository.save(notification);
+        entityManager.flush();
+
+        // 읽지 않았던 알림을 읽음 처리한 경우에만 뱃지 업데이트
+        if (wasUnread) {
+            sendBadgeUpdateIfNeeded(user);
+        }
+
         return toDto(notification);
     }
 
@@ -58,6 +68,13 @@ public class NotificationService {
 
         // 배치 업데이트로 최적화
         int count = notificationRepository.markAllAsReadByUserId(currentUser.getId());
+        entityManager.flush();
+
+        // 읽음 처리한 알림이 있는 경우 뱃지 업데이트
+        if (count > 0) {
+            sendBadgeUpdateIfNeeded(currentUser);
+        }
+
         return count;
     }
 
@@ -66,7 +83,16 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
 
+        User user = notification.getUser();
+        boolean wasUnread = notification.getIsRead() == null || !notification.getIsRead();
+
         notificationRepository.delete(notification);
+        entityManager.flush();
+
+        // 읽지 않았던 알림을 삭제한 경우에만 뱃지 업데이트
+        if (wasUnread) {
+            sendBadgeUpdateIfNeeded(user);
+        }
     }
 
     /**
@@ -180,6 +206,34 @@ public class NotificationService {
             }
             case SYSTEM -> "/notifications";
         };
+    }
+
+    /**
+     * 뱃지 업데이트 푸시 알림 발송 (필요한 경우에만)
+     * 
+     * @param user 사용자
+     */
+    private void sendBadgeUpdateIfNeeded(User user) {
+        // 푸시 알림이 활성화되어 있고 FCM 토큰이 있는 경우에만 전송
+        if (user.getPushNotificationEnabled() != null && user.getPushNotificationEnabled() 
+            && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
+            try {
+                // 현재 읽지 않은 알림 개수 계산
+                long unreadCount = notificationRepository.countUnreadByUserId(user.getId());
+                
+                // 뱃지 업데이트 푸시 전송
+                boolean sent = fcmService.sendBadgeUpdate(user.getFcmToken(), (int) unreadCount);
+                
+                if (sent) {
+                    log.info("Badge update sent successfully to user: {} (badge: {})", user.getId(), unreadCount);
+                } else {
+                    log.warn("Failed to send badge update to user: {}", user.getId());
+                }
+            } catch (Exception e) {
+                log.error("Error sending badge update to user: {}", user.getId(), e);
+                // 뱃지 업데이트 실패해도 계속 진행
+            }
+        }
     }
 
     private NotificationDto toDto(Notification notification) {
