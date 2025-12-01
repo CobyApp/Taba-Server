@@ -20,7 +20,7 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
     @Query("SELECT COUNT(lr) FROM LetterRecipient lr WHERE lr.letter.id = :letterId AND lr.deletedAt IS NULL")
     long countByLetterId(@Param("letterId") String letterId);
     
-    @Query("SELECT COUNT(lr) FROM LetterRecipient lr WHERE lr.user.id = :userId AND lr.isRead = false AND lr.deletedAt IS NULL")
+    @Query("SELECT COUNT(lr) FROM LetterRecipient lr WHERE lr.user.id = :userId AND (lr.isRead IS NULL OR lr.isRead = false) AND lr.deletedAt IS NULL")
     long countUnreadByUserId(@Param("userId") String userId);
     
     /**

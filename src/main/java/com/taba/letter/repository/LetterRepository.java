@@ -126,5 +126,18 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
             @Param("originalLetterId") String originalLetterId,
             @Param("senderId") String senderId,
             @Param("recipientId") String recipientId);
+
+    /**
+     * 사용자가 받은 읽지 않은 DIRECT 편지 개수 조회
+     */
+    @Query("SELECT COUNT(l) FROM Letter l WHERE " +
+           "l.recipient.id = :userId " +
+           "AND l.visibility = 'DIRECT' " +
+           "AND l.sentAt IS NOT NULL " +
+           "AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
+           "AND (l.recipient.deletedAt IS NULL OR l.recipient.id = :userId) " +
+           "AND (l.isRead IS NULL OR l.isRead = false)")
+    long countUnreadDirectLettersByUserId(@Param("userId") String userId);
 }
 

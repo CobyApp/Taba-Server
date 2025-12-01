@@ -1,6 +1,8 @@
 package com.taba.notification.service;
 
 import com.taba.common.util.SecurityUtil;
+import com.taba.letter.repository.LetterRecipientRepository;
+import com.taba.letter.repository.LetterRepository;
 import com.taba.notification.dto.NotificationDto;
 import com.taba.notification.entity.Notification;
 import com.taba.notification.repository.NotificationRepository;
@@ -24,6 +26,8 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final FcmService fcmService;
     private final EntityManager entityManager;
+    private final LetterRepository letterRepository;
+    private final LetterRecipientRepository letterRecipientRepository;
 
     @Transactional(readOnly = true)
     public Page<NotificationDto> getNotifications(Pageable pageable, Notification.NotificationCategory category) {
@@ -96,9 +100,9 @@ public class NotificationService {
     }
 
     /**
-     * 읽지 않은 알림 개수 조회 (앱 뱃지 숫자용)
+     * 읽지 않은 편지 개수 조회 (앱 뱃지 숫자용)
      * 
-     * @return 읽지 않은 알림 개수
+     * @return 읽지 않은 편지 개수
      */
     @Transactional(readOnly = true)
     public long getUnreadCount() {
@@ -106,7 +110,14 @@ public class NotificationService {
         if (currentUser == null) {
             throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
         }
-        return notificationRepository.countUnreadByUserId(currentUser.getId());
+        
+        // DIRECT 편지 중 읽지 않은 개수
+        long unreadDirectLetters = letterRepository.countUnreadDirectLettersByUserId(currentUser.getId());
+        
+        // PUBLIC/FRIENDS 편지 중 읽지 않은 개수 (LetterRecipient 기준)
+        long unreadPublicLetters = letterRecipientRepository.countUnreadByUserId(currentUser.getId());
+        
+        return unreadDirectLetters + unreadPublicLetters;
     }
 
     /**
@@ -138,8 +149,10 @@ public class NotificationService {
         if (user.getPushNotificationEnabled() != null && user.getPushNotificationEnabled() 
             && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
             try {
-                // 읽지 않은 알림 개수 계산 (앱 뱃지 숫자) - 새로 생성된 알림 포함
-                long unreadCount = notificationRepository.countUnreadByUserId(user.getId());
+                // 읽지 않은 편지 개수 계산 (앱 뱃지 숫자)
+                long unreadDirectLetters = letterRepository.countUnreadDirectLettersByUserId(user.getId());
+                long unreadPublicLetters = letterRecipientRepository.countUnreadByUserId(user.getId());
+                long unreadCount = unreadDirectLetters + unreadPublicLetters;
                 
                 Map<String, String> data = new HashMap<>();
                 data.put("notificationId", notification.getId());
@@ -240,8 +253,10 @@ public class NotificationService {
         if (user.getPushNotificationEnabled() != null && user.getPushNotificationEnabled() 
             && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
             try {
-                // 현재 읽지 않은 알림 개수 계산
-                long unreadCount = notificationRepository.countUnreadByUserId(user.getId());
+        // 현재 읽지 않은 편지 개수 계산
+        long unreadDirectLetters = letterRepository.countUnreadDirectLettersByUserId(user.getId());
+        long unreadPublicLetters = letterRecipientRepository.countUnreadByUserId(user.getId());
+        long unreadCount = unreadDirectLetters + unreadPublicLetters;
                 
                 // 뱃지 업데이트 푸시 전송
                 boolean sent = fcmService.sendBadgeUpdate(user.getFcmToken(), (int) unreadCount);
