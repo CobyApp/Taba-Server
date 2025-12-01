@@ -42,12 +42,12 @@
 --   - id: UUID (VARCHAR(36), PK)
 --   - sender_id: 발신자 ID (VARCHAR(36), FK -> users.id, NOT NULL)
 --   - recipient_id: 수신자 ID (VARCHAR(36), FK -> users.id, nullable)
---     * PUBLIC/FRIENDS 편지: NULL
+--     * PUBLIC 편지: NULL
 --     * DIRECT 편지: 수신자 ID
 --   - title: 편지 제목 (VARCHAR(200), NOT NULL)
 --   - content: 편지 내용 (TEXT, NOT NULL)
 --   - preview: 미리보기 텍스트 (VARCHAR(500), NOT NULL)
---   - visibility: 공개 범위 (VARCHAR(20), ENUM: PUBLIC, FRIENDS, DIRECT, PRIVATE)
+--   - visibility: 공개 범위 (VARCHAR(20), ENUM: PUBLIC, DIRECT)
 --   - is_anonymous: 익명 여부 (BOOLEAN, 기본값: false)
 --   - template_background: 배경색/템플릿 (VARCHAR(50))
 --   - template_text_color: 텍스트 색상 (VARCHAR(50))

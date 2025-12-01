@@ -340,9 +340,9 @@ INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visib
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
 ('lbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', 'To Charlie', 'Charlie, it was really nice to meet you today! Let''s meet again. It was a fun time. 🎊', 'Charlie, it was really nice to meet you today! Let''s meet again. It was a fun time. 🎊', 'DIRECT', FALSE, '#001100', '#00FF00', 'Patrick Hand', 15.0, NULL, NOW() - INTERVAL 4 HOUR, 0, TRUE, NOW() - INTERVAL 3 HOUR, 'en', NOW() - INTERVAL 4 HOUR, NOW() - INTERVAL 3 HOUR, NULL);
 
--- 친구 전용 편지 1 (Frank -> Diana, 친구만 볼 수 있음, 3일 전 발송)
+-- 공개 편지 1 (Frank -> Diana, 3일 전 발송)
 INSERT INTO letters (id, sender_id, recipient_id, title, content, preview, visibility, is_anonymous, template_background, template_text_color, template_font_family, template_font_size, scheduled_at, sent_at, views, is_read, read_at, language, created_at, updated_at, deleted_at) VALUES
-('lccccccc-cccc-cccc-cccc-cccccccccccc', '66666666-6666-6666-6666-666666666666', NULL, '친구들에게', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', 'FRIENDS', FALSE, '#2A1F00', '#FFFF00', 'Jua', 16.0, NULL, NOW() - INTERVAL 3 DAY, 2, FALSE, NULL, 'en', NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL);
+('lccccccc-cccc-cccc-cccc-cccccccccccc', '66666666-6666-6666-6666-666666666666', NULL, '친구들에게', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', '친구들에게 전하는 편지입니다. 모두 건강하고 행복하길 바라요. 함께라서 행복해요! 🌈', 'PUBLIC', FALSE, '#2A1F00', '#FFFF00', 'Jua', 16.0, NULL, NOW() - INTERVAL 3 DAY, 2, FALSE, NULL, 'en', NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY, NULL);
 
 -- ============================================
 -- 4. 편지 이미지 (Letter Images)

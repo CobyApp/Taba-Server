@@ -409,7 +409,6 @@ profileImage: [파일]
 - `isRead`: 
   - DIRECT 편지: 내가 받은 편지인 경우 읽음 상태 (내가 보낸 편지인 경우 null)
   - PUBLIC 편지: 공개편지에 답장을 보내면 자동으로 읽음 처리되며, 이후 읽음 상태가 표시됩니다 (아직 읽지 않은 경우 false)
-  - FRIENDS 편지: 친구 전용 편지의 경우 `LetterRecipient`를 통해 읽음 상태가 관리되며, 편지를 조회하면 자동으로 읽음 처리됩니다
 - `letter`: 편지 요약 정보 (id, title, preview, fontFamily)
 - 시간순 정렬: `sentAt` 기준 오름차순 정렬 (오래된 편지부터 최신 편지 순서)
 - 페이지네이션 정보가 포함됩니다.
@@ -447,7 +446,7 @@ profileImage: [파일]
 ```
 
 **참고사항**:
-- `visibility`: `PUBLIC`, `FRIENDS`, `DIRECT`, `PRIVATE` 중 하나 (필수)
+- `visibility`: `PUBLIC`, `DIRECT` 중 하나 (필수)
 - **익명 기능은 제거되었습니다.** 모든 편지는 작성자 정보가 표시됩니다.
 - `recipientId`: 직접 전송(`DIRECT`) 편지인 경우 필수, 공개 편지인 경우 선택사항
 - `language`: 편지 언어 (선택사항). `ko` (한국어), `en` (영어), `ja` (일본어) 중 하나
@@ -494,12 +493,10 @@ profileImage: [파일]
 **인증**: 필요
 
 **참고사항**:
-- 편지의 접근 권한을 확인합니다 (PUBLIC, FRIENDS, DIRECT, PRIVATE)
+- 편지의 접근 권한을 확인합니다 (PUBLIC, DIRECT)
 - **읽음 처리** (작성자가 아닌 경우에만 자동 처리):
   - 공개 편지(PUBLIC): `LetterRecipient` 테이블을 통해 읽음 상태가 자동으로 기록됩니다. 여러 사용자가 읽을 수 있으므로 사용자별로 읽음 상태를 관리합니다.
-  - 친구 전용 편지(FRIENDS): `LetterRecipient` 테이블을 통해 읽음 상태가 자동으로 기록됩니다. 친구 관계인 사용자만 읽을 수 있으며, 사용자별로 읽음 상태를 관리합니다.
   - 직접 전송 편지(DIRECT): 수신자가 조회하면 `Letter` 엔티티의 `isRead` 필드가 자동으로 업데이트됩니다. 1:1 편지이므로 편지 자체의 읽음 상태로 관리합니다.
-  - 비공개 편지(PRIVATE): 본인만 볼 수 있으므로 읽음 처리가 필요하지 않습니다.
 - 편지를 조회하면 조회수(`views`)가 증가합니다.
 - `isRead`: 읽음 상태 (작성자가 아닌 경우에만 표시)
   - `true`: 읽음
@@ -689,15 +686,13 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 
 **참고사항**:
 - `recipientId`는 필요하지 않습니다. 원본 편지의 작성자가 자동으로 수신자가 됩니다.
-- 공개 편지, 친구 전용 편지, 직접 전송 편지 모두에 답장 가능합니다.
+- 공개 편지, 직접 전송 편지 모두에 답장 가능합니다.
 - 답장은 항상 `DIRECT` 타입으로 생성됩니다.
 - 친구가 아닌 사용자에게 답장을 보내면 자동으로 양방향 친구 관계가 생성됩니다.
 - 자기 자신에게 답장할 수 없습니다.
 - **공개 편지(PUBLIC)에 답장하는 경우**:
   - 원본 편지 ID(`originalLetterId`)가 답장 편지에 저장되어, 친구와의 편지 목록에서 해당 공개편지만 표시됩니다.
   - 공개 편지에 답장을 보내면 자동으로 해당 공개 편지가 읽음 처리됩니다 (`LetterRecipient`를 통해).
-- **친구 전용 편지(FRIENDS)에 답장하는 경우**:
-  - 친구 전용 편지에 답장을 보내면 자동으로 해당 편지가 읽음 처리됩니다 (`LetterRecipient`를 통해).
 - `attachedImages`: 첨부 이미지 URL 배열 (선택사항). 여러 이미지를 첨부할 수 있으며, 순서대로 저장됩니다.
   - 이미지 업로드는 `/files` API를 통해 먼저 수행하고, 반환된 URL을 사용합니다.
 
@@ -944,7 +939,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 - 앱 뱃지 숫자 표시용으로 사용됩니다.
 - FCM 푸시 알림 발송 시에도 이 개수가 뱃지 숫자로 전송됩니다.
 - 편지 읽음 처리 시 즉시 반영됩니다.
-- DIRECT 편지와 PUBLIC/FRIENDS 편지 모두 포함됩니다.
+- DIRECT 편지와 PUBLIC 편지 모두 포함됩니다.
 
 ### 6.6 FCM 푸시 알림 및 뱃지
 
@@ -960,7 +955,6 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 **뱃지 계산 기준**:
 - 뱃지 숫자는 읽지 않은 편지 개수를 기준으로 합니다.
 - DIRECT 편지: 수신자가 현재 사용자이고 읽지 않은 편지
-- FRIENDS 편지: LetterRecipient에서 현재 사용자가 읽지 않은 편지 (PUBLIC 편지는 제외)
 
 **FCM Data Payload 구조** (알림 생성 시):
 ```json
@@ -1002,7 +996,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 - 앱이 포그라운드로 올라오거나 알림 목록 화면 진입 시 호출하는 것을 권장합니다.
 - 읽지 않은 편지 개수를 반환하며, 동시에 FCM 푸시 알림으로 뱃지 숫자를 업데이트합니다.
 - iOS와 Android 모두 지원합니다.
-- DIRECT 편지와 PUBLIC/FRIENDS 편지 모두 포함됩니다.
+- DIRECT 편지와 PUBLIC 편지 모두 포함됩니다.
 
 **Response** (200 OK):
 ```json
