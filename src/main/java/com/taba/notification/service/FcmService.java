@@ -26,9 +26,11 @@ public class FcmService {
      * @param title 알림 제목
      * @param body 알림 본문
      * @param data 추가 데이터 (선택사항)
+     * @param badgeCount 읽지 않은 알림 개수 (앱 뱃지 숫자, null이면 0으로 설정)
      * @return 성공 여부
      */
-    public boolean sendPushNotification(String fcmToken, String title, String body, java.util.Map<String, String> data) {
+    public boolean sendPushNotification(String fcmToken, String title, String body, 
+                                       java.util.Map<String, String> data, Integer badgeCount) {
         if (fcmToken == null || fcmToken.isEmpty()) {
             log.warn("FCM token is null or empty, skipping push notification");
             return false;
@@ -49,10 +51,14 @@ public class FcmService {
                 messageBuilder.putAllData(data);
             }
 
-            // iOS 설정 (APNs)
+            // 읽지 않은 알림 개수 설정 (null이면 0)
+            int badge = (badgeCount != null && badgeCount >= 0) ? badgeCount : 0;
+
+            // iOS 설정 (APNs) - 읽지 않은 알림 개수로 뱃지 설정
             ApnsConfig apnsConfig = ApnsConfig.builder()
                     .setAps(Aps.builder()
                             .setSound("default")
+                            .setBadge(badge)
                             .build())
                     .build();
             messageBuilder.setApnsConfig(apnsConfig);
@@ -96,20 +102,22 @@ public class FcmService {
      * @param title 알림 제목
      * @param body 알림 본문
      * @param data 추가 데이터 (선택사항)
+     * @param badgeCount 읽지 않은 알림 개수 (앱 뱃지 숫자, null이면 0으로 설정)
      * @return 성공한 발송 수
      */
     public int sendMulticastPushNotification(
             java.util.List<String> fcmTokens, 
             String title, 
             String body, 
-            java.util.Map<String, String> data) {
+            java.util.Map<String, String> data,
+            Integer badgeCount) {
         if (fcmTokens == null || fcmTokens.isEmpty()) {
             return 0;
         }
 
         int successCount = 0;
         for (String token : fcmTokens) {
-            if (sendPushNotification(token, title, body, data)) {
+            if (sendPushNotification(token, title, body, data, badgeCount)) {
                 successCount++;
             }
         }

@@ -7,6 +7,7 @@ import com.taba.notification.repository.NotificationRepository;
 import com.taba.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final FcmService fcmService;
+    private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public Page<NotificationDto> getNotifications(Pageable pageable, Notification.NotificationCategory category) {
@@ -37,35 +39,10 @@ public class NotificationService {
         return notifications.map(this::toDto);
     }
 
-    /**
-     * 읽지 않은 알림 개수 조회
-     * 
-     * @return 읽지 않은 알림 개수
-     */
-    @Transactional(readOnly = true)
-    public long getUnreadCount() {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
-            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
-        }
-
-        return notificationRepository.countUnreadByUserId(currentUser.getId());
-    }
-
     @Transactional
     public NotificationDto markAsRead(String notificationId) {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
-            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
-        }
-
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
-
-        // 알림 소유자 확인
-        if (!notification.getUser().getId().equals(currentUser.getId())) {
-            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND);
-        }
 
         notification.markAsRead();
         notification = notificationRepository.save(notification);
@@ -86,20 +63,24 @@ public class NotificationService {
 
     @Transactional
     public void deleteNotification(String notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        notificationRepository.delete(notification);
+    }
+
+    /**
+     * 읽지 않은 알림 개수 조회 (앱 뱃지 숫자용)
+     * 
+     * @return 읽지 않은 알림 개수
+     */
+    @Transactional(readOnly = true)
+    public long getUnreadCount() {
         User currentUser = SecurityUtil.getCurrentUser();
         if (currentUser == null) {
             throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.UNAUTHORIZED);
         }
-
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND));
-
-        // 알림 소유자 확인
-        if (!notification.getUser().getId().equals(currentUser.getId())) {
-            throw new com.taba.common.exception.BusinessException(com.taba.common.exception.ErrorCode.NOTIFICATION_NOT_FOUND);
-        }
-
-        notificationRepository.delete(notification);
+        return notificationRepository.countUnreadByUserId(currentUser.getId());
     }
 
     /**
@@ -123,12 +104,17 @@ public class NotificationService {
                 .relatedId(relatedId)
                 .build();
         notification = notificationRepository.save(notification);
+        // 저장 후 즉시 flush하여 DB에 반영 (알림 개수 계산 정확성을 위해)
+        entityManager.flush();
         log.info("Notification created: {} for user: {}", notification.getId(), user.getId());
 
         // FCM 푸시 발송 (푸시 알림이 활성화되어 있고 FCM 토큰이 있는 경우)
         if (user.getPushNotificationEnabled() != null && user.getPushNotificationEnabled() 
             && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
             try {
+                // 읽지 않은 알림 개수 계산 (앱 뱃지 숫자) - 새로 생성된 알림 포함
+                long unreadCount = notificationRepository.countUnreadByUserId(user.getId());
+                
                 Map<String, String> data = new HashMap<>();
                 data.put("notificationId", notification.getId());
                 data.put("category", category.name());
@@ -146,7 +132,8 @@ public class NotificationService {
                         user.getFcmToken(),
                         title,
                         subtitle != null ? subtitle : "",
-                        data
+                        data,
+                        (int) unreadCount
                 );
 
                 if (sent) {
@@ -196,17 +183,13 @@ public class NotificationService {
     }
 
     private NotificationDto toDto(Notification notification) {
-        // isRead가 false이면 읽지 않음(isUnread = true), isRead가 true이면 읽음(isUnread = false)
-        Boolean isRead = notification.getIsRead();
-        Boolean isUnread = (isRead == null || !isRead);
-        
         return NotificationDto.builder()
                 .id(notification.getId())
                 .title(notification.getTitle())
                 .subtitle(notification.getSubtitle())
                 .time(notification.getCreatedAt())
                 .category(notification.getCategory())
-                .isUnread(isUnread)
+                .isUnread(notification.getIsRead() == null || !notification.getIsRead())
                 .relatedId(notification.getRelatedId())
                 .build();
     }
