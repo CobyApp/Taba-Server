@@ -114,10 +114,10 @@ public class NotificationService {
         // DIRECT 편지 중 읽지 않은 개수
         long unreadDirectLetters = letterRepository.countUnreadDirectLettersByUserId(currentUser.getId());
         
-        // PUBLIC/FRIENDS 편지 중 읽지 않은 개수 (LetterRecipient 기준)
-        long unreadPublicLetters = letterRecipientRepository.countUnreadByUserId(currentUser.getId());
+        // FRIENDS 편지 중 읽지 않은 개수 (PUBLIC 제외, LetterRecipient 기준)
+        long unreadFriendsLetters = letterRecipientRepository.countUnreadFriendsLettersByUserId(currentUser.getId());
         
-        return unreadDirectLetters + unreadPublicLetters;
+        return unreadDirectLetters + unreadFriendsLetters;
     }
 
     /**
@@ -151,8 +151,8 @@ public class NotificationService {
             try {
                 // 읽지 않은 편지 개수 계산 (앱 뱃지 숫자)
                 long unreadDirectLetters = letterRepository.countUnreadDirectLettersByUserId(user.getId());
-                long unreadPublicLetters = letterRecipientRepository.countUnreadByUserId(user.getId());
-                long unreadCount = unreadDirectLetters + unreadPublicLetters;
+                long unreadFriendsLetters = letterRecipientRepository.countUnreadFriendsLettersByUserId(user.getId());
+                long unreadCount = unreadDirectLetters + unreadFriendsLetters;
                 
                 Map<String, String> data = new HashMap<>();
                 data.put("notificationId", notification.getId());
@@ -255,8 +255,8 @@ public class NotificationService {
             try {
         // 현재 읽지 않은 편지 개수 계산
         long unreadDirectLetters = letterRepository.countUnreadDirectLettersByUserId(user.getId());
-        long unreadPublicLetters = letterRecipientRepository.countUnreadByUserId(user.getId());
-        long unreadCount = unreadDirectLetters + unreadPublicLetters;
+        long unreadFriendsLetters = letterRecipientRepository.countUnreadFriendsLettersByUserId(user.getId());
+        long unreadCount = unreadDirectLetters + unreadFriendsLetters;
                 
                 // 뱃지 업데이트 푸시 전송
                 boolean sent = fcmService.sendBadgeUpdate(user.getFcmToken(), (int) unreadCount);

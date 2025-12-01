@@ -24,6 +24,19 @@ public interface LetterRecipientRepository extends JpaRepository<LetterRecipient
     long countUnreadByUserId(@Param("userId") String userId);
     
     /**
+     * 사용자가 읽지 않은 FRIENDS 편지 개수 조회 (PUBLIC 제외)
+     * 뱃지 숫자 계산용
+     */
+    @Query("SELECT COUNT(lr) FROM LetterRecipient lr " +
+           "WHERE lr.user.id = :userId " +
+           "AND lr.letter.visibility = 'FRIENDS' " +
+           "AND (lr.isRead IS NULL OR lr.isRead = false) " +
+           "AND lr.deletedAt IS NULL " +
+           "AND lr.letter.deletedAt IS NULL " +
+           "AND lr.letter.sender.deletedAt IS NULL")
+    long countUnreadFriendsLettersByUserId(@Param("userId") String userId);
+    
+    /**
      * 특정 편지를 읽은 모든 사용자 조회 (삭제되지 않은 것만)
      */
     @Query("SELECT lr FROM LetterRecipient lr WHERE lr.letter.id = :letterId AND lr.deletedAt IS NULL ORDER BY lr.readAt DESC")

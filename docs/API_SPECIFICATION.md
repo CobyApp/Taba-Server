@@ -960,7 +960,7 @@ GET /letters/public?languages=ko&languages=en&page=0&size=20
 **뱃지 계산 기준**:
 - 뱃지 숫자는 읽지 않은 편지 개수를 기준으로 합니다.
 - DIRECT 편지: 수신자가 현재 사용자이고 읽지 않은 편지
-- PUBLIC/FRIENDS 편지: LetterRecipient에서 현재 사용자가 읽지 않은 편지
+- FRIENDS 편지: LetterRecipient에서 현재 사용자가 읽지 않은 편지 (PUBLIC 편지는 제외)
 
 **FCM Data Payload 구조** (알림 생성 시):
 ```json
