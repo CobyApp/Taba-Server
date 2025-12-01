@@ -1,7 +1,6 @@
 package com.taba.notification.service;
 
 import com.taba.common.util.SecurityUtil;
-import com.taba.letter.repository.LetterRepository;
 import com.taba.notification.dto.NotificationDto;
 import com.taba.notification.entity.Notification;
 import com.taba.notification.repository.NotificationRepository;
@@ -22,7 +21,6 @@ import java.util.Map;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final LetterRepository letterRepository;
     private final FcmService fcmService;
 
     @Transactional(readOnly = true)
@@ -131,10 +129,6 @@ public class NotificationService {
         if (user.getPushNotificationEnabled() != null && user.getPushNotificationEnabled() 
             && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
             try {
-                // 읽지 않은 편지 개수 계산 (앱 뱃지 숫자) - 메인화면의 읽지 않은 편지 개수와 동일
-                long unreadLetterCount = letterRepository.countTotalUnreadLettersByUserId(user.getId());
-                int badgeCount = (int) Math.max(0, unreadLetterCount); // 음수 방지
-
                 Map<String, String> data = new HashMap<>();
                 data.put("notificationId", notification.getId());
                 data.put("category", category.name());
@@ -152,8 +146,7 @@ public class NotificationService {
                         user.getFcmToken(),
                         title,
                         subtitle != null ? subtitle : "",
-                        data,
-                        badgeCount
+                        data
                 );
 
                 if (sent) {
