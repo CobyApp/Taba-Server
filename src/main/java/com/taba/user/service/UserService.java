@@ -9,6 +9,8 @@ import com.taba.user.dto.UserDto;
 import com.taba.user.dto.UserMapper;
 import com.taba.user.entity.User;
 import com.taba.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class UserService {
     private final FriendshipRepository friendshipRepository;
     private final LetterRepository letterRepository;
     private final FileService fileService;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public UserDto getProfile(String userId) {
@@ -48,12 +53,21 @@ public class UserService {
     /**
      * User 엔티티를 최신 데이터로 새로고침하여 반환합니다.
      * 닉네임이나 프로필 변경사항이 즉시 반영됩니다.
+     * 
+     * JPA 1차 캐시에서 엔티티를 detach하고 DB에서 새로 로드하여
+     * 항상 최신 데이터를 반환합니다.
      */
     @Transactional(readOnly = true)
     public User refreshUser(User user) {
         if (user == null || user.getId() == null) {
             return user;
         }
+        
+        // 1차 캐시에서 기존 엔티티 제거 (캐시된 오래된 데이터 방지)
+        if (entityManager.contains(user)) {
+            entityManager.detach(user);
+        }
+        
         return userRepository.findActiveUserById(user.getId())
                 .orElse(user);
     }
