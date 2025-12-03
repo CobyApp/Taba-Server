@@ -1,6 +1,7 @@
 package com.taba.block.repository;
 
 import com.taba.block.entity.Block;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,9 +14,10 @@ import java.util.Optional;
 public interface BlockRepository extends JpaRepository<Block, String> {
 
     /**
-     * 특정 사용자가 차단한 사용자 목록 조회
+     * 특정 사용자가 차단한 사용자 목록 조회 (차단당한 사용자 정보 포함)
      */
-    @Query("SELECT b FROM Block b WHERE b.blocker.id = :blockerId AND b.deletedAt IS NULL")
+    @EntityGraph(attributePaths = {"blocked"})
+    @Query("SELECT b FROM Block b WHERE b.blocker.id = :blockerId AND b.deletedAt IS NULL AND b.blocked.deletedAt IS NULL")
     List<Block> findByBlockerId(@Param("blockerId") String blockerId);
 
     /**

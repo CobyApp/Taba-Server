@@ -36,22 +36,26 @@ public class BlockService {
      */
     @Transactional
     public void blockUser(String blockedUserId) {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         // 자기 자신은 차단 불가
-        if (currentUser.getId().equals(blockedUserId)) {
+        if (currentUserId.equals(blockedUserId)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+
+        // 현재 사용자 조회 (영속 상태)
+        User currentUser = userRepository.findActiveUserById(currentUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
 
         // 차단할 사용자 조회
         User blockedUser = userRepository.findActiveUserById(blockedUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 이미 차단한 경우 확인
-        if (blockRepository.existsByBlockerIdAndBlockedId(currentUser.getId(), blockedUserId)) {
+        if (blockRepository.existsByBlockerIdAndBlockedId(currentUserId, blockedUserId)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
@@ -63,7 +67,7 @@ public class BlockService {
         blockRepository.save(block);
 
         // 친구 관계가 있으면 삭제 (양방향)
-        List<Friendship> friendships = friendshipRepository.findByUserIdsList(currentUser.getId(), blockedUserId);
+        List<Friendship> friendships = friendshipRepository.findByUserIdsList(currentUserId, blockedUserId);
         for (Friendship friendship : friendships) {
             if (!friendship.isDeleted()) {
                 friendship.softDelete();
@@ -71,7 +75,7 @@ public class BlockService {
             }
         }
 
-        log.info("User {} blocked user {}", currentUser.getId(), blockedUserId);
+        log.info("User {} blocked user {}", currentUserId, blockedUserId);
     }
 
     /**
@@ -79,20 +83,20 @@ public class BlockService {
      */
     @Transactional
     public void unblockUser(String blockedUserId) {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         // 차단 관계 조회
-        Block block = blockRepository.findByBlockerIdAndBlockedId(currentUser.getId(), blockedUserId)
+        Block block = blockRepository.findByBlockerIdAndBlockedId(currentUserId, blockedUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
 
         // 차단 해제 (soft delete)
         block.softDelete();
         blockRepository.save(block);
 
-        log.info("User {} unblocked user {}", currentUser.getId(), blockedUserId);
+        log.info("User {} unblocked user {}", currentUserId, blockedUserId);
     }
 
     /**
@@ -100,15 +104,16 @@ public class BlockService {
      */
     @Transactional(readOnly = true)
     public List<BlockedUserDto> getBlockedUsers() {
-        User currentUser = SecurityUtil.getCurrentUser();
-        if (currentUser == null) {
+        String currentUserId = SecurityUtil.getCurrentUserId();
+        if (currentUserId == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        List<Block> blocks = blockRepository.findByBlockerId(currentUser.getId());
+        List<Block> blocks = blockRepository.findByBlockerId(currentUserId);
         
         return blocks.stream()
                 .map(block -> {
+                    // blocked 사용자 정보를 최신 데이터로 조회
                     User blockedUser = userService.refreshUser(block.getBlocked());
                     return BlockedUserDto.builder()
                             .id(blockedUser.getId())
