@@ -1,5 +1,6 @@
 package com.taba.letter.service;
 
+import com.taba.block.repository.BlockRepository;
 import com.taba.common.exception.BusinessException;
 import com.taba.common.exception.ErrorCode;
 import com.taba.common.util.SecurityUtil;
@@ -37,6 +38,7 @@ public class LetterService {
     private final FriendshipService friendshipService;
     private final NotificationService notificationService;
     private final com.taba.user.service.UserService userService;
+    private final BlockRepository blockRepository;
 
     @Transactional
     public LetterDto createLetter(LetterCreateRequest request) {
@@ -297,9 +299,19 @@ public class LetterService {
         // languages가 null이거나 비어있으면 null로 변환 (모든 언어 조회)
         List<String> languagesParam = (languages == null || languages.isEmpty()) ? null : languages;
         
-        // 로그인한 사용자의 경우 자신이 작성한 편지 제외
+        // 로그인한 사용자의 경우 자신이 작성한 편지 및 차단한 사용자의 편지 제외
         if (currentUserId != null && !currentUserId.isEmpty()) {
-            allLetters = letterRepository.findPublicLettersExcludingUserList(currentUserId, languagesParam);
+            // 차단한 사용자 ID 목록 조회
+            List<String> blockedUserIds = blockRepository.findBlockedUserIdsByBlockerId(currentUserId);
+            
+            if (blockedUserIds != null && !blockedUserIds.isEmpty()) {
+                // 차단한 사용자가 있으면 해당 사용자의 편지도 제외
+                allLetters = letterRepository.findPublicLettersExcludingUserAndBlockedList(
+                        currentUserId, blockedUserIds, languagesParam);
+            } else {
+                // 차단한 사용자가 없으면 기존 쿼리 사용
+                allLetters = letterRepository.findPublicLettersExcludingUserList(currentUserId, languagesParam);
+            }
         } else {
             // 비로그인 사용자는 모든 공개 편지 조회
             allLetters = letterRepository.findPublicLettersList(languagesParam);

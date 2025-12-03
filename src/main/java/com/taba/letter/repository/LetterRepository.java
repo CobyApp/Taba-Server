@@ -36,6 +36,20 @@ public interface LetterRepository extends JpaRepository<Letter, String> {
             @Param("excludeUserId") String excludeUserId,
             @Param("languages") List<String> languages);
 
+    /**
+     * 공개 편지 조회 (특정 사용자 및 차단한 사용자 제외)
+     */
+    @EntityGraph(attributePaths = {"sender", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
+    @Query("SELECT l FROM Letter l WHERE l.visibility = 'PUBLIC' AND l.sentAt IS NOT NULL AND l.deletedAt IS NULL " +
+           "AND l.sender.deletedAt IS NULL " +
+           "AND l.sender.id != :excludeUserId " +
+           "AND l.sender.id NOT IN :blockedUserIds " +
+           "AND (:languages IS NULL OR l.language IN :languages)")
+    List<Letter> findPublicLettersExcludingUserAndBlockedList(
+            @Param("excludeUserId") String excludeUserId,
+            @Param("blockedUserIds") List<String> blockedUserIds,
+            @Param("languages") List<String> languages);
+
     @EntityGraph(attributePaths = {"sender", "recipient", "images"}, type = org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.FETCH)
     @Query("SELECT l FROM Letter l WHERE l.sender.id = :userId AND l.deletedAt IS NULL " +
            "AND l.sender.deletedAt IS NULL ORDER BY l.createdAt DESC")
