@@ -31,5 +31,12 @@ public abstract class BaseEntity {
     public boolean isDeleted() {
         return this.deletedAt != null;
     }
+
+    /**
+     * Soft delete된 엔티티를 복구합니다.
+     */
+    public void restore() {
+        this.deletedAt = null;
+    }
 }
 

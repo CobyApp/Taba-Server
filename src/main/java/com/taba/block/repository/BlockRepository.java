@@ -21,10 +21,17 @@ public interface BlockRepository extends JpaRepository<Block, String> {
     List<Block> findByBlockerId(@Param("blockerId") String blockerId);
 
     /**
-     * 특정 차단 관계 조회
+     * 특정 차단 관계 조회 (활성 상태만)
      */
     @Query("SELECT b FROM Block b WHERE b.blocker.id = :blockerId AND b.blocked.id = :blockedId AND b.deletedAt IS NULL")
     Optional<Block> findByBlockerIdAndBlockedId(@Param("blockerId") String blockerId, @Param("blockedId") String blockedId);
+
+    /**
+     * 특정 차단 관계 조회 (삭제된 것 포함)
+     * - 이전에 차단했다가 해제한 기록도 포함
+     */
+    @Query("SELECT b FROM Block b WHERE b.blocker.id = :blockerId AND b.blocked.id = :blockedId")
+    Optional<Block> findByBlockerIdAndBlockedIdIncludingDeleted(@Param("blockerId") String blockerId, @Param("blockedId") String blockedId);
 
     /**
      * 차단 관계 존재 여부 확인

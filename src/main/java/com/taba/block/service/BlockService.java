@@ -31,7 +31,7 @@ public class BlockService {
 
     /**
      * 사용자 차단
-     * - 차단 관계 생성
+     * - 차단 관계 생성 또는 복구
      * - 친구 관계가 있으면 삭제 (양방향)
      */
     @Transactional
@@ -54,17 +54,27 @@ public class BlockService {
         User blockedUser = userRepository.findActiveUserById(blockedUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 이미 차단한 경우 확인
+        // 이미 차단한 경우 확인 (활성 상태)
         if (blockRepository.existsByBlockerIdAndBlockedId(currentUserId, blockedUserId)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        // 차단 관계 생성
-        Block block = Block.builder()
-                .blocker(currentUser)
-                .blocked(blockedUser)
-                .build();
-        blockRepository.save(block);
+        // 이전에 차단했다가 해제한 기록이 있는지 확인 (soft deleted)
+        Block existingBlock = blockRepository.findByBlockerIdAndBlockedIdIncludingDeleted(currentUserId, blockedUserId)
+                .orElse(null);
+
+        if (existingBlock != null) {
+            // 기존 차단 기록 복구 (deletedAt을 null로 설정)
+            existingBlock.restore();
+            blockRepository.save(existingBlock);
+        } else {
+            // 새 차단 관계 생성
+            Block block = Block.builder()
+                    .blocker(currentUser)
+                    .blocked(blockedUser)
+                    .build();
+            blockRepository.save(block);
+        }
 
         // 친구 관계가 있으면 삭제 (양방향)
         List<Friendship> friendships = friendshipRepository.findByUserIdsList(currentUserId, blockedUserId);
