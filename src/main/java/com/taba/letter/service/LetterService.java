@@ -364,6 +364,8 @@ public class LetterService {
         return toDto(letter, currentUserId);
     }
 
+    private static final int REPORT_THRESHOLD_FOR_DELETE = 5;
+
     @Transactional
     public void reportLetter(String letterId, String reason) {
         Letter letter = letterRepository.findActiveById(letterId)
@@ -382,6 +384,20 @@ public class LetterService {
         com.taba.letter.entity.LetterReport report = new com.taba.letter.entity.LetterReport(
                 letter, reporter, reason);
         letterReportRepository.save(report);
+        
+        // 신고가 5건 이상이면 편지 자동 삭제 (soft delete)
+        long reportCount = letterReportRepository.countByLetterId(letterId);
+        if (reportCount >= REPORT_THRESHOLD_FOR_DELETE) {
+            letter.softDelete();
+            letterRepository.save(letter);
+            
+            // 관련된 LetterRecipient도 소프트 삭제 처리
+            List<LetterRecipient> recipients = letterRecipientRepository.findAllByLetterId(letterId);
+            for (LetterRecipient recipient : recipients) {
+                recipient.softDelete();
+                letterRecipientRepository.save(recipient);
+            }
+        }
     }
 
     @Transactional
